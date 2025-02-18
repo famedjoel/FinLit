@@ -1,25 +1,30 @@
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CourseDashboard from "./pages/CourseDashboard";
 import Games from "./pages/Games";
 import "./styles.css";
-import "./index.css";
 
 function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <Router>
       <div className="app-container">
-        {/* Navigation Bar */}
+        {/* Navbar */}
         <nav className="navbar">
           <div className="logo">💰 FinLearn</div>
-          <div className="nav-links">
-            <Link to="/" className="nav-link">Home</Link>
-            <Link to="/courses" className="nav-link">Courses</Link>
-            <Link to="/games" className="nav-link">Games</Link>
+          <div className="menu-icon" onClick={() => setMenuOpen(!menuOpen)}>
+            ☰
+          </div>
+          <div className={`nav-links ${menuOpen ? "show" : ""}`}>
+            <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link to="/courses" className="nav-link" onClick={() => setMenuOpen(false)}>Courses</Link>
+            <Link to="/games" className="nav-link" onClick={() => setMenuOpen(false)}>Games</Link>
           </div>
         </nav>
 
-        {/* Routing for different pages */}
+        {/* Main Content */}
         <div className="content-container">
           <Routes>
             <Route path="/" element={<LandingPage />} />
