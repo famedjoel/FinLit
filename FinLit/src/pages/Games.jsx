@@ -18,9 +18,9 @@ function Games() {
           <p>Complete daily money-saving tasks to reach your goal.</p>
         </Link>
         <Link to="/games/money-match" className="game-card">
-  <h3>💳 Money Match: Needs vs. Wants</h3>
-  <p>Drag and drop expenses into the correct category.</p>
-</Link>
+        <h3>💳 Money Match: Needs vs. Wants</h3>
+        <p>Drag and drop expenses into the correct category.</p>
+        </Link>
 
         <Link to="/games/lifestyle-inflation" className="game-card">
           <h3>📈 Lifestyle Inflation Trap</h3>

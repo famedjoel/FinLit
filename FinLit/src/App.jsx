@@ -4,6 +4,7 @@ import LandingPage from "./pages/LandingPage";
 import CourseDashboard from "./pages/CourseDashboard";
 import Games from "./pages/Games";
 import MoneyMatch from "./pages/MoneyMatch";
+import SavingsChallenge from "./pages/SavingsChallenge";
 import "./styles.css";
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/courses" element={<CourseDashboard />} />
             <Route path="/games" element={<Games />} />
             <Route path="/games/money-match" element={<MoneyMatch />} />
+            <Route path="/games/30-day-savings" element={<SavingsChallenge />} />
           </Routes>
         </div>
       </div>
