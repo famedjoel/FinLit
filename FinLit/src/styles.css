@@ -8,9 +8,15 @@
   
   /* Body */
   body {
-    background: linear-gradient(135deg, #f6f9fc 0%, #edf2f7 100%);
-    color: #2d3748;
-    line-height: 1.6;
+    font-family: "Arial", sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
   }
   
   /* App Container */
@@ -208,8 +214,14 @@
   }
   
   /* Games Container */
-  .games-container {
+  .game-container {
+    background: white;
     padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    width: 90%;
+    text-align: center;
   }
   
   .games-container h2 {
@@ -335,3 +347,175 @@
     color: white;
     border-color: #2563eb;
   }
+
+  
+/* Draggable Item */
+.draggable-item {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: grab;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.draggable-item:hover {
+  transform: scale(1.05);
+}
+
+.draggable-item.used {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* When dragging an item */
+.draggable-item.dragging {
+  opacity: 0.7;
+  transform: scale(1.05);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+}
+/* Highlight drop zones when hovering */
+.drop-zone.over {
+  background-color: #e0f7fa; /* Light cyan background */
+  border: 2px dashed #00796b; /* Dashed green border */
+  transition: all 0.3s ease-in-out;
+}
+
+
+/* Drop Zones */
+.drop-zones {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.drop-zone {
+  background-color: #e3f2fd;
+  border: 2px dashed #64b5f6;
+  padding: 20px;
+  border-radius: 10px;
+  min-width: 200px;
+  flex: 1;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.drop-zone.over {
+  background-color: #bbdefb;
+}
+
+.dropped-item {
+  background: white;
+  padding: 8px;
+  border-radius: 6px;
+  margin-top: 5px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Reset Button */
+.reset-btn {
+  background-color: #ff5252;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.2s ease;
+}
+
+.reset-btn:hover {
+  background-color: #e53935;
+}
+
+/* Alert Styles */
+.alert {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 300px;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+.alert.success {
+  background-color: #dcfce7;
+  color: #16a34a;
+  border: 1px solid #16a34a;
+}
+
+.alert.error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+/* Slide-in Animation */
+@keyframes slideIn {
+  from {
+    top: -100px;
+    opacity: 0;
+  }
+  to {
+    top: 20px;
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .drop-zones {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .drop-zone {
+    min-width: 100%;
+  }
+
+  .draggable-item {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Budget Selector */
+.budget-selector {
+  margin: 1rem 0;
+}
+
+.budget-selector select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+/* Budget Display */
+.budget {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 1rem 0;
+}
+
+/* Items Container */
+.items-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}

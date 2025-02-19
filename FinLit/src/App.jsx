@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CourseDashboard from "./pages/CourseDashboard";
 import Games from "./pages/Games";
+import MoneyMatch from "./pages/MoneyMatch";
 import "./styles.css";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/courses" element={<CourseDashboard />} />
             <Route path="/games" element={<Games />} />
+            <Route path="/games/money-match" element={<MoneyMatch />} />
           </Routes>
         </div>
       </div>
