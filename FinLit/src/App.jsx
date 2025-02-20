@@ -5,7 +5,7 @@ import CourseDashboard from "./pages/CourseDashboard";
 import Games from "./pages/Games";
 import MoneyMatch from "./pages/MoneyMatch";
 import SavingsChallenge from "./pages/SavingsChallenge";
-import "./styles.css";
+import "./styles/styles.css"; 
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);

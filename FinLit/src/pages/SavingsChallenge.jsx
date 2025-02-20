@@ -1,11 +1,9 @@
 import { useState,  useEffect } from "react";
 import PropTypes from 'prop-types';
-import "../SavingsChallenge.css"; 
+import "../styles/SavingsChallenge.css"; 
 import Confetti from "react-confetti";
 import dropSound from "../assets/drop.mp3"; // Add a drop sound effect
 import removeSound from "../assets/remove.mp3"; // Add a remove sound effect
-
-// Import sound effects
 import challengeSound from "../assets/challenge-completed.mp3";
 import streakSound from "../assets/streak-bonus.mp3";
 import goalSound from "../assets/goal-reached.mp3";
