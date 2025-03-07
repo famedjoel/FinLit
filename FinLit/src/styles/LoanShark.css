@@ -1,0 +1,199 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #e2e2e2;
+    min-height: 100vh;
+  } */
+  
+  /* Game container styles */
+  .loan-shark-game {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: #4ecca3;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    margin: 1.5rem 0 1rem;
+    color: #45b3e7;
+  }
+  
+  /* Stats section */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+  }
+  
+  .stats p {
+    font-size: 1.1rem;
+  }
+  
+  .stats strong {
+    color: #4ecca3;
+    font-size: 1.2rem;
+  }
+  
+  /* Button styles */
+  .btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0.5rem;
+  }
+  
+  .loan-options, .job-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  
+  .loan-btn {
+    background: #4ecca3;
+    color: #1a1a2e;
+  }
+  
+  .loan-btn:hover {
+    background: #3db892;
+    transform: translateY(-2px);
+  }
+  
+  .job-btn {
+    background: #45b3e7;
+    color: #1a1a2e;
+  }
+  
+  .job-btn:hover {
+    background: #3a9fd0;
+    transform: translateY(-2px);
+  }
+  
+  .repay-btn {
+    background: #e7455d;
+    color: white;
+  }
+  
+  .repay-btn:hover {
+    background: #d13850;
+    transform: translateY(-2px);
+  }
+  
+  .next-day-btn {
+    background: #ffd700;
+    color: #1a1a2e;
+    width: 100%;
+    margin-top: 2rem;
+  }
+  
+  .next-day-btn:hover {
+    background: #f0c800;
+    transform: translateY(-2px);
+  }
+
+
+.reset-btn {
+    background: #d32f2f;
+    color: white;
+  }
+  
+  .btn:hover {
+    transform: scale(1.05);
+  }
+  
+/* Notifications */
+.notifications {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    min-width: 300px;
+    text-align: center;
+  }
+  
+  .notification {
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    animation: fadeIn 0.3s ease-out;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .notification.success {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  
+  .notification.error {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  
+  .notification.warning {
+    background: #fef3c7;
+    color: #d97706;
+  }
+  
+  /* Animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -60%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
+  
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .loan-shark-game {
+      margin: 1rem;
+      padding: 1rem;
+    }
+  
+    .stats {
+      grid-template-columns: 1fr;
+    }
+  
+    .btn {
+      width: 100%;
+      margin: 0.5rem 0;
+    }
+  
+    .loan-options, .job-options {
+      flex-direction: column;
+    }
+  }

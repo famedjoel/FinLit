@@ -1,0 +1,89 @@
+/* General Styling */
+.battle-budgets-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #f7f7f7;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+  
+  h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  h3 {
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  /* Expense List */
+  .expenses {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    margin-bottom: 15px;
+  }
+  
+  .expenses ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .expenses li {
+    font-size: 16px;
+    color: #444;
+    padding: 5px 0;
+  }
+  
+  /* Buttons */
+  .choices {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+  }
+  
+  .choice-btn {
+    padding: 10px 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .choice-btn.save {
+    background: #4caf50;
+    color: white;
+  }
+  
+  .choice-btn.spend {
+    background: #f44336;
+    color: white;
+  }
+  
+  .choice-btn.invest {
+    background: #2196f3;
+    color: white;
+  }
+  
+  .choice-btn:hover {
+    opacity: 0.8;
+  }
+  
+  /* Message */
+  .message {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+    background: #e0e0e0;
+    color: #333;
+  }
+  
