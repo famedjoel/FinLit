@@ -69,13 +69,14 @@ app.post("/signup", async (req, res) => {
 });
 
 // Login Route
+// Fixed Login Route in server.js
 app.post("/login", async (req, res) => {
   try {
     console.log("Login request body:", req.body);
     const { email, password } = req.body;
 
-    // Find user by email
-    const user = await User.findOne({ where: { email } });
+    // Find user by email - using correct syntax for your adapter
+    const user = await User.findOne({ email: email });
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
     // Check password
@@ -94,7 +95,8 @@ app.post("/login", async (req, res) => {
     // Keep only the 10 most recent activities
     const updatedActivities = activities.slice(0, 10);
     
-    await user.update({ recentActivity: JSON.stringify(updatedActivities) });
+    user.recentActivity = updatedActivities;
+    await user.save();
 
     // Login successful
     res.status(200).json({ 
