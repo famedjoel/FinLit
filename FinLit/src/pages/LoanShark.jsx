@@ -5,12 +5,36 @@ const LOAN_OPTIONS = [100, 200, 500];
 const DAILY_INTEREST = 0.05; // 5% daily interest
 const LOAN_DEADLINE = 7; // Repayment deadline in days
 
+// Get the current hostname for API calls (works on all devices)
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:5900`;
+
 const LoanShark = () => {
   const [money, setMoney] = useState(() => parseFloat(localStorage.getItem("money")) || 50);
   const [loan, setLoan] = useState(() => parseFloat(localStorage.getItem("loan")) || 0);
   const [daysLeft, setDaysLeft] = useState(() => parseInt(localStorage.getItem("daysLeft")) || LOAN_DEADLINE);
   const [interest, setInterest] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [user, setUser] = useState(null);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Track game start
+  useEffect(() => {
+    // Only track if user is logged in and game hasn't been started yet
+    if (user && !gameStarted) {
+      trackGameActivity(0); // 0 score for just starting
+      setGameStarted(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, gameStarted]);
 
   const showNotification = (message, type) => {
     const id = Date.now();
@@ -33,6 +57,30 @@ const LoanShark = () => {
     localStorage.setItem("daysLeft", daysLeft);
   }, [money, loan, daysLeft]);
 
+  // Track game activity (start, end, score update)
+  const trackGameActivity = async (score) => {
+    if (!user) return; // Only track if user is logged in
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/progress/game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          gameId: "loan-shark",
+          title: "Loan Shark Challenge",
+          score: score
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error("Error tracking game activity");
+      }
+    } catch (error) {
+      console.error("Failed to track game activity:", error);
+    }
+  };
+
   const borrowMoney = (amount) => {
     if (loan > 0) {
       showNotification("❌ You can only take one loan at a time!", "error");
@@ -51,11 +99,17 @@ const LoanShark = () => {
 
   const repayLoan = () => {
     if (money >= loan + interest) {
-      setMoney(money - (loan + interest));
+      const finalMoney = money - (loan + interest);
+      setMoney(finalMoney);
       setLoan(0);
       setDaysLeft(0);
       setInterest(0);
       showNotification("🎉 Loan fully repaid!", "success");
+      
+      // Track successful loan repayment as a score
+      if (user && !gameEnded) {
+        trackGameActivity(Math.round(finalMoney));
+      }
     } else {
       showNotification("❌ Not enough money to repay the loan!", "error");
     }
@@ -69,8 +123,15 @@ const LoanShark = () => {
       }
     } else {
       if (loan > 0) {
-        setLoan(loan * 1.2);
+        const newLoan = loan * 1.2;
+        setLoan(newLoan);
         showNotification("❌ Loan overdue! Penalty applied.", "error");
+        
+        // Track game over due to defaulting on loan
+        if (user && !gameEnded) {
+          trackGameActivity(Math.round(money - newLoan));
+          setGameEnded(true);
+        }
       } else {
         showNotification("✅ A new day, no debts. Keep going!", "success");
       }
@@ -78,9 +139,16 @@ const LoanShark = () => {
   };
 
   const resetGame = () => {
+    // Track final score before reset if game was in progress
+    if (user && gameStarted && !gameEnded) {
+      trackGameActivity(Math.round(money - loan));
+    }
+    
     setMoney(50);
     setLoan(0);
     setDaysLeft(LOAN_DEADLINE);
+    setGameStarted(false);
+    setGameEnded(false);
     localStorage.clear();
     showNotification("🔄 Game reset! Start fresh.", "success");
   };
