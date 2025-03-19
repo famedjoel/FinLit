@@ -1,16 +1,11 @@
-import mongoose from "mongoose";
+import { connect } from './sqlite-adapter.js';
 
 const connectDB = async () => {
   try {
-    console.log("Connecting to MongoDB Atlas...");
-    
-    // eslint-disable-next-line no-undef
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log("Connecting to SQLite database...");
+    const db = await connect();
+    console.log(`SQLite Database Connected`);
+    return db;
   } catch (error) {
     console.error(`Error: ${error.message}`);
     // eslint-disable-next-line no-undef

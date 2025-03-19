@@ -6,7 +6,7 @@ const DAILY_INTEREST = 0.05; // 5% daily interest
 const LOAN_DEADLINE = 7; // Repayment deadline in days
 
 // Get the current hostname for API calls (works on all devices)
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:5900`;
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 const LoanShark = () => {
   const [money, setMoney] = useState(() => parseFloat(localStorage.getItem("money")) || 50);

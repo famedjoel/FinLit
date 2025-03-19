@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "../styles/auth.css";
 
 // Get the current hostname for API calls (works on all devices)
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:5900`;
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });

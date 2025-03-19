@@ -1,18 +1,16 @@
 import express from "express";
 import cors from "cors";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import User from "./models/User.js";
 import bcrypt from "bcryptjs";
 import connectDB from "./config/db.js"; // Import DB connection
-// import path from "path"; // Import path for file paths
 
 dotenv.config();
-connectDB(); // Call function to connect to MongoDB
+connectDB(); // Call function to connect to SQLite
 
 const app = express();
 // eslint-disable-next-line no-undef
-const PORT = process.env.PORT || 5900;
+const PORT = process.env.PORT || 7900;
 
 // Define custom CORS options that allow all origins
 const corsOptions = {
@@ -21,15 +19,6 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
-
-// Database Connection
-// eslint-disable-next-line no-undef
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => console.log("MongoDB connected"))
-  .catch(err => console.log("MongoDB connection error:", err));
-
 
 // Middleware
 app.use(cors(corsOptions));
@@ -51,32 +40,32 @@ app.post("/signup", async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "Email already in use" });
 
-   // Create new user with initial course data
-   const initialCourses = [
-    { courseId: "course1", title: "Beginner Finance", progress: 0 },
-    { courseId: "course2", title: "Investment Basics", progress: 0 },
-    { courseId: "course3", title: "Advanced Trading", progress: 0 }
-  ];
+    // Create new user with initial course data
+    const initialCourses = [
+      { courseId: "course1", title: "Beginner Finance", progress: 0 },
+      { courseId: "course2", title: "Investment Basics", progress: 0 },
+      { courseId: "course3", title: "Advanced Trading", progress: 0 }
+    ];
 
-  const newUser = new User({ 
-    username, 
-    email, 
-    password,
-    courseProgress: initialCourses,
-    recentActivity: [{
-      type: 'account',
-      title: 'Account Creation',
-      action: 'created',
-      timestamp: new Date()
-    }]
-  });
-  await newUser.save();
+    // eslint-disable-next-line no-unused-vars
+    const newUser = await User.create({ 
+      username, 
+      email, 
+      password,
+      courseProgress: initialCourses,
+      recentActivity: [{
+        type: 'account',
+        title: 'Account Creation',
+        action: 'created',
+        timestamp: new Date()
+      }]
+    });
 
-  res.status(201).json({ message: "User registered successfully" });
-} catch (err) {
-  console.error("Signup error:", err);
-  res.status(500).json({ message: "Server error", error: err.message });
-}
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 });
 
 // Login Route
@@ -86,7 +75,7 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
     // Check password
@@ -94,7 +83,8 @@ app.post("/login", async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
     // Add login activity
-    user.recentActivity.unshift({
+    const activities = user.recentActivity || [];
+    activities.unshift({
       type: 'account',
       title: 'Login',
       action: 'logged in',
@@ -102,17 +92,15 @@ app.post("/login", async (req, res) => {
     });
 
     // Keep only the 10 most recent activities
-    if (user.recentActivity.length > 10) {
-      user.recentActivity = user.recentActivity.slice(0, 10);
-    }
+    const updatedActivities = activities.slice(0, 10);
     
-    await user.save();
+    await user.update({ recentActivity: JSON.stringify(updatedActivities) });
 
     // Login successful
     res.status(200).json({ 
       message: "Login successful", 
       user: { 
-        id: user._id, 
+        id: user.id, 
         username: user.username, 
         email: user.email,
         avatar: user.avatar 
@@ -152,8 +140,6 @@ app.get("/profile/:userId", async (req, res) => {
   }
 });
 
-// NEW ROUTES FOR DASHBOARD DATA
-
 // Get User Dashboard Data
 app.get("/dashboard/:userId", async (req, res) => {
   try {
@@ -161,9 +147,10 @@ app.get("/dashboard/:userId", async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // Calculate overall progress
+    const courseProgress = user.courseProgress || [];
     let totalProgress = 0;
-    if (user.courseProgress.length > 0) {
-      totalProgress = user.courseProgress.reduce((sum, course) => sum + course.progress, 0) / user.courseProgress.length;
+    if (courseProgress.length > 0) {
+      totalProgress = courseProgress.reduce((sum, course) => sum + course.progress, 0) / courseProgress.length;
     }
 
     // Update the overallProgress field
@@ -175,9 +162,9 @@ app.get("/dashboard/:userId", async (req, res) => {
       username: user.username,
       overallProgress: user.overallProgress,
       coursesCompleted: user.totalCoursesCompleted,
-      courseProgress: user.courseProgress,
-      recentActivity: user.recentActivity.slice(0, 5), // Get 5 most recent activities
-      gameProgress: user.gameProgress
+      courseProgress: courseProgress,
+      recentActivity: (user.recentActivity || []).slice(0, 5), // Get 5 most recent activities
+      gameProgress: user.gameProgress || []
     };
 
     res.json(dashboardData);
@@ -195,30 +182,41 @@ app.post("/progress/course", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Get current course progress
+    const courseProgress = user.courseProgress || [];
+    
     // Find if course already exists in user progress
-    const courseIndex = user.courseProgress.findIndex(c => c.courseId === courseId);
+    const courseIndex = courseProgress.findIndex(c => c.courseId === courseId);
     
     // Update or add course progress
     if (courseIndex >= 0) {
-      user.courseProgress[courseIndex].progress = progress;
-      user.courseProgress[courseIndex].lastAccessed = new Date();
+      courseProgress[courseIndex].progress = progress;
+      courseProgress[courseIndex].lastAccessed = new Date();
       
       // Check if course was just completed
-      if (progress >= 100 && !user.courseProgress[courseIndex].completed) {
-        user.courseProgress[courseIndex].completed = true;
+      if (progress >= 100 && !courseProgress[courseIndex].completed) {
+        courseProgress[courseIndex].completed = true;
         user.totalCoursesCompleted += 1;
         
         // Add completion activity
-        user.recentActivity.unshift({
+        const activities = user.recentActivity || [];
+        activities.unshift({
           type: 'course',
           title: title,
           action: 'completed',
           timestamp: new Date()
         });
+        
+        // Keep only the 10 most recent activities
+        if (activities.length > 10) {
+          activities.length = 10;
+        }
+        
+        user.recentActivity = activities;
       }
     } else {
       // Add new course to progress
-      user.courseProgress.push({
+      courseProgress.push({
         courseId,
         title,
         progress,
@@ -227,21 +225,27 @@ app.post("/progress/course", async (req, res) => {
       });
       
       // Add started course activity
-      user.recentActivity.unshift({
+      const activities = user.recentActivity || [];
+      activities.unshift({
         type: 'course',
         title: title,
         action: 'started',
         timestamp: new Date()
       });
+      
+      // Keep only the 10 most recent activities
+      if (activities.length > 10) {
+        activities.length = 10;
+      }
+      
+      user.recentActivity = activities;
     }
     
-    // Keep only the 10 most recent activities
-    if (user.recentActivity.length > 10) {
-      user.recentActivity = user.recentActivity.slice(0, 10);
-    }
+    // Update user's course progress
+    user.courseProgress = courseProgress;
     
     // Calculate overall progress
-    const totalProgress = user.courseProgress.reduce((sum, course) => sum + course.progress, 0) / user.courseProgress.length;
+    const totalProgress = courseProgress.reduce((sum, course) => sum + course.progress, 0) / courseProgress.length;
     user.overallProgress = Math.round(totalProgress);
     
     await user.save();
@@ -261,20 +265,23 @@ app.post("/progress/game", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
     
+    // Get current game progress
+    const gameProgress = user.gameProgress || [];
+    
     // Find if game already exists in user progress
-    const gameIndex = user.gameProgress.findIndex(g => g.gameId === gameId);
+    const gameIndex = gameProgress.findIndex(g => g.gameId === gameId);
     
     // Update or add game progress
     if (gameIndex >= 0) {
       // Update high score if new score is higher
-      if (score > user.gameProgress[gameIndex].highScore) {
-        user.gameProgress[gameIndex].highScore = score;
+      if (score > gameProgress[gameIndex].highScore) {
+        gameProgress[gameIndex].highScore = score;
       }
-      user.gameProgress[gameIndex].timesPlayed += 1;
-      user.gameProgress[gameIndex].lastPlayed = new Date();
+      gameProgress[gameIndex].timesPlayed += 1;
+      gameProgress[gameIndex].lastPlayed = new Date();
     } else {
       // Add new game to progress
-      user.gameProgress.push({
+      gameProgress.push({
         gameId,
         title,
         highScore: score,
@@ -283,8 +290,12 @@ app.post("/progress/game", async (req, res) => {
       });
     }
     
+    // Update user's game progress
+    user.gameProgress = gameProgress;
+    
     // Add game activity
-    user.recentActivity.unshift({
+    const activities = user.recentActivity || [];
+    activities.unshift({
       type: 'game',
       title: title,
       action: 'played',
@@ -292,9 +303,11 @@ app.post("/progress/game", async (req, res) => {
     });
     
     // Keep only the 10 most recent activities
-    if (user.recentActivity.length > 10) {
-      user.recentActivity = user.recentActivity.slice(0, 10);
+    if (activities.length > 10) {
+      activities.length = 10;
     }
+    
+    user.recentActivity = activities;
     
     await user.save();
     
