@@ -9,6 +9,7 @@ import SavingsChallenge from "./pages/SavingsChallenge";
 import LemonadeStand from "./pages/LemonadeStand";
 import BattleBudgets from "./pages/BattleBudgets";
 import LoanShark from "./pages/LoanShark";
+import FinancialTrivia from "./pages/FinancialTrivia";
 import "./styles/styles.css"; 
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
@@ -102,6 +103,7 @@ function App() {
             <Route path="/games/lemonade-stand" element={<LemonadeStand />} />
             <Route path="/games/loan-shark" element={<LoanShark />} />
             <Route path="/games/battle-of-budgets" element={<BattleBudgets />} />
+            <Route path="/games/quiz" element={<FinancialTrivia />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />

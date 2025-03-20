@@ -7,7 +7,7 @@ function Games() {
       <div className="game-options">
         <Link to="/games/quiz" className="game-card">
           <h3>📘 Financial Trivia</h3>
-          <p>Test your financial knowledge with multiple-choice questions.</p>
+          <p>Test your financial knowledge with multiple-choice questions across different difficulty levels.</p>
         </Link>
         <Link to="/games/debt-trap" className="game-card">
           <h3>🚨 Avoid the Debt Trap</h3>

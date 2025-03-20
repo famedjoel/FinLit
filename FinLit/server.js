@@ -1,7 +1,9 @@
+/* eslint-disable no-undef */
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import User from "./models/User.js";
+import TriviaQuestion from "./models/TriviaQuestion.js";
 import bcrypt from "bcryptjs";
 import connectDB from "./config/db.js"; // Import DB connection
 
@@ -9,7 +11,6 @@ dotenv.config();
 connectDB(); // Call function to connect to SQLite
 
 const app = express();
-// eslint-disable-next-line no-undef
 const PORT = process.env.PORT || 7900;
 
 // Define custom CORS options that allow all origins
@@ -317,6 +318,123 @@ app.post("/progress/game", async (req, res) => {
   } catch (error) {
     console.error("Game progress error:", error);
     res.status(500).json({ message: "Error updating game progress", error: error.message });
+  }
+});
+
+// API routes for the trivia game
+app.get("/trivia/questions", async (req, res) => {
+  try {
+    const { difficulty, limit = 5 } = req.query;
+    
+    let questions;
+    if (difficulty) {
+      questions = await TriviaQuestion.getByDifficulty(difficulty, Number(limit));
+    } else {
+      questions = await TriviaQuestion.getRandom(Number(limit));
+    }
+    
+    res.json(questions);
+  } catch (error) {
+    console.error("Error fetching trivia questions:", error);
+    res.status(500).json({ message: "Error fetching questions", error: error.message });
+  }
+});
+
+// For admins - get all questions (could add auth middleware later)
+app.get("/admin/trivia/questions", async (req, res) => {
+  try {
+    const questions = await TriviaQuestion.getAll();
+    res.json(questions);
+  } catch (error) {
+    console.error("Error fetching all trivia questions:", error);
+    res.status(500).json({ message: "Error fetching questions", error: error.message });
+  }
+});
+
+// Add a new trivia question
+app.post("/admin/trivia/questions", async (req, res) => {
+  try {
+    const { question, options, correctAnswer, explanation, difficulty, category } = req.body;
+    
+    // Validate required fields
+    if (!question || !options || correctAnswer === undefined || !explanation || !difficulty) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    
+    const newQuestion = await TriviaQuestion.create({
+      question,
+      options,
+      correctAnswer,
+      explanation,
+      difficulty,
+      category: category || 'general'
+    });
+    
+    res.status(201).json({ message: "Question added successfully", question: newQuestion });
+  } catch (error) {
+    console.error("Error adding trivia question:", error);
+    res.status(500).json({ message: "Error adding question", error: error.message });
+  }
+});
+
+// Update a trivia question
+app.put("/admin/trivia/questions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const updatedQuestion = await TriviaQuestion.update(id, updates);
+    
+    if (!updatedQuestion) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    
+    res.json({ message: "Question updated successfully", question: updatedQuestion });
+  } catch (error) {
+    console.error("Error updating trivia question:", error);
+    res.status(500).json({ message: "Error updating question", error: error.message });
+  }
+});
+
+// Delete a trivia question
+app.delete("/admin/trivia/questions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { permanent } = req.query;
+    
+    let result;
+    if (permanent === 'true') {
+      result = await TriviaQuestion.hardDelete(id);
+    } else {
+      result = await TriviaQuestion.delete(id);
+    }
+    
+    if (!result) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    
+    res.json({ message: "Question deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting trivia question:", error);
+    res.status(500).json({ message: "Error deleting question", error: error.message });
+  }
+});
+
+// Bulk insert trivia questions
+app.post("/admin/trivia/questions/bulk", async (req, res) => {
+  try {
+    const { questions } = req.body;
+    
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ message: "Questions array is required" });
+    }
+    
+    await TriviaQuestion.bulkInsert(questions);
+    
+    res.status(201).json({ message: `${questions.length} questions added successfully` });
+  } catch (error) {
+    console.error("Error in bulk insert of trivia questions:", error);
+    res.status(500).json({ message: "Error adding questions", error: error.message });
   }
 });
 

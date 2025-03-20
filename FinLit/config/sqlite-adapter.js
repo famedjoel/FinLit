@@ -45,6 +45,21 @@ async function initDatabase() {
       )
     `);
     
+    // Create trivia questions table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS trivia_questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT NOT NULL,
+        options TEXT NOT NULL,
+        correctAnswer INTEGER NOT NULL,
+        explanation TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        category TEXT DEFAULT 'general',
+        active INTEGER DEFAULT 1,
+        createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
     return db;
   } catch (error) {
     console.error('Unable to connect to the database:', error);
