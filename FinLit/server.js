@@ -1,4 +1,5 @@
 /* eslint-disable no-undef */
+/* eslint-disable no-undef */
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -361,33 +362,36 @@ app.get("/trivia/categories", async (req, res) => {
   }
 });
 
-// Add a new trivia question with category
-app.post("/admin/trivia/questions", async (req, res) => {
+// Get all trivia questions (admin endpoint)
+app.get("/admin/trivia/questions", async (req, res) => {
   try {
-    const { question, options, correctAnswer, explanation, difficulty, category } = req.body;
-    
-    // Validate required fields
-    if (!question || !options || correctAnswer === undefined || !explanation || !difficulty) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-    
-    const newQuestion = await TriviaQuestion.create({
-      question,
-      options,
-      correctAnswer,
-      explanation,
-      difficulty,
-      category: category || 'general'
-    });
-    
-    res.status(201).json({ message: "Question added successfully", question: newQuestion });
+    // Get all questions, including inactive ones
+    const questions = await TriviaQuestion.getAll();
+    res.json(questions);
   } catch (error) {
-    console.error("Error adding trivia question:", error);
-    res.status(500).json({ message: "Error adding question", error: error.message });
+    console.error("Error fetching all trivia questions:", error);
+    res.status(500).json({ message: "Error fetching questions", error: error.message });
   }
 });
 
-// Add a new trivia question
+// Get a specific trivia question by ID (admin endpoint)
+app.get("/admin/trivia/questions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const question = await TriviaQuestion.findById(id);
+    
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    
+    res.json(question);
+  } catch (error) {
+    console.error(`Error fetching trivia question with ID ${req.params.id}:`, error);
+    res.status(500).json({ message: "Error fetching question", error: error.message });
+  }
+});
+
+// Add a new trivia question with category
 app.post("/admin/trivia/questions", async (req, res) => {
   try {
     const { question, options, correctAnswer, explanation, difficulty, category } = req.body;

@@ -23,6 +23,30 @@ const FinancialTrivia = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showQuitConfirmation, setShowQuitConfirmation] = useState(false);
+  const [timerSetting, setTimerSetting] = useState(30); // Default 30 seconds
+  const [timerEnabled, setTimerEnabled] = useState(true); // Default enabled
+  // New state variable for question count
+  const [questionCount, setQuestionCount] = useState(5); // Default to 5 questions
+
+
+    // Question count options
+    const questionCountOptions = [
+      { value: 3, label: "3 (Quick Quiz)" },
+      { value: 5, label: "5 questions" },
+      { value: 10, label: "10 questions" },
+      { value: 15, label: "15 questions" },
+      { value: 20, label: "20 questions" }
+    ];
+
+
+  // Timer settings options
+  const timerOptions = [
+    { value: 15, label: "15 seconds" },
+    { value: 30, label: "30 seconds" },
+    { value: 45, label: "45 seconds" },
+    { value: 60, label: "60 seconds" },
+    { value: 0, label: "No time limit" }
+  ];
 
   // Financial categories
   const financialCategories = [
@@ -108,13 +132,13 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Load questions from the database based on difficulty level and category
+    // Update the fetchQuestions function to use the selected question count
   const fetchQuestions = async () => {
     try {
       setLoading(true);
       setError("");
       
-      let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=5`;
+      let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=${questionCount}`;
       
       // Add category parameter if a specific category is selected
       if (selectedCategory !== "all") {
@@ -143,62 +167,66 @@ const FinancialTrivia = () => {
     }
   };
 
+
   // Load questions when difficulty or category changes
   useEffect(() => {
     if (!quizStarted) {
       // Fetch questions when user selects difficulty and category but hasn't started yet
       fetchQuestions();
     }
-  }, [difficulty, selectedCategory]);
+  }, [difficulty, selectedCategory, questionCount]);
 
   // Timer countdown
   useEffect(() => {
     let timer;
-    if (quizStarted && !answerSubmitted && !showScore && timeLeft > 0) {
+    // Only run timer if it's enabled and there's a time limit
+    if (quizStarted && !answerSubmitted && !showScore && timeLeft > 0 && timerEnabled && timerSetting > 0) {
       timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
-    } else if (timeLeft === 0 && !answerSubmitted && !showScore) {
+    } else if (timeLeft === 0 && !answerSubmitted && !showScore && timerEnabled && timerSetting > 0) {
       // Time's up, move to next question
       handleTimeUp();
     }
     
     return () => clearTimeout(timer);
-  }, [timeLeft, answerSubmitted, showScore, quizStarted]);
+  }, [timeLeft, answerSubmitted, showScore, quizStarted, timerEnabled]);
 
-  // Handle when time is up
-  const handleTimeUp = () => {
-    setAnswerSubmitted(true);
-    setAnswerIsCorrect(false);
-    showNotification("⏰ Time's up!", "warning");
+  const startQuiz = () => {
+    if (questions.length === 0) {
+      showNotification("No questions available. Try a different difficulty level or category.", "error");
+      return;
+    }
     
-    // Move to next question after 2 seconds
-    setTimeout(() => {
-      const nextQuestion = currentQuestion + 1;
-      if (nextQuestion < questions.length) {
-        setCurrentQuestion(nextQuestion);
-        setSelectedAnswer(null);
-        setAnswerSubmitted(false);
-        setTimeLeft(30);
-      } else {
-        setShowScore(true);
-        setQuizFinished(true);
-        // Track game progress if user is logged in
-        if (user) {
-          trackGameProgress(score);
-        }
-      }
-    }, 2000);
+    setQuizStarted(true);
+    setTimeLeft(timerSetting); // Use the selected timer setting
+    setCurrentQuestion(0);
+    setScore(0);
+    setShowScore(false);
+    setSelectedAnswer(null);
+    setAnswerSubmitted(false);
+    setQuizFinished(false);
   };
 
-  // Handle answer selection
-  const handleAnswerSelect = (optionIndex) => {
-    if (!answerSubmitted) {
-      setSelectedAnswer(optionIndex);
+  // Modified next question function to reset timer with new setting
+  const goToNextQuestion = () => {
+    const nextQuestion = currentQuestion + 1;
+    if (nextQuestion < questions.length) {
+      setCurrentQuestion(nextQuestion);
+      setSelectedAnswer(null);
+      setAnswerSubmitted(false);
+      setTimeLeft(timerSetting); // Use the selected timer setting
+    } else {
+      setShowScore(true);
+      setQuizFinished(true);
+      // Track game progress if user is logged in
+      if (user) {
+        trackGameProgress(score);
+      }
     }
   };
 
-  // Handle answer submission
+  // Add this to handleAnswerSubmit and handleTimeUp to use the updated function
   const handleAnswerSubmit = () => {
     if (selectedAnswer === null) {
       showNotification("Please select an answer first!", "warning");
@@ -218,40 +246,27 @@ const FinancialTrivia = () => {
     }
     
     // Move to next question after 2 seconds
-    setTimeout(() => {
-      const nextQuestion = currentQuestion + 1;
-      if (nextQuestion < questions.length) {
-        setCurrentQuestion(nextQuestion);
-        setSelectedAnswer(null);
-        setAnswerSubmitted(false);
-        setTimeLeft(30);
-      } else {
-        setShowScore(true);
-        setQuizFinished(true);
-        // Track game progress if user is logged in
-        if (user) {
-          trackGameProgress(score);
-        }
-      }
-    }, 2000);
+    setTimeout(() => goToNextQuestion(), 2000);
   };
 
-  // Start the quiz
-  const startQuiz = () => {
-    if (questions.length === 0) {
-      showNotification("No questions available. Try a different difficulty level or category.", "error");
-      return;
-    }
+  const handleTimeUp = () => {
+    setAnswerSubmitted(true);
+    setAnswerIsCorrect(false);
+    showNotification("⏰ Time's up!", "warning");
     
-    setQuizStarted(true);
-    setTimeLeft(30);
-    setCurrentQuestion(0);
-    setScore(0);
-    setShowScore(false);
-    setSelectedAnswer(null);
-    setAnswerSubmitted(false);
-    setQuizFinished(false);
+    // Move to next question after 2 seconds
+    setTimeout(() => goToNextQuestion(), 2000);
   };
+
+
+
+  // Handle answer selection
+  const handleAnswerSelect = (optionIndex) => {
+    if (!answerSubmitted) {
+      setSelectedAnswer(optionIndex);
+    }
+  };
+
 
   // Reset the quiz
   const resetQuiz = () => {
@@ -325,7 +340,7 @@ const FinancialTrivia = () => {
       {/* Selection UI for non-started quiz */}
       {!quizStarted && (
         <div className="quiz-selection">
-          {/* Difficulty Selection */}
+          {/* Existing Difficulty Selection */}
           <div className="selection-section difficulty-selector">
             <h3>Select Difficulty Level:</h3>
             <div className="difficulty-buttons">
@@ -357,7 +372,54 @@ const FinancialTrivia = () => {
             </p>
           </div>
 
-          {/* Category Selection */}
+          {/* Timer Settings Section from previous implementation */}
+          <div className="selection-section timer-selector">
+            <h3>Timer Settings:</h3>
+            <div className="timer-options">
+              {timerOptions.map((option) => (
+                <button 
+                  key={option.value} 
+                  className={`timer-btn ${timerSetting === option.value ? "active" : ""}`}
+                  onClick={() => {
+                    setTimerSetting(option.value);
+                    setTimerEnabled(option.value > 0);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="timer-description">
+              {timerSetting > 0 
+                ? `You'll have ${timerSetting} seconds to answer each question.` 
+                : "Take your time. There's no time limit for answering questions."}
+            </p>
+          </div>
+
+          {/* New Question Count Selection Section */}
+          <div className="selection-section question-count-selector">
+            <h3>Number of Questions:</h3>
+            <div className="question-count-options">
+              {questionCountOptions.map((option) => (
+                <button 
+                  key={option.value} 
+                  className={`question-count-btn ${questionCount === option.value ? "active" : ""}`}
+                  onClick={() => setQuestionCount(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="question-count-description">
+              {questionCount <= 5 
+                ? "A short quiz to test your knowledge." 
+                : questionCount <= 10 
+                ? "A medium-length quiz to challenge you." 
+                : "A comprehensive quiz to thoroughly test your knowledge."}
+            </p>
+          </div>
+
+          {/* Existing Category Selection */}
           <div className="selection-section category-selector">
             <h3>Select Category:</h3>
             <div className="category-buttons">
@@ -374,6 +436,7 @@ const FinancialTrivia = () => {
             </div>
           </div>
           
+          {/* Existing loading/error states and start button */}
           {loading ? (
             <div className="loading-spinner">
               <div className="spinner"></div>
@@ -412,9 +475,12 @@ const FinancialTrivia = () => {
                   getCategoryInfo("all").icon}
               </span>
             </div>
-            <div className={`quiz-timer ${timeLeft < 10 ? "running-out" : ""}`}>
-              Time: {timeLeft}s
+            {/* Only show timer if it's enabled */}
+            {timerEnabled && timerSetting > 0 && (
+              <div className={`quiz-timer ${timeLeft < 10 ? "running-out" : ""}`}>
+                Time: {timeLeft}s
             </div>
+            )}
           </div>
           
           <div className="question-container">

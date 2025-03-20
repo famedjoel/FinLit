@@ -1,352 +1,488 @@
-/**
- * Sample financial trivia questions organized by category
- * This file is imported by the seed-trivia.js script
- */
+// Sample questions for the Financial Trivia Quiz
+// Located at: FinLit/data/financial-trivia-questions.js
 
-const financialTriviaQuestions = [
-    // Investing Category
-    {
-      question: "What is the term for the measure of how much an investment's returns fluctuate over time?",
-      options: ["Volatility", "Liquidity", "Dividend", "Maturity"],
-      correctAnswer: 0,
-      explanation: "Volatility measures how much an investment's returns fluctuate over time. Higher volatility generally implies higher risk.",
-      difficulty: "easy",
-      category: "investing"
-    },
-    {
-      question: "Which of these is a retirement account that allows for tax-free withdrawals in retirement?",
-      options: ["Traditional IRA", "Roth IRA", "401(k)", "Pension"],
-      correctAnswer: 1,
-      explanation: "A Roth IRA allows for tax-free withdrawals in retirement because contributions are made with after-tax dollars.",
-      difficulty: "easy",
-      category: "investing"
-    },
-    {
-      question: "What is the term for spreading your investments across different asset classes to reduce risk?",
-      options: ["Leverage", "Diversification", "Arbitrage", "Hedging"],
-      correctAnswer: 1,
-      explanation: "Diversification involves spreading investments across different asset classes (like stocks, bonds, real estate) to reduce risk.",
-      difficulty: "easy",
-      category: "investing"
-    },
-    {
-      question: "What is the P/E ratio used for in stock analysis?",
-      options: ["To compare debt to equity", "To measure how fast a company is growing", "To compare a stock's price to its earnings", "To determine dividend yield"],
-      correctAnswer: 2,
-      explanation: "The Price-to-Earnings (P/E) ratio compares a company's stock price to its earnings per share, helping investors assess if a stock is overvalued or undervalued.",
-      difficulty: "medium",
-      category: "investing"
-    },
-    {
-      question: "What investment strategy involves buying assets that have underperformed but have strong fundamentals?",
-      options: ["Momentum investing", "Growth investing", "Value investing", "Dollar-cost averaging"],
-      correctAnswer: 2,
-      explanation: "Value investing focuses on finding assets trading below their intrinsic value, often buying underperforming assets with strong fundamentals.",
-      difficulty: "medium",
-      category: "investing"
-    },
-    {
-      question: "Which of these is NOT considered a defensive stock sector?",
-      options: ["Utilities", "Healthcare", "Technology", "Consumer staples"],
-      correctAnswer: 2,
-      explanation: "Technology is considered a cyclical or growth sector, not a defensive sector. Defensive sectors typically perform relatively well during economic downturns.",
-      difficulty: "hard",
-      category: "investing"
-    },
-    
-    // Budgeting Category
-    {
-      question: "What is the 50/30/20 rule in budgeting?",
-      options: ["50% needs, 30% wants, 20% savings", "50% savings, 30% needs, 20% wants", "50% wants, 30% needs, 20% savings", "50% income, 30% expenses, 20% debt"],
-      correctAnswer: 0,
-      explanation: "The 50/30/20 rule suggests allocating 50% of your income to needs, 30% to wants, and 20% to savings and debt repayment.",
-      difficulty: "easy",
-      category: "budgeting"
-    },
-    {
-      question: "What does 'paying yourself first' mean in budgeting?",
-      options: ["Paying your bills before buying wants", "Setting aside money for saving before other expenses", "Giving yourself a regular allowance", "Taking your salary before paying taxes"],
-      correctAnswer: 1,
-      explanation: "Paying yourself first means setting aside money for savings goals before spending on other expenses, making saving a priority.",
-      difficulty: "easy",
-      category: "budgeting"
-    },
-    {
-      question: "What is a zero-based budget?",
-      options: ["A budget where you spend nothing", "A budget that always equals zero at the end of the month", "A budget that starts from zero each month", "A budget with no fixed expenses"],
-      correctAnswer: 1,
-      explanation: "A zero-based budget is when your income minus expenses equals zero because every dollar has a specific purpose, including saving and investing.",
-      difficulty: "medium",
-      category: "budgeting"
-    },
-    {
-      question: "Which budgeting method uses envelopes filled with cash for different spending categories?",
-      options: ["Zero-based budgeting", "50/30/20 method", "Envelope budgeting", "Value-based budgeting"],
-      correctAnswer: 2,
-      explanation: "Envelope budgeting involves placing cash in physical or digital envelopes for different spending categories, and when an envelope is empty, you stop spending in that category.",
-      difficulty: "medium",
-      category: "budgeting"
-    },
-    {
-      question: "What is the term for expenses that vary from month to month?",
-      options: ["Variable expenses", "Discretionary expenses", "Flexible expenses", "Indirect expenses"],
-      correctAnswer: 0,
-      explanation: "Variable expenses are costs that change from month to month, such as groceries, entertainment, or utility bills.",
-      difficulty: "easy",
-      category: "budgeting"
-    },
-    
-    // Savings Category
-    {
-      question: "What is an emergency fund?",
-      options: ["Money set aside for vacations", "Money saved for retirement", "Money kept for unexpected expenses", "Money invested in stocks"],
-      correctAnswer: 2,
-      explanation: "An emergency fund is money set aside specifically for unexpected expenses like medical emergencies, car repairs, or job loss.",
-      difficulty: "easy",
-      category: "savings"
-    },
-    {
-      question: "How many months of expenses should an ideal emergency fund cover?",
-      options: ["1-2 months", "3-6 months", "7-9 months", "10-12 months"],
-      correctAnswer: 1,
-      explanation: "Financial experts typically recommend having 3-6 months of essential expenses saved in an emergency fund.",
-      difficulty: "easy",
-      category: "savings"
-    },
-    {
-      question: "What type of account typically offers the highest interest rate?",
-      options: ["Checking account", "Basic savings account", "Certificate of Deposit (CD)", "Money market account"],
-      correctAnswer: 2,
-      explanation: "Certificates of Deposit (CDs) typically offer higher interest rates than standard checking, savings, or money market accounts because they require you to lock up your money for a set period.",
-      difficulty: "medium",
-      category: "savings"
-    },
-    {
-      question: "What is a Health Savings Account (HSA)?",
-      options: ["An account for general medical expenses", "A tax-advantaged account for medical expenses", "A government health insurance program", "A retirement account for healthcare workers"],
-      correctAnswer: 1,
-      explanation: "An HSA is a tax-advantaged savings account available to people with high-deductible health plans, used for qualified medical expenses.",
-      difficulty: "medium",
-      category: "savings"
-    },
-    {
-      question: "What is the Rule of 72 used for?",
-      options: ["Calculating how fast inflation erodes savings", "Determining retirement age", "Estimating how long it takes for money to double", "Calculating tax advantages"],
-      correctAnswer: 2,
-      explanation: "The Rule of 72 is a simple way to estimate how long it will take for money to double at a given interest rate. Divide 72 by the interest rate to get the approximate number of years.",
-      difficulty: "hard",
-      category: "savings"
-    },
-    
-    // Credit Category
-    {
-      question: "What is a credit score?",
-      options: ["The total amount of debt you owe", "A numerical representation of your creditworthiness", "The interest rate on your credit card", "The credit limit on your account"],
-      correctAnswer: 1,
-      explanation: "A credit score is a numerical representation of your creditworthiness based on your credit history, used by lenders to evaluate risk.",
-      difficulty: "easy",
-      category: "credit"
-    },
-    {
-      question: "What is the typical range for a FICO credit score?",
-      options: ["0-100", "100-500", "300-850", "500-1000"],
-      correctAnswer: 2,
-      explanation: "FICO credit scores typically range from 300 to 850, with higher scores indicating better creditworthiness.",
-      difficulty: "easy",
-      category: "credit"
-    },
-    {
-      question: "What is the most important factor in calculating your credit score?",
-      options: ["Credit utilization", "Payment history", "Length of credit history", "Types of credit"],
-      correctAnswer: 1,
-      explanation: "Payment history—whether you've paid your credit accounts on time—is the most important factor in calculating your credit score, accounting for about 35% of a FICO score.",
-      difficulty: "medium",
-      category: "credit"
-    },
-    {
-      question: "What does APR stand for in credit terms?",
-      options: ["Annual Percentage Rate", "Average Payment Return", "Approved Personal Rate", "Additional Payment Requirement"],
-      correctAnswer: 0,
-      explanation: "APR stands for Annual Percentage Rate, which represents the yearly cost of funds over the term of a loan, including fees and interest.",
-      difficulty: "easy",
-      category: "credit"
-    },
-    {
-      question: "What is a secured credit card?",
-      options: ["A card that requires PIN for every purchase", "A card that is backed by a cash deposit", "A card with advanced security features", "A card with a very low interest rate"],
-      correctAnswer: 1,
-      explanation: "A secured credit card is backed by a cash deposit made by the cardholder, which serves as collateral. It's often used to build or rebuild credit.",
-      difficulty: "medium",
-      category: "credit"
-    },
-    
-    // Taxes Category
-    {
-      question: "What is the difference between a tax deduction and a tax credit?",
-      options: ["They are the same thing", "A deduction reduces taxable income, a credit reduces tax owed", "A credit is for businesses, a deduction is for individuals", "A deduction is refundable, a credit is not"],
-      correctAnswer: 1,
-      explanation: "A tax deduction reduces the amount of income subject to taxation, while a tax credit directly reduces the amount of tax owed, dollar for dollar.",
-      difficulty: "medium",
-      category: "taxes"
-    },
-    {
-      question: "What is a W-2 form?",
-      options: ["A form for self-employed income", "A tax refund form", "A wage and tax statement from your employer", "A form to claim dependents"],
-      correctAnswer: 2,
-      explanation: "A W-2 is a Wage and Tax Statement provided by employers that shows total earnings and taxes withheld for the year.",
-      difficulty: "easy",
-      category: "taxes"
-    },
-    {
-      question: "What does it mean to itemize deductions on your tax return?",
-      options: ["To list all your income sources", "To list specific deductible expenses rather than taking the standard deduction", "To pay taxes in installments", "To claim business expenses"],
-      correctAnswer: 1,
-      explanation: "Itemizing deductions means listing specific eligible expenses (like mortgage interest, charitable donations, etc.) rather than taking the standard deduction.",
-      difficulty: "medium",
-      category: "taxes"
-    },
-    {
-      question: "What is capital gains tax?",
-      options: ["Tax on your regular income", "Tax on profits from selling investments", "Tax on property", "Tax on retirement withdrawals"],
-      correctAnswer: 1,
-      explanation: "Capital gains tax is a tax on the profit realized on the sale of a non-inventory asset such as stocks, bonds, real estate, or other investments.",
-      difficulty: "medium",
-      category: "taxes"
-    },
-    {
-      question: "What is tax-loss harvesting?",
-      options: ["A way to defer taxes until retirement", "Claiming a tax refund", "Selling investments at a loss to offset capital gains", "Taking the standard deduction every year"],
-      correctAnswer: 2,
-      explanation: "Tax-loss harvesting is the strategy of selling investments at a loss to offset capital gains tax on other investments that were sold at a profit.",
-      difficulty: "hard",
-      category: "taxes"
-    },
-    
-    // Retirement Category
-    {
-      question: "What is a 401(k)?",
-      options: ["A government pension program", "A type of health insurance", "An employer-sponsored retirement plan", "A college savings account"],
-      correctAnswer: 2,
-      explanation: "A 401(k) is an employer-sponsored retirement plan that allows employees to save and invest a portion of their paycheck before taxes are taken out.",
-      difficulty: "easy",
-      category: "retirement"
-    },
-    {
-      question: "At what age can you typically start making penalty-free withdrawals from retirement accounts?",
-      options: ["55", "59½", "62", "65"],
-      correctAnswer: 1,
-      explanation: "In most retirement accounts, you can start making penalty-free withdrawals at age 59½. Earlier withdrawals typically incur a 10% penalty plus taxes.",
-      difficulty: "medium",
-      category: "retirement"
-    },
-    {
-      question: "What is an IRA?",
-      options: ["International Retirement Association", "Individual Retirement Account", "Income Reporting Application", "Investment Risk Assessment"],
-      correctAnswer: 1,
-      explanation: "An IRA (Individual Retirement Account) is a tax-advantaged investing account designed to help people save for retirement.",
-      difficulty: "easy",
-      category: "retirement"
-    },
-    {
-      question: "What is the '4% rule' in retirement planning?",
-      options: ["Withdraw 4% of your salary for retirement savings", "Ensure retirement income is 4% of your final salary", "Withdraw 4% of your retirement savings annually", "Invest 4% of your portfolio in bonds"],
-      correctAnswer: 2,
-      explanation: "The 4% rule suggests withdrawing 4% of your retirement savings in the first year of retirement and adjusting for inflation in subsequent years, as a sustainable withdrawal rate.",
-      difficulty: "medium",
-      category: "retirement"
-    },
-    {
-      question: "What is a defined benefit pension plan?",
-      options: ["A plan where benefits depend on investment performance", "A plan that guarantees a specified monthly benefit in retirement", "A self-directed retirement account", "A government-sponsored retirement plan"],
-      correctAnswer: 1,
-      explanation: "A defined benefit pension plan guarantees a specified monthly benefit in retirement, often based on salary history and years of service with an employer.",
-      difficulty: "medium",
-      category: "retirement"
-    },
-    
-    // Insurance Category
-    {
-      question: "What is a deductible in insurance?",
-      options: ["The monthly premium amount", "The amount you pay before insurance coverage begins", "The maximum insurance will pay", "A tax-deductible insurance payment"],
-      correctAnswer: 1,
-      explanation: "A deductible is the amount you must pay out-of-pocket for covered services before your insurance begins to pay.",
-      difficulty: "easy",
-      category: "insurance"
-    },
-    {
-      question: "What type of insurance covers damage to your vehicle from an accident?",
-      options: ["Liability insurance", "Comprehensive insurance", "Collision insurance", "Gap insurance"],
-      correctAnswer: 2,
-      explanation: "Collision insurance covers damage to your vehicle resulting from a collision with another vehicle or object, regardless of fault.",
-      difficulty: "medium",
-      category: "insurance"
-    },
-    {
-      question: "What is the purpose of life insurance?",
-      options: ["To cover medical expenses", "To provide financial protection to dependents after your death", "To pay for retirement", "To cover property damage"],
-      correctAnswer: 1,
-      explanation: "Life insurance is designed to provide financial protection to your dependents or beneficiaries in the event of your death.",
-      difficulty: "easy",
-      category: "insurance"
-    },
-    {
-      question: "What is an insurance premium?",
-      options: ["The amount paid for an insurance policy", "The amount the insurer pays for a claim", "The deductible amount", "The coverage limit"],
-      correctAnswer: 0,
-      explanation: "An insurance premium is the amount paid for an insurance policy, typically on a monthly, semi-annual, or annual basis.",
-      difficulty: "easy",
-      category: "insurance"
-    },
-    {
-      question: "What is an umbrella insurance policy?",
-      options: ["Insurance for natural disasters", "Insurance for personal property", "Insurance that provides additional liability coverage", "Insurance for business owners"],
-      correctAnswer: 2,
-      explanation: "An umbrella insurance policy provides additional liability coverage beyond the limits of your homeowners, auto, or other basic liability policies.",
-      difficulty: "medium",
-      category: "insurance"
-    },
-    
-    // Debt Management Category
-    {
-      question: "What is the debt snowball method?",
-      options: ["Paying off the highest interest rate debt first", "Paying off the lowest balance debt first", "Consolidating all debts into one payment", "Taking on more debt to pay existing debt"],
-      correctAnswer: 1,
-      explanation: "The debt snowball method involves paying off debts from smallest to largest balance, regardless of interest rate, to build momentum and motivation.",
-      difficulty: "easy",
-      category: "debt"
-    },
-    {
-      question: "What is the debt avalanche method?",
-      options: ["Paying off the highest interest rate debt first", "Paying off the lowest balance debt first", "Consolidating all debts into one payment", "Taking on more debt to pay existing debt"],
-      correctAnswer: 0,
-      explanation: "The debt avalanche method involves paying off debts in order from highest interest rate to lowest, which saves the most money in interest over time.",
-      difficulty: "easy",
-      category: "debt"
-    },
-    {
-      question: "What is debt consolidation?",
-      options: ["Bankruptcy protection", "Combining multiple debts into a single payment", "Settling debt for less than owed", "Transferring credit card balances"],
-      correctAnswer: 1,
-      explanation: "Debt consolidation involves combining multiple debts into a single loan, often to secure a lower interest rate or lower monthly payment.",
-      difficulty: "medium",
-      category: "debt"
-    },
-    {
-      question: "What is a debt-to-income ratio?",
-      options: ["The ratio of good debt to bad debt", "The ratio of your monthly debt payments to your gross monthly income", "The ratio of total debt to total assets", "The ratio of interest to principal in debt payments"],
-      correctAnswer: 1,
-      explanation: "Debt-to-income ratio is the percentage of your gross monthly income that goes toward paying debts. Lenders use this to evaluate borrowing risk.",
-      difficulty: "medium",
-      category: "debt"
-    },
-    {
-      question: "What typically happens to your credit score when you close a credit card account?",
-      options: ["It always increases", "It always decreases", "It can decrease if it impacts your credit utilization ratio", "It's not affected"],
-      correctAnswer: 2,
-      explanation: "Closing a credit card can decrease your credit score if it increases your credit utilization ratio (the percentage of available credit you're using) or reduces the average age of your accounts.",
-      difficulty: "hard",
-      category: "debt"
-    }
-  ];
+const questions = [
+  // Investing - Easy
+  {
+    question: "What is a stock?",
+    options: [
+      "A loan to a company",
+      "Ownership in a company",
+      "A type of bond",
+      "A government investment"
+    ],
+    correctAnswer: 1,
+    explanation: "A stock represents ownership (or equity) in a company. When you buy a share of stock, you're buying a small piece of that company.",
+    difficulty: "easy",
+    category: "investing"
+  },
+  {
+    question: "What does diversification mean in investing?",
+    options: [
+      "Buying stocks in different countries",
+      "Investing in many different types of assets",
+      "Investing all your money in one industry",
+      "Frequently trading stocks"
+    ],
+    correctAnswer: 1,
+    explanation: "Diversification means spreading your investments across various asset types (stocks, bonds, real estate, etc.) to reduce risk.",
+    difficulty: "easy",
+    category: "investing"
+  },
+  {
+    question: "What is a mutual fund?",
+    options: [
+      "A government bond",
+      "A type of retirement account",
+      "A pool of money from many investors used to buy stocks, bonds, or other assets",
+      "A high-interest savings account"
+    ],
+    correctAnswer: 2,
+    explanation: "A mutual fund pools money from many investors to purchase a diversified portfolio of stocks, bonds, or other securities, managed by investment professionals.",
+    difficulty: "easy",
+    category: "investing"
+  },
   
-  export default financialTriviaQuestions;
+  // Budgeting - Easy
+  {
+    question: "What is the 50/30/20 rule in budgeting?",
+    options: [
+      "50% needs, 30% wants, 20% savings",
+      "50% savings, 30% needs, 20% wants",
+      "50% wants, 30% savings, 20% needs",
+      "50% needs, 30% savings, 20% wants"
+    ],
+    correctAnswer: 0,
+    explanation: "The 50/30/20 rule recommends allocating 50% of your income to necessities (housing, food, utilities), 30% to wants (entertainment, dining out), and 20% to savings and debt repayment.",
+    difficulty: "easy",
+    category: "budgeting"
+  },
+  {
+    question: "What is a fixed expense?",
+    options: [
+      "An expense that changes each month",
+      "A one-time expense",
+      "An expense that stays the same each month",
+      "An unexpected expense"
+    ],
+    correctAnswer: 2,
+    explanation: "A fixed expense is a cost that remains constant each month, such as rent/mortgage, car payments, or insurance premiums.",
+    difficulty: "easy",
+    category: "budgeting"
+  },
+  {
+    question: "Which of these is an example of a variable expense?",
+    options: [
+      "Mortgage payment",
+      "Car insurance",
+      "Grocery bill",
+      "Property tax"
+    ],
+    correctAnswer: 2,
+    explanation: "Variable expenses change from month to month. Grocery bills vary depending on what and how much you buy, unlike fixed expenses like mortgage payments or insurance.",
+    difficulty: "easy",
+    category: "budgeting"
+  },
+  
+  // Savings - Easy
+  {
+    question: "What is an emergency fund?",
+    options: [
+      "Money saved for retirement",
+      "Money set aside for unexpected expenses",
+      "Money invested in stocks",
+      "Money used for vacations"
+    ],
+    correctAnswer: 1,
+    explanation: "An emergency fund is money set aside specifically for unexpected expenses like medical emergencies, car repairs, or job loss.",
+    difficulty: "easy",
+    category: "savings"
+  },
+  {
+    question: "How much should an emergency fund typically cover?",
+    options: [
+      "1 week of expenses",
+      "1 month of expenses",
+      "3-6 months of expenses",
+      "2 years of expenses"
+    ],
+    correctAnswer: 2,
+    explanation: "Financial experts generally recommend having an emergency fund that covers 3-6 months of essential living expenses.",
+    difficulty: "easy",
+    category: "savings"
+  },
+  {
+    question: "What is compound interest?",
+    options: [
+      "Interest earned only on the principal amount",
+      "Interest that decreases over time",
+      "Interest earned on both the principal and accumulated interest",
+      "A fixed interest rate that never changes"
+    ],
+    correctAnswer: 2,
+    explanation: "Compound interest is when you earn interest not only on your initial deposit (principal) but also on any interest already earned. It's often described as 'interest on interest.'",
+    difficulty: "easy",
+    category: "savings"
+  },
+  
+  // Credit - Easy
+  {
+    question: "What is a credit score?",
+    options: [
+      "The amount of money you owe",
+      "A numerical rating of your creditworthiness",
+      "Your bank account balance",
+      "The interest rate on your loans"
+    ],
+    correctAnswer: 1,
+    explanation: "A credit score is a number (typically between 300-850) that represents your creditworthiness, based on your credit history. Higher scores indicate less risk to lenders.",
+    difficulty: "easy",
+    category: "credit"
+  },
+  {
+    question: "What is APR?",
+    options: [
+      "Annual Percentage Rate - the yearly cost of borrowing money",
+      "Average Payment Requirement",
+      "Additional Purchase Rate",
+      "Automatic Payment Return"
+    ],
+    correctAnswer: 0,
+    explanation: "APR stands for Annual Percentage Rate, which represents the yearly cost of borrowing money, including fees and interest rate.",
+    difficulty: "easy",
+    category: "credit"
+  },
+  {
+    question: "What is the main difference between a credit card and a debit card?",
+    options: [
+      "Credit cards are plastic, debit cards are metal",
+      "Credit cards can only be used online",
+      "Credit cards borrow money from a lender, debit cards use your own money",
+      "Debit cards have higher interest rates"
+    ],
+    correctAnswer: 2,
+    explanation: "When you use a credit card, you're borrowing money from the card issuer. With a debit card, you're using your own money directly from your bank account.",
+    difficulty: "easy",
+    category: "credit"
+  },
+  
+  // Investing - Medium
+  {
+    question: "What is a P/E ratio?",
+    options: [
+      "Price to Earnings - a valuation metric for stocks",
+      "Profit and Expense ratio",
+      "Percentage of Equity in a portfolio",
+      "Performance Evaluation score"
+    ],
+    correctAnswer: 0,
+    explanation: "P/E (Price to Earnings) ratio is a valuation metric that compares a company's share price to its earnings per share. It helps investors determine if a stock is overvalued or undervalued.",
+    difficulty: "medium",
+    category: "investing"
+  },
+  {
+    question: "What is dollar-cost averaging?",
+    options: [
+      "Converting investments to dollars",
+      "Investing a fixed amount at regular intervals regardless of price",
+      "Buying stocks only when they're cheap",
+      "Exchanging currency at optimal rates"
+    ],
+    correctAnswer: 1,
+    explanation: "Dollar-cost averaging is an investment strategy where you invest a fixed amount at regular intervals, regardless of the asset's price. This reduces the impact of volatility and the risk of investing a large amount at the wrong time.",
+    difficulty: "medium",
+    category: "investing"
+  },
+  {
+    question: "What is an ETF?",
+    options: [
+      "Electronic Trading Fund",
+      "Extra Tax Form",
+      "Exchange-Traded Fund - a type of investment that tracks an index",
+      "Extended Time Finance"
+    ],
+    correctAnswer: 2,
+    explanation: "An ETF (Exchange-Traded Fund) is an investment fund traded on stock exchanges that holds assets like stocks, bonds, or commodities and typically tracks an index. ETFs combine features of mutual funds and stocks.",
+    difficulty: "medium",
+    category: "investing"
+  },
+  
+  // Budgeting - Medium
+  {
+    question: "What is a zero-based budget?",
+    options: [
+      "A budget where you spend everything you earn",
+      "A budget where you save everything and spend nothing",
+      "A budget where your income minus expenses equals zero",
+      "A budget with zero debt payments"
+    ],
+    correctAnswer: 2,
+    explanation: "A zero-based budget is a method where you assign every dollar of your income to a specific expense, savings, or debt payment category until your income minus your allocations equals zero. Every dollar has a purpose.",
+    difficulty: "medium",
+    category: "budgeting"
+  },
+  {
+    question: "What does 'paying yourself first' mean in budgeting?",
+    options: [
+      "Giving yourself a salary from your business",
+      "Prioritizing savings before spending on expenses",
+      "Paying all your bills at the beginning of the month",
+      "Taking a percentage of your income as cash"
+    ],
+    correctAnswer: 1,
+    explanation: "'Paying yourself first' means automatically setting aside a portion of your income for savings goals before paying bills or other expenses. This ensures saving remains a priority.",
+    difficulty: "medium",
+    category: "budgeting"
+  },
+  {
+    question: "What is lifestyle inflation?",
+    options: [
+      "The rising cost of luxury goods",
+      "Increasing your spending as your income increases",
+      "The impact of inflation on your standard of living",
+      "Buying status symbols to appear wealthy"
+    ],
+    correctAnswer: 1,
+    explanation: "Lifestyle inflation occurs when your spending increases with your income. Instead of saving the additional income, people often upgrade their lifestyle with bigger homes, luxury cars, or more expensive habits.",
+    difficulty: "medium",
+    category: "budgeting"
+  },
+  
+  // Savings - Medium
+  {
+    question: "What is the difference between a traditional IRA and a Roth IRA?",
+    options: [
+      "Traditional IRAs are for employees, Roth IRAs are for self-employed individuals",
+      "Traditional IRAs have contribution limits, Roth IRAs don't",
+      "Traditional IRA contributions are tax-deductible now but taxed in retirement, Roth IRA contributions are taxed now but tax-free in retirement",
+      "Traditional IRAs can only invest in stocks, Roth IRAs can invest in bonds"
+    ],
+    correctAnswer: 2,
+    explanation: "With a Traditional IRA, you get a tax deduction for contributions now, but pay taxes when you withdraw in retirement. With a Roth IRA, you pay taxes on contributions now, but withdrawals in retirement are tax-free.",
+    difficulty: "medium",
+    category: "savings"
+  },
+  {
+    question: "What is a Health Savings Account (HSA)?",
+    options: [
+      "A regular savings account for medical expenses",
+      "A tax-advantaged account for medical expenses if you have a high-deductible health plan",
+      "A government program for low-income healthcare",
+      "An insurance policy for major medical expenses"
+    ],
+    correctAnswer: 1,
+    explanation: "An HSA is a tax-advantaged savings account available to individuals enrolled in high-deductible health plans. Contributions are tax-deductible, grow tax-free, and withdrawals for qualified medical expenses are tax-free.",
+    difficulty: "medium",
+    category: "savings"
+  },
+  {
+    question: "What is the Rule of 72?",
+    options: [
+      "A rule stating you should save 72% of your income",
+      "A formula to estimate how long it takes for an investment to double",
+      "A retirement planning guideline to have 72 times your annual expenses saved",
+      "A tax rule for withdrawals after age 72"
+    ],
+    correctAnswer: 1,
+    explanation: "The Rule of 72 is a simple way to estimate how long it will take for an investment to double. You divide 72 by the annual rate of return. For example, at 8% interest, an investment would double in approximately 72 ÷ 8 = 9 years.",
+    difficulty: "medium",
+    category: "savings"
+  },
+  
+  // Credit - Medium
+  {
+    question: "What factors have the largest impact on your credit score?",
+    options: [
+      "Your income and employment history",
+      "Payment history and credit utilization",
+      "Your education level and address",
+      "The number of credit cards you own"
+    ],
+    correctAnswer: 1,
+    explanation: "The two most important factors affecting your credit score are payment history (35% of your FICO score) and credit utilization (30%). Income and education don't directly impact your credit score.",
+    difficulty: "medium",
+    category: "credit"
+  },
+  {
+    question: "What is credit utilization?",
+    options: [
+      "How frequently you use your credit cards",
+      "The ratio of your credit card balances to your credit limits",
+      "The number of different types of credit you have",
+      "How long you've been using credit"
+    ],
+    correctAnswer: 1,
+    explanation: "Credit utilization is the percentage of your available credit that you're using. For example, if you have a $10,000 credit limit and a $3,000 balance, your utilization is 30%. Lower utilization (under 30%) is better for your credit score.",
+    difficulty: "medium",
+    category: "credit"
+  },
+  {
+    question: "What is a secured credit card?",
+    options: [
+      "A credit card with fraud protection",
+      "A credit card that requires a security deposit as collateral",
+      "A credit card with a high credit limit",
+      "A credit card that can only be used for online purchases"
+    ],
+    correctAnswer: 1,
+    explanation: "A secured credit card requires a security deposit that typically becomes your credit limit. It's designed for people with limited or poor credit history, helping them build or rebuild their credit.",
+    difficulty: "medium",
+    category: "credit"
+  },
+  
+  // Taxes - Medium
+  {
+    question: "What is the difference between a tax deduction and a tax credit?",
+    options: [
+      "They are different names for the same thing",
+      "A deduction reduces your taxable income, a credit reduces your tax bill directly",
+      "A deduction is for businesses, a credit is for individuals",
+      "A deduction is applied before filing taxes, a credit is applied after"
+    ],
+    correctAnswer: 1,
+    explanation: "A tax deduction reduces your taxable income, lowering your tax bill based on your tax bracket. A tax credit reduces your tax bill dollar-for-dollar, making credits generally more valuable than deductions of the same amount.",
+    difficulty: "medium",
+    category: "taxes"
+  },
+  {
+    question: "What is the difference between a traditional 401(k) and a Roth 401(k)?",
+    options: [
+      "Traditional 401(k)s are offered by employers, Roth 401(k)s are individual accounts",
+      "Traditional 401(k)s have higher contribution limits than Roth 401(k)s",
+      "Traditional 401(k) contributions are pre-tax, Roth 401(k) contributions are after-tax",
+      "Traditional 401(k)s can invest in stocks, Roth 401(k)s can only invest in bonds"
+    ],
+    correctAnswer: 2,
+    explanation: "Traditional 401(k) contributions are made with pre-tax dollars, reducing your current taxable income but requiring you to pay taxes when you withdraw in retirement. Roth 401(k) contributions are made with after-tax dollars, allowing tax-free withdrawals in retirement.",
+    difficulty: "medium",
+    category: "taxes"
+  },
+  
+  // Investing - Hard
+  {
+    question: "What is the efficient frontier in portfolio theory?",
+    options: [
+      "The maximum return possible for any investment",
+      "The set of optimal portfolios that offer the highest expected return for a defined level of risk",
+      "The point at which adding more investments no longer improves diversification",
+      "The threshold at which investment gains become tax-exempt"
+    ],
+    correctAnswer: 1,
+    explanation: "The efficient frontier represents the set of optimal portfolios that offer the maximum possible expected return for a given level of risk, or the minimum risk for a given level of expected return. It's a key concept in modern portfolio theory.",
+    difficulty: "hard",
+    category: "investing"
+  },
+  {
+    question: "What is a put option?",
+    options: [
+      "An option to buy a stock at a specified price before a specified date",
+      "An option to sell a stock at a specified price before a specified date",
+      "A guarantee that a stock price will increase",
+      "A requirement to purchase a stock if it reaches a certain price"
+    ],
+    correctAnswer: 1,
+    explanation: "A put option gives the holder the right, but not the obligation, to sell a specific asset at a predetermined price (strike price) by a specified date. Put options generally increase in value when the underlying asset falls in price.",
+    difficulty: "hard",
+    category: "investing"
+  },
+  {
+    question: "What is the difference between alpha and beta in investing?",
+    options: [
+      "Alpha measures volatility, beta measures performance",
+      "Alpha measures performance relative to a benchmark, beta measures volatility relative to the market",
+      "Alpha is for stock investments, beta is for bond investments",
+      "Alpha measures short-term returns, beta measures long-term returns"
+    ],
+    correctAnswer: 1,
+    explanation: "Alpha represents an investment's excess return relative to a benchmark index, indicating a portfolio manager's skill. Beta measures volatility or systematic risk compared to the market as a whole. A beta of 1 means the investment moves with the market.",
+    difficulty: "hard",
+    category: "investing"
+  },
+  
+  // Retirement - Hard
+  {
+    question: "What is the 4% rule in retirement planning?",
+    options: [
+      "Saving 4% of your income for retirement",
+      "Withdrawing 4% of your retirement portfolio in the first year, then adjusting for inflation",
+      "Limiting retirement investments to 4% of high-risk assets",
+      "Ensuring your retirement account grows by at least 4% annually"
+    ],
+    correctAnswer: 1,
+    explanation: "The 4% rule is a retirement withdrawal strategy that suggests you can withdraw 4% of your portfolio in the first year of retirement, then adjust that amount for inflation each year, with a high probability that your money will last at least 30 years.",
+    difficulty: "hard",
+    category: "retirement"
+  },
+  {
+    question: "What is a Qualified Longevity Annuity Contract (QLAC)?",
+    options: [
+      "A life insurance policy that pays out upon reaching a certain age",
+      "A retirement account that allows penalty-free withdrawals for education expenses",
+      "A deferred annuity purchased with retirement account funds that delays required minimum distributions",
+      "A government pension supplement for individuals over 80"
+    ],
+    correctAnswer: 2,
+    explanation: "A QLAC is a type of deferred annuity purchased with funds from a qualified retirement account. It provides guaranteed income later in life and allows you to exclude the money used to buy the QLAC from required minimum distributions (RMDs) until age 85.",
+    difficulty: "hard",
+    category: "retirement"
+  },
+  
+  // Insurance - Hard
+  {
+    question: "What is the difference between term life insurance and whole life insurance?",
+    options: [
+      "Term life covers disabilities, whole life covers death",
+      "Term life provides coverage for a specific period, whole life provides lifelong coverage and has a cash value component",
+      "Term life is for individuals, whole life is for families",
+      "Term life is provided by employers, whole life is purchased individually"
+    ],
+    correctAnswer: 1,
+    explanation: "Term life insurance provides coverage for a specific period (e.g., 20 years) with no cash value accumulation. Whole life insurance provides lifelong coverage with a cash value component that grows over time, but typically has higher premiums.",
+    difficulty: "hard",
+    category: "insurance"
+  },
+  {
+    question: "What is an umbrella insurance policy?",
+    options: [
+      "Insurance that covers multiple properties under one policy",
+      "Insurance that provides additional liability coverage beyond the limits of your auto and home insurance",
+      "Insurance specifically for natural disasters",
+      "A bundle of different insurance types from the same company"
+    ],
+    correctAnswer: 1,
+    explanation: "An umbrella insurance policy provides additional liability coverage beyond the limits of your existing home, auto, or other insurance policies. It helps protect your assets from major claims and lawsuits, typically offering $1 million or more in coverage.",
+    difficulty: "hard",
+    category: "insurance"
+  },
+  
+  // Debt Management - Hard
+  {
+    question: "What is debt-to-income ratio (DTI) and why is it important?",
+    options: [
+      "The ratio of good debt to bad debt; it helps you balance different types of debt",
+      "The percentage of your income that goes toward paying debts; lenders use it to evaluate borrowing risk",
+      "The ratio of secured to unsecured debt; it affects your credit score directly",
+      "The amount of debt relative to your net worth; it determines your financial health"
+    ],
+    correctAnswer: 1,
+    explanation: "Debt-to-income ratio (DTI) is the percentage of your gross monthly income that goes toward paying debts. Lenders use DTI to assess your ability to manage monthly payments and repay debts. A lower DTI (typically below 36%) is preferred for loan approval.",
+    difficulty: "hard",
+    category: "debt"
+  },
+  {
+    question: "What is the avalanche method of debt repayment?",
+    options: [
+      "Paying off the newest debts first",
+      "Paying off the debts with the highest interest rates first",
+      "Paying off the debts with the lowest balances first",
+      "Making equal payments to all debts simultaneously"
+    ],
+    correctAnswer: 1,
+    explanation: "The avalanche method involves paying minimum payments on all debts while putting extra money toward the debt with the highest interest rate. Once that debt is paid off, you focus on the next highest interest rate debt. This method minimizes the total interest paid.",
+    difficulty: "hard",
+    category: "debt"
+  }
+];
+
+export default questions;
+

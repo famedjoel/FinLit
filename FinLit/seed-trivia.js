@@ -1,94 +1,90 @@
-#!/usr/bin/env node
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
+// FinLit/seed-trivia.js
+// Script to seed financial trivia questions into the database
 
-/**
- * This script seeds the database with sample financial trivia questions
- * Run it with: node seed-trivia.js
- */
+import fetch from 'node-fetch';
+import questions from './data/financial-trivia-questions.js';
 
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs/promises';
-import TriviaQuestion from './models/TriviaQuestion.js';
-import connectDB from './config/db.js';
-import { connect } from './config/sqlite-adapter.js';
+const API_BASE_URL = 'http://localhost:7900';
+const BULK_INSERT_URL = `${API_BASE_URL}/admin/trivia/questions/bulk`;
 
-// Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Add this function to your seed-trivia.js file
+// Function to clear existing questions before seeding
 async function clearExistingQuestions() {
   try {
-    const db = await connect();
-    console.log("Deleting all existing questions...");
-    await db.run('DELETE FROM trivia_questions');
-    console.log("All existing questions deleted successfully");
-    return true;
+    console.log('Clearing existing trivia questions...');
+    
+    // Get all existing questions first
+    const response = await fetch(`${API_BASE_URL}/admin/trivia/questions`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch existing questions: ${response.statusText}`);
+    }
+    
+    const existingQuestions = await response.json();
+    
+    if (existingQuestions.length === 0) {
+      console.log('No existing questions to clear.');
+      return;
+    }
+    
+    console.log(`Found ${existingQuestions.length} existing questions.`);
+    
+    // Delete each question
+    let deletedCount = 0;
+    for (const question of existingQuestions) {
+      const deleteResponse = await fetch(`${API_BASE_URL}/admin/trivia/questions/${question.id}?permanent=true`, {
+        method: 'DELETE',
+      });
+      
+      if (deleteResponse.ok) {
+        deletedCount++;
+      }
+    }
+    
+    console.log(`Successfully deleted ${deletedCount} questions.`);
   } catch (error) {
-    console.error("Error deleting questions:", error);
-    return false;
+    console.error('Error clearing existing questions:', error);
+    console.log('Continuing with seeding new questions...');
   }
 }
 
-async function seedDatabase() {
+async function seedQuestions() {
   try {
-    // Connect to the database
-    await connectDB();
-    console.log("Connected to database");
+    console.log(`Preparing to seed ${questions.length} trivia questions...`);
+    
+    const response = await fetch(BULK_INSERT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ questions }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to seed questions: ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`Success! ${result.message}`);
+  } catch (error) {
+    console.error('Error seeding questions:', error);
+    console.error('Make sure your server is running on port 7900');
+  }
+}
 
-    // Clear existing questions
+// Add a main function to run everything in sequence
+async function main() {
+  try {
+    // First clear existing questions
     await clearExistingQuestions();
     
-    // Check if we already have questions
-    const db = await connect();
-    const countResult = await db.get('SELECT COUNT(*) as count FROM trivia_questions');
+    // Then seed new questions
+    await seedQuestions();
     
-    if (countResult.count > 0) {
-      console.log(`Database already has ${countResult.count} questions`);
-      const shouldContinue = process.argv.includes('--force');
-      
-      if (!shouldContinue) {
-        console.log("Use --force flag to add more questions anyway");
-        process.exit(0);
-      }
-      console.log("Proceeding with seeding due to --force flag");
-    }
-    
-    // Load question data from a module
-    const questionsModule = await import('./data/financial-trivia-questions.js');
-    const sampleQuestions = questionsModule.default || [];
-    
-    if (sampleQuestions.length === 0) {
-      console.error("No questions found in the data file");
-      process.exit(1);
-    }
-    
-    console.log(`Found ${sampleQuestions.length} questions to seed`);
-    
-    // Use bulk insert for better performance
-    await TriviaQuestion.bulkInsert(sampleQuestions);
-    
-    console.log(`Successfully seeded ${sampleQuestions.length} financial trivia questions!`);
-    
-    // Verify seeding was successful
-    const categories = await TriviaQuestion.getCategories();
-    console.log("Available categories now:", categories);
-    
-    // Get count by difficulty
-    const easyCount = (await TriviaQuestion.getByDifficulty('easy')).length;
-    const mediumCount = (await TriviaQuestion.getByDifficulty('medium')).length;
-    const hardCount = (await TriviaQuestion.getByDifficulty('hard')).length;
-    
-    console.log(`Question counts by difficulty: Easy=${easyCount}, Medium=${mediumCount}, Hard=${hardCount}`);
-    
+    console.log('Seeding process completed successfully!');
   } catch (error) {
-    console.error("Error seeding database:", error);
-  } finally {
-    process.exit(0);
+    console.error('Error in seeding process:', error);
   }
 }
 
-// Run the seeding function
-seedDatabase();
+// Run the main function
+main();
