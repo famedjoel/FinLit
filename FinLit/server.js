@@ -1,5 +1,4 @@
 /* eslint-disable no-undef */
-/* eslint-disable no-undef */
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
