@@ -1,553 +1,677 @@
 /* Financial Trivia Styles */
 .financial-trivia-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.financial-trivia-container h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Quiz Selection */
+.quiz-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.selection-section {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.selection-section h3 {
+  font-size: 18px;
+  margin-bottom: 1rem;
+  color: #1e293b;
+}
+
+/* Difficulty Selector */
+.difficulty-selector {
+  background: #f0f9ff;
+}
+
+.difficulty-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.difficulty-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  background: #e0e7ff;
+  color: #4f46e5;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.difficulty-btn:hover {
+  background: #c7d2fe;
+  transform: translateY(-2px);
+}
+
+.difficulty-btn.active {
+  background: #4f46e5;
+  color: white;
+}
+
+.difficulty-description {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+/* Category Selector */
+.category-selector {
+  background: #f0fdf4;
+}
+
+.category-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: #dcfce7;
+  color: #166534;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.category-btn:hover {
+  background: #bbf7d0;
+  transform: translateY(-2px);
+}
+
+.category-btn.active {
+  background: #16a34a;
+  color: white;
+}
+
+.category-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.category-name {
+  font-size: 0.85rem;
+}
+
+.start-quiz-btn {
+  padding: 0.875rem 2rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.start-quiz-btn:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+/* Quiz Container */
+.quiz-container {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quiz-progress, .quiz-score, .quiz-timer, .quiz-info {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+.quiz-progress {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.quiz-score {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.quiz-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0f9ff;
+  color: #1e40af;
+}
+
+.quiz-difficulty, .quiz-category {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quiz-category {
+  font-size: 1.2rem;
+}
+
+.quiz-timer {
+  background: #fff7ed;
+  color: #ea580c;
+  transition: background 0.3s ease;
+}
+
+.quiz-timer.running-out {
+  background: #fee2e2;
+  color: #dc2626;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
   }
-  
-  .financial-trivia-container h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #333;
+  50% {
+    opacity: 0.7;
   }
-  
-  /* Difficulty Selector */
-  .difficulty-selector {
-    background: #f8fafc;
-    padding: 2rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
+  100% {
+    opacity: 1;
   }
-  
-  .difficulty-selector h3 {
-    font-size: 18px;
-    margin-bottom: 1rem;
-    color: #1e293b;
+}
+
+/* Question Container */
+.question-container {
+  text-align: left;
+}
+
+.question {
+  font-size: 18px;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.option {
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option:hover {
+  background: #f1f5f9;
+  transform: translateX(5px);
+}
+
+.option.selected {
+  border: 2px solid #3b82f6;
+  background: #eff6ff;
+}
+
+.option.correct {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #166534;
+}
+
+.option.incorrect {
+  background: #fee2e2;
+  border-color: #dc2626;
+  color: #991b1b;
+}
+
+/* Explanation Box */
+.explanation-box {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-left: 4px solid #3b82f6;
+  border-radius: 4px;
+}
+
+.explanation-box p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
+}
+
+/* Quiz Buttons */
+.quiz-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.submit-btn, .quit-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.submit-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.submit-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.submit-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quit-btn {
+  background: #f43f5e;
+  color: white;
+}
+
+.quit-btn:hover {
+  background: #e11d48;
+  transform: translateY(-2px);
+}
+
+/* Results Container */
+.results-container {
+  background: #f8fafc;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.results-container h3 {
+  font-size: 24px;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.final-score {
+  margin-bottom: 2rem;
+}
+
+.final-score p {
+  font-size: 18px;
+  margin-bottom: 0.5rem;
+  color: #334155;
+}
+
+.final-score span {
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.result-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.play-again-btn, .change-settings-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.play-again-btn {
+  background: #10b981;
+  color: white;
+}
+
+.play-again-btn:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.change-settings-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.change-settings-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+/* Notifications */
+.notifications {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.notification {
+  min-width: 250px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  animation: slideIn 0.3s forwards;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.notification.success {
+  background: #dcfce7;
+  color: #166534;
+  border-left: 5px solid #16a34a;
+}
+
+.notification.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 5px solid #dc2626;
+}
+
+.notification.warning {
+  background: #fff7ed;
+  color: #9a3412;
+  border-left: 5px solid #ea580c;
+}
+
+.notification.info {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-left: 5px solid #0ea5e9;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
-  
-  .difficulty-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
-  
-  .difficulty-btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    background: #e0e7ff;
-    color: #4f46e5;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-left-color: #3b82f6;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-  
-  .difficulty-btn:hover {
-    background: #c7d2fe;
-    transform: translateY(-2px);
+  100% {
+    transform: rotate(360deg);
   }
-  
-  .difficulty-btn.active {
-    background: #4f46e5;
-    color: white;
+}
+
+/* Error message */
+.error-message {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.retry-btn {
+  background: #ef4444;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+/* Confirmation Dialog */
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.confirmation-dialog {
+  background: white;
+  border-radius: 10px;
+  padding: 2rem;
+  max-width: 90%;
+  width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+.confirmation-dialog h3 {
+  color: #f43f5e;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.confirmation-dialog p {
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.confirmation-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.confirm-btn, .cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn {
+  background: #f43f5e;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #e11d48;
+  transform: translateY(-2px);
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.cancel-btn:hover {
+  background: #d1d5db;
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  
-  .difficulty-description {
-    font-size: 14px;
-    color: #64748b;
-    margin-bottom: 2rem;
-    font-style: italic;
+  to {
+    opacity: 1;
   }
-  
-  .start-quiz-btn {
-    padding: 0.875rem 2rem;
-    background: #10b981;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .start-quiz-btn:hover {
-    background: #059669;
-    transform: translateY(-2px);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* Quiz Container */
-  .quiz-container {
-    background: #f8fafc;
-    border-radius: 8px;
+}
+
+/* Category Badge for quiz */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 1rem;
+}
+
+.category-badge-icon {
+  font-size: 1.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .financial-trivia-container {
     padding: 1.5rem;
   }
   
   .quiz-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  
-  .quiz-progress, .quiz-score, .quiz-timer {
-    font-size: 16px;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-  }
-  
-  .quiz-progress {
-    background: #e0f2fe;
-    color: #0284c7;
-  }
-  
-  .quiz-score {
-    background: #dcfce7;
-    color: #16a34a;
-  }
-  
-  .quiz-timer {
-    background: #fff7ed;
-    color: #ea580c;
-    transition: background 0.3s ease;
-  }
-  
-  .quiz-timer.running-out {
-    background: #fee2e2;
-    color: #dc2626;
-    animation: pulse 1s infinite;
-  }
-  
-  @keyframes pulse {
-    0% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-  
-  /* Question Container */
-  .question-container {
-    text-align: left;
-  }
-  
-  .question {
-    font-size: 18px;
-    color: #1e293b;
-    margin-bottom: 1.5rem;
-    line-height: 1.4;
-  }
-  
-  .options-container {
-    display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    align-items: center;
   }
   
-  .option {
-    padding: 1rem;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  .difficulty-buttons {
+    flex-direction: column;
+    width: 100%;
   }
   
-  .option:hover {
-    background: #f1f5f9;
-    transform: translateX(5px);
-  }
-  
-  .option.selected {
-    border: 2px solid #3b82f6;
-    background: #eff6ff;
-  }
-  
-  .option.correct {
-    background: #dcfce7;
-    border-color: #16a34a;
-    color: #166534;
-  }
-  
-  .option.incorrect {
-    background: #fee2e2;
-    border-color: #dc2626;
-    color: #991b1b;
-  }
-  
-  .submit-btn {
-    padding: 0.75rem 2rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .submit-btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-  }
-  
-  .submit-btn:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  /* Explanation Box */
-  .explanation-box {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: #f8fafc;
-    border-left: 4px solid #3b82f6;
-    border-radius: 4px;
-  }
-  
-  .explanation-box p {
-    margin: 0;
-    color: #334155;
-    line-height: 1.5;
-  }
-  
-  /* Results Container */
-  .results-container {
-    background: #f8fafc;
-    padding: 2rem;
-    border-radius: 8px;
-    text-align: center;
-  }
-  
-  .results-container h3 {
-    font-size: 24px;
-    color: #1e293b;
-    margin-bottom: 1.5rem;
-  }
-  
-  .final-score {
-    margin-bottom: 2rem;
-  }
-  
-  .final-score p {
-    font-size: 18px;
-    margin-bottom: 0.5rem;
-    color: #334155;
-  }
-  
-  .final-score span {
-    font-weight: 700;
-    color: #3b82f6;
+  .category-buttons {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
   
   .result-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .play-again-btn, .change-difficulty-btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .play-again-btn {
-    background: #10b981;
-    color: white;
-  }
-  
-  .play-again-btn:hover {
-    background: #059669;
-    transform: translateY(-2px);
-  }
-  
-  .change-difficulty-btn {
-    background: #3b82f6;
-    color: white;
-  }
-  
-  .change-difficulty-btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-  }
-  
-  /* Notifications */
-  .notifications {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-  }
-  
-  .notification {
-    min-width: 250px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    border-radius: 6px;
-    font-weight: 600;
-    animation: slideIn 0.3s forwards;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .notification.success {
-    background: #dcfce7;
-    color: #166534;
-    border-left: 5px solid #16a34a;
-  }
-  
-  .notification.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border-left: 5px solid #dc2626;
-  }
-  
-  .notification.warning {
-    background: #fff7ed;
-    color: #9a3412;
-    border-left: 5px solid #ea580c;
-  }
-  
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .financial-trivia-container {
-      padding: 1.5rem;
-    }
-    
-    .quiz-header {
-      flex-direction: column;
-      gap: 0.75rem;
-      align-items: center;
-    }
-    
-    .difficulty-buttons {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .result-buttons {
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-  }
-
-
-  /* Loading spinner */
-.loading-spinner {
-    display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 2rem 0;
-  }
-  
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-left-color: #3b82f6;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
-  }
-  
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  
-  /* Error message */
-  .error-message {
-    background: #fee2e2;
-    color: #b91c1c;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin: 2rem 0;
-    text-align: center;
-  }
-  
-  .retry-btn {
-    background: #ef4444;
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.25rem;
-    margin-top: 1rem;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s ease;
-  }
-  
-  .retry-btn:hover {
-    background: #dc2626;
-    transform: translateY(-2px);
-  }
-
-  /* Quiz Buttons */
-.quiz-buttons {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-  
-  .submit-btn, .quit-btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    flex: 1;
-  }
-  
-  .submit-btn {
-    background: #3b82f6;
-    color: white;
-  }
-  
-  .submit-btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-  }
-  
-  .submit-btn:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  .quit-btn {
-    background: #f43f5e;
-    color: white;
-  }
-  
-  .quit-btn:hover {
-    background: #e11d48;
-    transform: translateY(-2px);
-  }
-
-  /* Confirmation Dialog */
-.confirmation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-out;
+    gap: 0.75rem;
   }
   
   .confirmation-dialog {
-    background: white;
-    border-radius: 10px;
-    padding: 2rem;
-    max-width: 90%;
-    width: 400px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    animation: slideUp 0.3s ease-out;
-  }
-  
-  .confirmation-dialog h3 {
-    color: #f43f5e;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .confirmation-dialog p {
-    color: #4b5563;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
+    width: 90%;
+    padding: 1.5rem;
   }
   
   .confirmation-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .financial-trivia-container {
+    padding: 1rem;
   }
   
-  .confirm-btn, .cancel-btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
+  .category-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .question {
     font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
   }
   
-  .confirm-btn {
-    background: #f43f5e;
-    color: white;
+  .option {
+    padding: 0.75rem;
   }
   
-  .confirm-btn:hover {
-    background: #e11d48;
-    transform: translateY(-2px);
+  .submit-btn, .quit-btn {
+    padding: 0.75rem 1rem;
+    font-size: 14px;
   }
   
-  .cancel-btn {
-    background: #e5e7eb;
-    color: #4b5563;
+  .notification {
+    min-width: 200px;
+    right: 10px;
+    left: 10px;
   }
-  
-  .cancel-btn:hover {
-    background: #d1d5db;
-    transform: translateY(-2px);
-  }
-  
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Add info notification style */
-  .notification.info {
-    background: #e0f2fe;
-    color: #0369a1;
-    border-left: 5px solid #0ea5e9;
-  }
+}

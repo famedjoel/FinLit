@@ -70,7 +70,6 @@ app.post("/signup", async (req, res) => {
 });
 
 // Login Route
-// Fixed Login Route in server.js
 app.post("/login", async (req, res) => {
   try {
     console.log("Login request body:", req.body);
@@ -322,14 +321,25 @@ app.post("/progress/game", async (req, res) => {
 });
 
 // API routes for the trivia game
+// Add these endpoints to your server.js file
+
+// Get trivia questions with optional difficulty and category filters
 app.get("/trivia/questions", async (req, res) => {
   try {
-    const { difficulty, limit = 5 } = req.query;
+    const { difficulty, category, limit = 5 } = req.query;
     
     let questions;
-    if (difficulty) {
+    if (difficulty && category && category !== "all") {
+      // Both difficulty and category filters
+      questions = await TriviaQuestion.getByDifficultyAndCategory(difficulty, category, Number(limit));
+    } else if (difficulty) {
+      // Only difficulty filter
       questions = await TriviaQuestion.getByDifficulty(difficulty, Number(limit));
+    } else if (category && category !== "all") {
+      // Only category filter
+      questions = await TriviaQuestion.getByCategory(category, Number(limit));
     } else {
+      // No filters, get random questions
       questions = await TriviaQuestion.getRandom(Number(limit));
     }
     
@@ -340,14 +350,40 @@ app.get("/trivia/questions", async (req, res) => {
   }
 });
 
-// For admins - get all questions (could add auth middleware later)
-app.get("/admin/trivia/questions", async (req, res) => {
+// Get all available categories
+app.get("/trivia/categories", async (req, res) => {
   try {
-    const questions = await TriviaQuestion.getAll();
-    res.json(questions);
+    const categories = await TriviaQuestion.getCategories();
+    res.json(categories);
   } catch (error) {
-    console.error("Error fetching all trivia questions:", error);
-    res.status(500).json({ message: "Error fetching questions", error: error.message });
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ message: "Error fetching categories", error: error.message });
+  }
+});
+
+// Add a new trivia question with category
+app.post("/admin/trivia/questions", async (req, res) => {
+  try {
+    const { question, options, correctAnswer, explanation, difficulty, category } = req.body;
+    
+    // Validate required fields
+    if (!question || !options || correctAnswer === undefined || !explanation || !difficulty) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    
+    const newQuestion = await TriviaQuestion.create({
+      question,
+      options,
+      correctAnswer,
+      explanation,
+      difficulty,
+      category: category || 'general'
+    });
+    
+    res.status(201).json({ message: "Question added successfully", question: newQuestion });
+  } catch (error) {
+    console.error("Error adding trivia question:", error);
+    res.status(500).json({ message: "Error adding question", error: error.message });
   }
 });
 

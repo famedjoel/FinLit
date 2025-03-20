@@ -40,6 +40,31 @@ const TriviaQuestion = {
     }
   },
   
+  // Get questions by difficulty and optionally by category
+  getByDifficultyAndCategory: async (difficulty, category = null, limit = 10) => {
+    try {
+      const connection = await connect();
+      
+      let query = 'SELECT * FROM trivia_questions WHERE difficulty = ? AND active = 1';
+      const params = [difficulty];
+      
+      if (category && category !== 'all') {
+        query += ' AND category = ?';
+        params.push(category);
+      }
+      
+      query += ' ORDER BY RANDOM() LIMIT ?';
+      params.push(limit);
+      
+      const questions = await connection.all(query, params);
+      
+      return questions.map(question => processQuestionData(question));
+    } catch (error) {
+      console.error('Error fetching questions by difficulty and category:', error);
+      throw error;
+    }
+  },
+  
   // Get questions by difficulty
   getByDifficulty: async (difficulty, limit = 10) => {
     try {
@@ -58,8 +83,42 @@ const TriviaQuestion = {
     }
   },
   
-  // Get random questions (with optional difficulty filter)
-  getRandom: async (limit = 5, difficulty = null) => {
+  // Get questions by category
+  getByCategory: async (category, limit = 10) => {
+    try {
+      const connection = await connect();
+      
+      // Get questions with specified category
+      const questions = await connection.all(
+        'SELECT * FROM trivia_questions WHERE category = ? AND active = 1 ORDER BY RANDOM() LIMIT ?',
+        [category, limit]
+      );
+      
+      return questions.map(question => processQuestionData(question));
+    } catch (error) {
+      console.error('Error fetching questions by category:', error);
+      throw error;
+    }
+  },
+  
+  // Get all available categories
+  getCategories: async () => {
+    try {
+      const connection = await connect();
+      
+      const result = await connection.all(
+        'SELECT DISTINCT category FROM trivia_questions WHERE active = 1'
+      );
+      
+      return result.map(row => row.category).filter(Boolean);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+  },
+  
+  // Get random questions (with optional difficulty and category filters)
+  getRandom: async (limit = 5, difficulty = null, category = null) => {
     try {
       const connection = await connect();
       
@@ -69,6 +128,11 @@ const TriviaQuestion = {
       if (difficulty) {
         query += ' AND difficulty = ?';
         params.push(difficulty);
+      }
+      
+      if (category && category !== 'all') {
+        query += ' AND category = ?';
+        params.push(category);
       }
       
       query += ' ORDER BY RANDOM() LIMIT ?';
