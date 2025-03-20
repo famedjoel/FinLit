@@ -24,7 +24,7 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json()); // Parses JSON requests
+app.use(express.json({limit: '50mb'})); // Parses JSON requests
 
 // Log all requests for debugging
 app.use((req, res, next) => {
