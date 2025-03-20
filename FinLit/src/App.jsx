@@ -9,7 +9,7 @@ import SavingsChallenge from "./pages/SavingsChallenge";
 import LemonadeStand from "./pages/LemonadeStand";
 import BattleBudgets from "./pages/BattleBudgets";
 import LoanShark from "./pages/LoanShark";
-import FinancialTrivia from "./pages/FinancialTrivia";
+import FinancialTrivia from "./pages/FinancialTrivia"; // Enhanced version with quiz types
 import "./styles/styles.css"; 
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
@@ -114,26 +114,5 @@ function App() {
     </Router>
   );
 }
-
-// Add CSS styles for logout button
-document.head.insertAdjacentHTML(
-  'beforeend',
-  `<style>
-    .logout-link {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      padding: 8px 15px;
-      border-radius: 5px;
-      transition: all 0.3s ease;
-    }
-    .logout-link:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-  </style>`
-);
 
 export default App;

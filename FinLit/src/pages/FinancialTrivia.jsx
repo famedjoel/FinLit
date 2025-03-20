@@ -2,6 +2,9 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import "../styles/FinancialTrivia.css";
+// Import quiz types specific CSS
+import "../styles/FinancialTriviaQuizTypes.css";
+import { useRef } from "react";
 
 const FinancialTrivia = () => {
   // State variables
@@ -23,21 +26,30 @@ const FinancialTrivia = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showQuitConfirmation, setShowQuitConfirmation] = useState(false);
-  const [timerSetting, setTimerSetting] = useState(30); // Default 30 seconds
-  const [timerEnabled, setTimerEnabled] = useState(true); // Default enabled
-  // New state variable for question count
-  const [questionCount, setQuestionCount] = useState(5); // Default to 5 questions
+  const [timerSetting, setTimerSetting] = useState(30);
+  const [timerEnabled, setTimerEnabled] = useState(true);
+  const [questionCount, setQuestionCount] = useState(5);
+  const [showResultsReview, setShowResultsReview] = useState(false);
+const [userAnswers, setUserAnswers] = useState([]);
+const [showCertificate, setShowCertificate] = useState(false);
+const resultsRef = useRef(null);
+  
+  // Quiz type options
+  const [quizType, setQuizType] = useState("standard");
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [topStreak, setTopStreak] = useState(0);
+  const [progressiveDifficulty, setProgressiveDifficulty] = useState("easy");
+  const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
+  const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
 
-
-    // Question count options
-    const questionCountOptions = [
-      { value: 3, label: "3 (Quick Quiz)" },
-      { value: 5, label: "5 questions" },
-      { value: 10, label: "10 questions" },
-      { value: 15, label: "15 questions" },
-      { value: 20, label: "20 questions" }
-    ];
-
+  // Question count options
+  const questionCountOptions = [
+    { value: 3, label: "3 (Quick Quiz)" },
+    { value: 5, label: "5 questions" },
+    { value: 10, label: "10 questions" },
+    { value: 15, label: "15 questions" },
+    { value: 20, label: "20 questions" }
+  ];
 
   // Timer settings options
   const timerOptions = [
@@ -46,6 +58,34 @@ const FinancialTrivia = () => {
     { value: 45, label: "45 seconds" },
     { value: 60, label: "60 seconds" },
     { value: 0, label: "No time limit" }
+  ];
+
+  // Quiz type options
+  const quizTypeOptions = [
+    { 
+      value: "standard", 
+      label: "Standard Quiz", 
+      description: "Answer a set number of questions with your chosen difficulty level.",
+      icon: "📚"
+    },
+    { 
+      value: "daily", 
+      label: "Daily Challenge", 
+      description: "A new set of 5 questions each day across various topics.",
+      icon: "🗓️"
+    },
+    { 
+      value: "progressive", 
+      label: "Progressive Difficulty", 
+      description: "Starts easy and gets harder as you answer correctly.",
+      icon: "📈"
+    },
+    { 
+      value: "marathon", 
+      label: "Marathon Mode", 
+      description: "Keep answering questions until you get one wrong.",
+      icon: "🏃"
+    }
   ];
 
   // Financial categories
@@ -61,6 +101,9 @@ const FinancialTrivia = () => {
     { id: "debt", name: "Debt Management", icon: "⚖️" }
   ];
 
+  // Get the current hostname for API calls (works on all devices)
+  const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
+
   // Load user data if available
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -70,10 +113,32 @@ const FinancialTrivia = () => {
     
     // Load available categories from the server
     fetchCategories();
+    
+    // Check if daily challenge was already completed today
+    checkDailyChallengeStatus();
+    
+    // Check for quiz type in URL parameters
+    const queryParams = new URLSearchParams(window.location.search);
+    const typeParam = queryParams.get('type');
+    
+    if (typeParam && quizTypeOptions.some(option => option.value === typeParam)) {
+      changeQuizType(typeParam);
+    }
   }, []);
 
-  // Get the current hostname for API calls (works on all devices)
-  const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
+  // Check if daily challenge was completed today
+  const checkDailyChallengeStatus = () => {
+    const lastCompleted = localStorage.getItem("dailyChallengeCompleted");
+    if (lastCompleted) {
+      const lastDate = new Date(lastCompleted);
+      const today = new Date();
+      
+      // Compare if the saved date is today
+      if (lastDate.toDateString() === today.toDateString()) {
+        setDailyChallengeCompleted(true);
+      }
+    }
+  };
 
   // Fetch available categories from the server
   const fetchCategories = async () => {
@@ -93,6 +158,148 @@ const FinancialTrivia = () => {
       setCategories(financialCategories.map(cat => cat.id));
     }
   };
+
+  // Modified function to fetch questions based on quiz type
+  const fetchQuestions = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      // Handle different quiz types
+      switch (quizType) {
+        case "daily":
+          await fetchDailyChallenge();
+          break;
+        case "progressive":
+          await fetchProgressiveQuestions();
+          break;
+        case "marathon":
+          await fetchMarathonQuestions();
+          break;
+        case "standard":
+        default:
+          await fetchStandardQuestions();
+          break;
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      setError(error.message);
+      setLoading(false);
+      showNotification(`Error: ${error.message}`, "error");
+    }
+  };
+
+  // Fetch standard quiz questions
+  const fetchStandardQuestions = async () => {
+    let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=${questionCount}`;
+    
+    if (selectedCategory !== "all") {
+      url += `&category=${selectedCategory}`;
+    }
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch questions");
+    }
+    
+    const data = await response.json();
+    
+    if (data.length === 0) {
+      throw new Error("No questions found for this combination of difficulty and category");
+    }
+    
+    setQuestions(data);
+  };
+
+  // Fetch daily challenge questions
+  const fetchDailyChallenge = async () => {
+    // Generate a seed based on the current date
+    const today = new Date();
+    const dateSeed = `${today.getFullYear()}${today.getMonth()}${today.getDate()}`;
+    
+    // Fetch mixed difficulty questions for daily challenge
+    const url = `${API_BASE_URL}/trivia/questions?limit=5&dateSeed=${dateSeed}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch daily challenge");
+    }
+    
+    const data = await response.json();
+    
+    if (data.length === 0) {
+      throw new Error("No questions available for daily challenge");
+    }
+    
+    setQuestions(data);
+  };
+
+  // Fetch progressive difficulty questions
+  const fetchProgressiveQuestions = async () => {
+    // Fetch questions for all difficulty levels
+    const easyUrl = `${API_BASE_URL}/trivia/questions?difficulty=easy&limit=5`;
+    const mediumUrl = `${API_BASE_URL}/trivia/questions?difficulty=medium&limit=5`;
+    const hardUrl = `${API_BASE_URL}/trivia/questions?difficulty=hard&limit=5`;
+    
+    const [easyResponse, mediumResponse, hardResponse] = await Promise.all([
+      fetch(easyUrl),
+      fetch(mediumUrl),
+      fetch(hardUrl)
+    ]);
+    
+    if (!easyResponse.ok || !mediumResponse.ok || !hardResponse.ok) {
+      throw new Error("Failed to fetch questions for progressive mode");
+    }
+    
+    const easyData = await easyResponse.json();
+    const mediumData = await mediumResponse.json();
+    const hardData = await hardResponse.json();
+    
+    // Combine all questions
+    const combinedQuestions = [...easyData, ...mediumData, ...hardData];
+    
+    if (combinedQuestions.length === 0) {
+      throw new Error("No questions available for progressive difficulty");
+    }
+    
+    setQuestions(combinedQuestions);
+  };
+
+  // Fetch marathon questions
+  const fetchMarathonQuestions = async () => {
+    // Start with easy questions for marathon mode
+    const url = `${API_BASE_URL}/trivia/questions?difficulty=easy&limit=20`;
+    
+    if (selectedCategory !== "all") {
+      // eslint-disable-next-line no-const-assign
+      url += `&category=${selectedCategory}`;
+    }
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch marathon questions");
+    }
+    
+    const data = await response.json();
+    
+    if (data.length === 0) {
+      throw new Error("No questions available for marathon mode");
+    }
+    
+    setQuestions(data);
+  };
+  
+  // Load questions when difficulty, category, or quiz type changes
+  useEffect(() => {
+    if (!quizStarted) {
+      fetchQuestions();
+    }
+  }, [difficulty, selectedCategory, questionCount, quizType]);
 
   // Show notification function
   const showNotification = (message, type) => {
@@ -115,11 +322,14 @@ const FinancialTrivia = () => {
         body: JSON.stringify({
           userId: user.id,
           gameId: "financial-trivia",
-          title: "Financial Trivia Quiz",
+          title: `Financial Trivia - ${quizTypeOptions.find(t => t.value === quizType).label}`,
           score: finalScore,
           metadata: JSON.stringify({
-            difficulty: difficulty,
-            category: selectedCategory
+            difficulty,
+            category: selectedCategory,
+            quizType,
+            questionCount,
+            topStreak: quizType === "marathon" ? topStreak : undefined
           })
         }),
       });
@@ -132,101 +342,145 @@ const FinancialTrivia = () => {
     }
   };
 
-    // Update the fetchQuestions function to use the selected question count
-  const fetchQuestions = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      
-      let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=${questionCount}`;
-      
-      // Add category parameter if a specific category is selected
-      if (selectedCategory !== "all") {
-        url += `&category=${selectedCategory}`;
-      }
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch questions");
-      }
-      
-      const data = await response.json();
-      
-      if (data.length === 0) {
-        throw new Error("No questions found for this combination of difficulty and category");
-      }
-      
-      setQuestions(data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching questions:", error);
-      setError(error.message);
-      setLoading(false);
-      showNotification(`Error: ${error.message}`, "error");
-    }
-  };
-
-
-  // Load questions when difficulty or category changes
-  useEffect(() => {
-    if (!quizStarted) {
-      // Fetch questions when user selects difficulty and category but hasn't started yet
-      fetchQuestions();
-    }
-  }, [difficulty, selectedCategory, questionCount]);
-
   // Timer countdown
   useEffect(() => {
     let timer;
-    // Only run timer if it's enabled and there's a time limit
     if (quizStarted && !answerSubmitted && !showScore && timeLeft > 0 && timerEnabled && timerSetting > 0) {
       timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
     } else if (timeLeft === 0 && !answerSubmitted && !showScore && timerEnabled && timerSetting > 0) {
-      // Time's up, move to next question
       handleTimeUp();
     }
     
     return () => clearTimeout(timer);
   }, [timeLeft, answerSubmitted, showScore, quizStarted, timerEnabled]);
 
+  // Start quiz
   const startQuiz = () => {
     if (questions.length === 0) {
-      showNotification("No questions available. Try a different difficulty level or category.", "error");
+      showNotification("No questions available. Try a different mode or category.", "error");
       return;
     }
     
+    // Reset state for new quiz
     setQuizStarted(true);
-    setTimeLeft(timerSetting); // Use the selected timer setting
+    setTimeLeft(timerSetting);
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
     setSelectedAnswer(null);
     setAnswerSubmitted(false);
     setQuizFinished(false);
+    setCurrentStreak(0);
+    setTotalQuestionsAnswered(0);
+    setProgressiveDifficulty("easy");
+    
+    // Shuffle questions for standard and daily modes
+    if (quizType === "standard" || quizType === "daily") {
+      setQuestions(prevQuestions => [...prevQuestions].sort(() => Math.random() - 0.5));
+    }
+    
+    // Sort questions by difficulty for progressive mode
+    if (quizType === "progressive") {
+      setQuestions(prevQuestions => 
+        [...prevQuestions].sort((a, b) => {
+          const difficultyOrder = { easy: 1, medium: 2, hard: 3 };
+          return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+        })
+      );
+    }
   };
 
-  // Modified next question function to reset timer with new setting
+  // Modified next question function for quiz types
   const goToNextQuestion = () => {
+    setTotalQuestionsAnswered(prev => prev + 1);
+    
+    // Handle marathon mode - continue until wrong answer
+    if (quizType === "marathon" && !answerIsCorrect) {
+      setShowScore(true);
+      setQuizFinished(true);
+      if (user) {
+        trackGameProgress(score);
+      }
+      return;
+    }
+    
+    // For regular progression
     const nextQuestion = currentQuestion + 1;
+    
+    // Check if we've reached the end of questions
     if (nextQuestion < questions.length) {
+      // Continue to next question
       setCurrentQuestion(nextQuestion);
       setSelectedAnswer(null);
       setAnswerSubmitted(false);
-      setTimeLeft(timerSetting); // Use the selected timer setting
+      setTimeLeft(timerSetting);
+      
+      // For progressive mode, check if we should increase difficulty
+      if (quizType === "progressive") {
+        const currentProgress = totalQuestionsAnswered + 1;
+        if (currentProgress === 5) {
+          setProgressiveDifficulty("medium");
+          showNotification("Difficulty increased to Medium!", "info");
+        } else if (currentProgress === 10) {
+          setProgressiveDifficulty("hard");
+          showNotification("Difficulty increased to Hard!", "info");
+        }
+      }
+      
+      // For marathon mode, fetch more questions if needed
+      if (quizType === "marathon" && nextQuestion >= questions.length - 5) {
+        fetchMoreMarathonQuestions();
+      }
     } else {
+      // End of quiz reached
       setShowScore(true);
       setQuizFinished(true);
-      // Track game progress if user is logged in
+      
+      // Mark daily challenge as completed if applicable
+      if (quizType === "daily") {
+        setDailyChallengeCompleted(true);
+        localStorage.setItem("dailyChallengeCompleted", new Date().toISOString());
+      }
+      
+      // Track game progress
       if (user) {
         trackGameProgress(score);
       }
     }
   };
 
-  // Add this to handleAnswerSubmit and handleTimeUp to use the updated function
+  // Fetch more questions for marathon mode
+  const fetchMoreMarathonQuestions = async () => {
+    try {
+      // Determine difficulty based on streak
+      let marathonDifficulty = "easy";
+      if (currentStreak >= 20) {
+        marathonDifficulty = "hard";
+      } else if (currentStreak >= 10) {
+        marathonDifficulty = "medium";
+      }
+      
+      const url = `${API_BASE_URL}/trivia/questions?difficulty=${marathonDifficulty}&limit=10`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        console.error("Failed to fetch more marathon questions");
+        return;
+      }
+      
+      const newQuestions = await response.json();
+      
+      if (newQuestions.length > 0) {
+        setQuestions(prev => [...prev, ...newQuestions]);
+      }
+    } catch (error) {
+      console.error("Error fetching more marathon questions:", error);
+    }
+  };
+
+  // Handle answer submission
   const handleAnswerSubmit = () => {
     if (selectedAnswer === null) {
       showNotification("Please select an answer first!", "warning");
@@ -236,12 +490,55 @@ const FinancialTrivia = () => {
     setAnswerSubmitted(true);
     const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer;
     setAnswerIsCorrect(isCorrect);
+
+    // Save the user's answer for this question
+  setUserAnswers(prev => [
+    ...prev, 
+    {
+      question: questions[currentQuestion].question,
+      userAnswer: selectedAnswer,
+      correctAnswer: questions[currentQuestion].correctAnswer,
+      options: questions[currentQuestion].options,
+      explanation: questions[currentQuestion].explanation,
+      isCorrect: isCorrect
+    }
+  ]);
     
     if (isCorrect) {
-      const pointsEarned = difficulty === "easy" ? 10 : difficulty === "medium" ? 20 : 30;
-      setScore(score + pointsEarned);
-      showNotification(`✅ Correct! +${pointsEarned} points`, "success");
+      // Calculate points based on difficulty and quiz type
+      let difficultyPoints = 10; // Default easy points
+      
+      if (quizType === "progressive") {
+        // Use progressive difficulty for scoring
+        difficultyPoints = progressiveDifficulty === "easy" ? 10 : 
+                          progressiveDifficulty === "medium" ? 20 : 30;
+      } else {
+        // Use question's actual difficulty for scoring
+        difficultyPoints = questions[currentQuestion].difficulty === "easy" ? 10 : 
+                          questions[currentQuestion].difficulty === "medium" ? 20 : 30;
+      }
+      
+      // Add time bonus for timed quizzes
+      const timeBonus = timerEnabled && timerSetting > 0 ? Math.round(timeLeft * 0.2) : 0;
+      const totalPoints = difficultyPoints + timeBonus;
+      
+      setScore(prev => prev + totalPoints);
+      
+      // Update streak for marathon mode
+      if (quizType === "marathon") {
+        const newStreak = currentStreak + 1;
+        setCurrentStreak(newStreak);
+        if (newStreak > topStreak) {
+          setTopStreak(newStreak);
+        }
+      }
+      
+      showNotification(`✅ Correct! +${totalPoints} points${timeBonus > 0 ? ` (includes ${timeBonus} time bonus)` : ''}`, "success");
     } else {
+      // Reset streak for marathon mode on wrong answer
+      if (quizType === "marathon") {
+        setCurrentStreak(0);
+      }
       showNotification("❌ Incorrect!", "error");
     }
     
@@ -249,16 +546,34 @@ const FinancialTrivia = () => {
     setTimeout(() => goToNextQuestion(), 2000);
   };
 
+  // Handle time up
   const handleTimeUp = () => {
     setAnswerSubmitted(true);
     setAnswerIsCorrect(false);
+
+     // Save the time-up as a skipped answer
+  setUserAnswers(prev => [
+    ...prev, 
+    {
+      question: questions[currentQuestion].question,
+      userAnswer: null, // No answer selected
+      correctAnswer: questions[currentQuestion].correctAnswer,
+      options: questions[currentQuestion].options,
+      explanation: questions[currentQuestion].explanation,
+      isCorrect: false
+    }
+  ]);
+    
+    // Reset streak for marathon mode on time up
+    if (quizType === "marathon") {
+      setCurrentStreak(0);
+    }
+    
     showNotification("⏰ Time's up!", "warning");
     
     // Move to next question after 2 seconds
     setTimeout(() => goToNextQuestion(), 2000);
   };
-
-
 
   // Handle answer selection
   const handleAnswerSelect = (optionIndex) => {
@@ -266,7 +581,6 @@ const FinancialTrivia = () => {
       setSelectedAnswer(optionIndex);
     }
   };
-
 
   // Reset the quiz
   const resetQuiz = () => {
@@ -276,11 +590,56 @@ const FinancialTrivia = () => {
     setScore(0);
     setSelectedAnswer(null);
     setAnswerSubmitted(false);
-    setTimeLeft(30);
+    setTimeLeft(timerSetting);
     setQuizFinished(false);
-    // Fetch questions again
+    setCurrentStreak(0);
+    setTopStreak(0);
+    setTotalQuestionsAnswered(0);
+    setProgressiveDifficulty("easy");
     fetchQuestions();
+    setUserAnswers([]);
+  setShowResultsReview(false);
   };
+
+// Function to export the quiz results as a text file
+const exportResultsAsText = () => {
+  // Create a text representation of the results
+  let resultsText = `Financial Trivia Quiz Results\n`;
+  resultsText += `Quiz Type: ${quizTypeOptions.find(t => t.value === quizType)?.label}\n`;
+  resultsText += `Final Score: ${score}\n`;
+  resultsText += `Correct Answers: ${userAnswers.filter(a => a.isCorrect).length} out of ${userAnswers.length}\n\n`;
+  
+  // Add each question and answer
+  userAnswers.forEach((answer, index) => {
+    resultsText += `Question ${index + 1}: ${answer.question}\n`;
+    resultsText += `Your Answer: ${answer.userAnswer !== null ? answer.options[answer.userAnswer] : "Time's up - No answer"}\n`;
+    resultsText += `Correct Answer: ${answer.options[answer.correctAnswer]}\n`;
+    resultsText += `Result: ${answer.isCorrect ? "Correct" : "Incorrect"}\n`;
+    resultsText += `Explanation: ${answer.explanation}\n\n`;
+  });
+  
+  // Create a download link
+  const element = document.createElement("a");
+  const file = new Blob([resultsText], {type: 'text/plain'});
+  element.href = URL.createObjectURL(file);
+  element.download = "financial_trivia_results.txt";
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+};
+
+// Add a function to generate a certificate if the user performed well
+const generateCertificate = () => {
+  const correctPercentage = (userAnswers.filter(a => a.isCorrect).length / userAnswers.length) * 100;
+  
+  // Only generate a certificate if the user got at least 80% correct
+  if (correctPercentage < 80) {
+    showNotification("Score at least 80% to earn a certificate!", "warning");
+    return;
+  }
+  
+  setShowCertificate(true);
+};
 
   // Change difficulty level
   const changeDifficulty = (level) => {
@@ -294,6 +653,36 @@ const FinancialTrivia = () => {
     resetQuiz();
   };
 
+  // Change quiz type
+  const changeQuizType = (type) => {
+    setQuizType(type);
+    
+    // Adjust settings based on quiz type
+    switch (type) {
+      case "daily":
+        setQuestionCount(5);
+        setTimerSetting(30);
+        setTimerEnabled(true);
+        break;
+      case "progressive":
+        setQuestionCount(15);
+        setTimerSetting(30);
+        setTimerEnabled(true);
+        break;
+      case "marathon":
+        // Marathon mode uses unlimited questions
+        setTimerSetting(20);
+        setTimerEnabled(true);
+        break;
+      case "standard":
+      default:
+        // Keep current settings
+        break;
+    }
+    
+    resetQuiz();
+  };
+
   // Handle showing quit confirmation dialog
   const handleQuitClick = () => {
     setShowQuitConfirmation(true);
@@ -301,13 +690,11 @@ const FinancialTrivia = () => {
 
   // Handle actual quitting after confirmation
   const handleConfirmQuit = () => {
-    // If the user has played at least one question and is logged in,
-    // track their progress with their current score
+    // Track progress if user has played at least one question
     if (currentQuestion > 0 && user && !quizFinished) {
       trackGameProgress(score);
     }
     
-    // Reset the quiz
     resetQuiz();
     setShowQuitConfirmation(false);
     showNotification("Quiz exited", "info");
@@ -337,106 +724,180 @@ const FinancialTrivia = () => {
         ))}
       </div>
       
-      {/* Selection UI for non-started quiz */}
+      {/* Quiz Selection UI */}
       {!quizStarted && (
         <div className="quiz-selection">
-          {/* Existing Difficulty Selection */}
-          <div className="selection-section difficulty-selector">
-            <h3>Select Difficulty Level:</h3>
-            <div className="difficulty-buttons">
-              <button 
-                className={`difficulty-btn ${difficulty === "easy" ? "active" : ""}`}
-                onClick={() => changeDifficulty("easy")}
-              >
-                Easy
-              </button>
-              <button 
-                className={`difficulty-btn ${difficulty === "medium" ? "active" : ""}`}
-                onClick={() => changeDifficulty("medium")}
-              >
-                Medium
-              </button>
-              <button 
-                className={`difficulty-btn ${difficulty === "hard" ? "active" : ""}`}
-                onClick={() => changeDifficulty("hard")}
-              >
-                Hard
-              </button>
-            </div>
-            <p className="difficulty-description">
-              {difficulty === "easy" ? 
-                "Basic financial concepts and terminology." : 
-                difficulty === "medium" ? 
-                "Intermediate financial knowledge and concepts." : 
-                "Advanced financial strategies and market knowledge."}
-            </p>
-          </div>
-
-          {/* Timer Settings Section from previous implementation */}
-          <div className="selection-section timer-selector">
-            <h3>Timer Settings:</h3>
-            <div className="timer-options">
-              {timerOptions.map((option) => (
+          {/* Quiz Type Selection */}
+          <div className="selection-section quiz-type-selector">
+            <h3>Select Quiz Type:</h3>
+            <div className="quiz-type-options">
+              {quizTypeOptions.map((option) => (
                 <button 
-                  key={option.value} 
-                  className={`timer-btn ${timerSetting === option.value ? "active" : ""}`}
-                  onClick={() => {
-                    setTimerSetting(option.value);
-                    setTimerEnabled(option.value > 0);
-                  }}
+                  key={option.value}
+                  className={`quiz-type-btn ${quizType === option.value ? "active" : ""} ${option.value === "daily" && dailyChallengeCompleted ? "completed" : ""}`}
+                  onClick={() => changeQuizType(option.value)}
+                  disabled={option.value === "daily" && dailyChallengeCompleted}
                 >
-                  {option.label}
+                  <span className="quiz-type-icon">{option.icon}</span>
+                  <span className="quiz-type-label">{option.label}</span>
+                  {option.value === "daily" && dailyChallengeCompleted && (
+                    <span className="daily-completed-badge">✅ Completed Today</span>
+                  )}
                 </button>
               ))}
             </div>
-            <p className="timer-description">
-              {timerSetting > 0 
-                ? `You'll have ${timerSetting} seconds to answer each question.` 
-                : "Take your time. There's no time limit for answering questions."}
+            <p className="quiz-type-description">
+              {quizTypeOptions.find(option => option.value === quizType)?.description}
             </p>
           </div>
 
-          {/* New Question Count Selection Section */}
-          <div className="selection-section question-count-selector">
-            <h3>Number of Questions:</h3>
-            <div className="question-count-options">
-              {questionCountOptions.map((option) => (
+          {/* Only show difficulty for standard and marathon modes */}
+          {(quizType === "standard" || quizType === "marathon") && (
+            <div className="selection-section difficulty-selector">
+              <h3>Select Difficulty Level:</h3>
+              <div className="difficulty-buttons">
                 <button 
-                  key={option.value} 
-                  className={`question-count-btn ${questionCount === option.value ? "active" : ""}`}
-                  onClick={() => setQuestionCount(option.value)}
+                  className={`difficulty-btn ${difficulty === "easy" ? "active" : ""}`}
+                  onClick={() => changeDifficulty("easy")}
                 >
-                  {option.label}
+                  Easy
                 </button>
-              ))}
+                <button 
+                  className={`difficulty-btn ${difficulty === "medium" ? "active" : ""}`}
+                  onClick={() => changeDifficulty("medium")}
+                >
+                  Medium
+                </button>
+                <button 
+                  className={`difficulty-btn ${difficulty === "hard" ? "active" : ""}`}
+                  onClick={() => changeDifficulty("hard")}
+                >
+                  Hard
+                </button>
+              </div>
+              <p className="difficulty-description">
+                {difficulty === "easy" ? 
+                  "Basic financial concepts and terminology." : 
+                  difficulty === "medium" ? 
+                  "Intermediate financial knowledge and concepts." : 
+                  "Advanced financial strategies and market knowledge."}
+              </p>
             </div>
-            <p className="question-count-description">
-              {questionCount <= 5 
-                ? "A short quiz to test your knowledge." 
-                : questionCount <= 10 
-                ? "A medium-length quiz to challenge you." 
-                : "A comprehensive quiz to thoroughly test your knowledge."}
-            </p>
-          </div>
+          )}
 
-          {/* Existing Category Selection */}
-          <div className="selection-section category-selector">
-            <h3>Select Category:</h3>
-            <div className="category-buttons">
-              {financialCategories.map((category) => (
-                <button 
-                  key={category.id}
-                  className={`category-btn ${selectedCategory === category.id ? "active" : ""}`}
-                  onClick={() => changeCategory(category.id)}
-                >
-                  <span className="category-icon">{category.icon}</span>
-                  <span className="category-name">{category.name}</span>
-                </button>
-              ))}
+          {/* Only show timer settings for standard and marathon modes */}
+          {(quizType === "standard" || quizType === "marathon") && (
+            <div className="selection-section timer-selector">
+              <h3>Timer Settings:</h3>
+              <div className="timer-options">
+                {timerOptions.map((option) => (
+                  <button 
+                    key={option.value} 
+                    className={`timer-btn ${timerSetting === option.value ? "active" : ""}`}
+                    onClick={() => {
+                      setTimerSetting(option.value);
+                      setTimerEnabled(option.value > 0);
+                    }}
+                    disabled={quizType === "marathon" && option.value === 0}
+                  >
+                    {option.label}
+                    {quizType === "marathon" && option.value === 0 && " (Not available for Marathon)"}
+                  </button>
+                ))}
+              </div>
+              <p className="timer-description">
+                {timerSetting > 0 
+                  ? `You'll have ${timerSetting} seconds to answer each question.` 
+                  : "Take your time. There's no time limit for answering questions."}
+              </p>
             </div>
+          )}
+
+          {/* Only show question count for standard mode */}
+          {quizType === "standard" && (
+            <div className="selection-section question-count-selector">
+              <h3>Number of Questions:</h3>
+              <div className="question-count-options">
+                {questionCountOptions.map((option) => (
+                  <button 
+                    key={option.value} 
+                    className={`question-count-btn ${questionCount === option.value ? "active" : ""}`}
+                    onClick={() => setQuestionCount(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="question-count-description">
+                {questionCount <= 5 
+                  ? "A short quiz to test your knowledge." 
+                  : questionCount <= 10 
+                  ? "A medium-length quiz to challenge you." 
+                  : "A comprehensive quiz to thoroughly test your knowledge."}
+              </p>
+            </div>
+          )}
+
+          {/* Only show category selection for standard and marathon modes */}
+          {(quizType === "standard" || quizType === "marathon") && (
+            <div className="selection-section category-selector">
+              <h3>Select Category:</h3>
+              <div className="category-buttons">
+                {financialCategories.map((category) => (
+                  <button 
+                    key={category.id}
+                    className={`category-btn ${selectedCategory === category.id ? "active" : ""}`}
+                    onClick={() => changeCategory(category.id)}
+                  >
+                    <span className="category-icon">{category.icon}</span>
+                    <span className="category-name">{category.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Show information about the quiz type */}
+          <div className="quiz-mode-info">
+            {quizType === "daily" && (
+              <div className="daily-challenge-info">
+                <h3>About Daily Challenge</h3>
+                <p>
+                  Test your knowledge with a new set of 5 curated questions each day.
+                  Covers various financial topics and difficulty levels. Challenge
+                  resets at midnight.
+                </p>
+                {dailyChallengeCompleted && (
+                  <div className="daily-completed-message">
+                    <p>You&apos;ve already completed today&apos;s challenge! Come back tomorrow for a new set of questions.</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {quizType === "progressive" && (
+              <div className="progressive-info">
+                <h3>About Progressive Difficulty</h3>
+                <p>
+                  You&apos;ll start with 5 easy questions, then move to 5 medium questions,
+                  and finish with 5 hard questions. Each level awards more points!
+                </p>
+              </div>
+            )}
+            
+            {quizType === "marathon" && (
+              <div className="marathon-info">
+                <h3>About Marathon Mode</h3>
+                <p>
+                  Keep answering questions as long as you can. The quiz ends when you
+                  answer incorrectly or run out of time. The difficulty increases as
+                  your streak builds. How many can you get right in a row?
+                </p>
+              </div>
+            )}
           </div>
           
-          {/* Existing loading/error states and start button */}
+          {/* Loading/error states and start button */}
           {loading ? (
             <div className="loading-spinner">
               <div className="spinner"></div>
@@ -450,8 +911,14 @@ const FinancialTrivia = () => {
               </button>
             </div>
           ) : (
-            <button onClick={startQuiz} className="start-quiz-btn">
-              Start Quiz
+            <button 
+              onClick={startQuiz} 
+              className="start-quiz-btn"
+              disabled={quizType === "daily" && dailyChallengeCompleted}
+            >
+              {quizType === "daily" && dailyChallengeCompleted 
+                ? "Today's Challenge Completed" 
+                : `Start ${quizTypeOptions.find(t => t.value === quizType)?.label}`}
             </button>
           )}
         </div>
@@ -462,24 +929,34 @@ const FinancialTrivia = () => {
         <div className="quiz-container">
           <div className="quiz-header">
             <div className="quiz-progress">
-              Question {currentQuestion + 1}/{questions.length}
+              {quizType === "marathon" ? (
+                <span>Streak: {currentStreak} questions</span>
+              ) : (
+                <span>Question {currentQuestion + 1}/{quizType === "progressive" ? 15 : quizType === "daily" ? 5 : questions.length}</span>
+              )}
             </div>
             <div className="quiz-score">
               Score: {score}
             </div>
             <div className="quiz-info">
-              <span className="quiz-difficulty">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
+              <span className="quiz-difficulty">
+                {quizType === "progressive" 
+                  ? progressiveDifficulty.charAt(0).toUpperCase() + progressiveDifficulty.slice(1)
+                  : questions[currentQuestion].difficulty.charAt(0).toUpperCase() + questions[currentQuestion].difficulty.slice(1)}
+              </span>
               <span className="quiz-category">
                 {questions[currentQuestion].category ? 
                   getCategoryInfo(questions[currentQuestion].category).icon : 
                   getCategoryInfo("all").icon}
               </span>
             </div>
-            {/* Only show timer if it's enabled */}
+            <div className="quiz-type-indicator">
+              {quizTypeOptions.find(t => t.value === quizType)?.icon}
+            </div>
             {timerEnabled && timerSetting > 0 && (
               <div className={`quiz-timer ${timeLeft < 10 ? "running-out" : ""}`}>
                 Time: {timeLeft}s
-            </div>
+              </div>
             )}
           </div>
           
@@ -532,18 +1009,47 @@ const FinancialTrivia = () => {
       {showScore && (
         <div className="results-container">
           <h3>Quiz Completed!</h3>
+          
+          {quizType === "marathon" ? (
+            <div className="marathon-results">
+              <div className="streak-display">
+                <p>Your marathon streak: <span>{topStreak}</span></p>
+                <p>Total questions answered: <span>{totalQuestionsAnswered}</span></p>
+              </div>
+            </div>
+          ) : null}
+          
           <div className="final-score">
             <p>Your score: <span>{score}</span></p>
-            <p>Difficulty: <span>{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span></p>
-            <p>Category: <span>{getCategoryInfo(selectedCategory).name}</span></p>
+            <p>Quiz type: <span>{quizTypeOptions.find(t => t.value === quizType)?.label}</span></p>
+            
+            {quizType === "standard" && (
+              <>
+                <p>Difficulty: <span>{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span></p>
+                <p>Category: <span>{getCategoryInfo(selectedCategory).name}</span></p>
+              </>
+            )}
+            
+            {quizType === "daily" && dailyChallengeCompleted && (
+              <div className="daily-badge">
+                <p>🏆 Daily Challenge Complete!</p>
+                <p>Come back tomorrow for a new set of questions</p>
+              </div>
+            )}
           </div>
           
           <div className="result-buttons">
             <button onClick={() => {
-              changeDifficulty(difficulty);
-              changeCategory(selectedCategory);
+              if (quizType === "standard") {
+                changeDifficulty(difficulty);
+                changeCategory(selectedCategory);
+              } else {
+                changeQuizType(quizType);
+              }
             }} className="play-again-btn">
-              Play Again
+              {quizType === "daily" && dailyChallengeCompleted 
+                ? "Try Another Quiz Type" 
+                : "Play Again"}
             </button>
             <button onClick={resetQuiz} className="change-settings-btn">
               Change Settings
@@ -551,6 +1057,127 @@ const FinancialTrivia = () => {
           </div>
         </div>
       )}
+
+      {/* Quiz Results Review */}
+{showScore && (
+  <div className="result-actions">
+    <button 
+      onClick={() => setShowResultsReview(!showResultsReview)} 
+      className="show-results-btn"
+    >
+      {showResultsReview ? "Hide Details" : "Show Results Details"}
+    </button>
+  </div>
+)}
+
+{showResultsReview && (
+  <div className="results-review">
+    <h3>Question Review</h3>
+    <p className="results-summary">
+      You answered {userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length} questions correctly.
+    </p>
+    
+    <div className="question-review-list">
+      {userAnswers.map((answer, index) => (
+        <div 
+          key={index} 
+          className={`question-review-item ${answer.isCorrect ? "correct" : "incorrect"}`}
+        >
+          <div className="question-review-header">
+            <span className="question-number">Question {index + 1}</span>
+            <span className={`question-result ${answer.isCorrect ? "correct" : "incorrect"}`}>
+              {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+            </span>
+          </div>
+          
+          <p className="question-text">{answer.question}</p>
+          
+          <div className="options-review">
+            {answer.options.map((option, optionIndex) => (
+              <div 
+                key={optionIndex} 
+                className={`
+                  option-review 
+                  ${optionIndex === answer.userAnswer ? "user-selected" : ""} 
+                  ${optionIndex === answer.correctAnswer ? "correct-answer" : ""}
+                `}
+              >
+                {option}
+                {optionIndex === answer.userAnswer && optionIndex !== answer.correctAnswer && (
+                  <span className="option-indicator">Your Answer</span>
+                )}
+                {optionIndex === answer.correctAnswer && (
+                  <span className="option-indicator">Correct Answer</span>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <div className="explanation-review">
+            <strong>Explanation:</strong> {answer.explanation}
+          </div>
+        </div>
+      ))}
+    </div>
+    
+    <button 
+      onClick={() => setShowResultsReview(false)} 
+      className="close-review-btn"
+    >
+      Close Review
+    </button>
+
+    <div className="results-actions">
+  <h4>Save Your Results</h4>
+  <div className="results-buttons">
+    <button onClick={exportResultsAsText} className="export-results-btn">
+      Download as Text
+    </button>
+    {userAnswers.filter(a => a.isCorrect).length / userAnswers.length >= 0.8 && (
+      <button onClick={generateCertificate} className="certificate-btn">
+        View Certificate
+      </button>
+    )}
+  </div>
+</div>
+
+{/* Certificate Modal */}
+{showCertificate && (
+  <div className="certificate-modal">
+    <div className="certificate-content">
+      <button 
+        className="close-certificate" 
+        onClick={() => setShowCertificate(false)}
+      >
+        ×
+      </button>
+      <div className="certificate">
+        <div className="certificate-logo">🏆</div>
+        <div className="certificate-title">Certificate of Achievement</div>
+        <p>This certifies that</p>
+        <div className="user-name">{user?.username || "Financial Learner"}</div>
+        <p className="achievement">has successfully completed the</p>
+        <p className="achievement"><strong>{quizTypeOptions.find(t => t.value === quizType)?.label}</strong></p>
+        <p className="achievement">in Financial Literacy</p>
+        <p className="score">with a score of {score} ({(userAnswers.filter(a => a.isCorrect).length / userAnswers.length * 100).toFixed(0)}% correct)</p>
+        <p className="date">Date: {new Date().toLocaleDateString()}</p>
+      </div>
+      <div className="certificate-actions">
+        <button 
+          onClick={() => window.print()} 
+          className="print-certificate-btn"
+        >
+          Print Certificate
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+  </div>
+)}
+
 
       {/* Quit Confirmation Dialog */}
       {showQuitConfirmation && (
