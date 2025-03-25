@@ -1041,16 +1041,19 @@ case 'matching':
       <div className="matching-container">
         <div className="terms-column">
           <h4>Terms</h4>
-          {terms.map((term, index) => (
+          {currentQ.terms && currentQ.terms.map((term, index) => (
             <div 
               key={index} 
               className={`
                 matching-item term-item 
                 ${matchingSelectedTerm === index ? "selected" : ""}
-                ${answerSubmitted && correctMatches[index] === matchingMatches[index] ? "correct-match" : ""}
-                ${answerSubmitted && correctMatches[index] !== matchingMatches[index] ? "incorrect-match" : ""}
+                ${answerSubmitted && currentQ.correctMatches[index] === selectedAnswer?.[index] ? "correct-match" : ""}
+                ${answerSubmitted && currentQ.correctMatches[index] !== selectedAnswer?.[index] ? "incorrect-match" : ""}
               `}
-              onClick={() => handleTermClick(index)}
+              onClick={() => {
+                if (answerSubmitted) return;
+                setMatchingSelectedTerm(index);
+              }}
             >
               {term}
             </div>
@@ -1059,17 +1062,25 @@ case 'matching':
         
         <div className="definitions-column">
           <h4>Definitions</h4>
-          {definitions.map((definition, index) => (
+          {currentQ.definitions && currentQ.definitions.map((definition, index) => (
             <div 
               key={index} 
               className={`
                 matching-item definition-item
-                ${answerSubmitted && matchingMatches.includes(index) && 
-                  correctMatches[matchingMatches.indexOf(index)] === index ? "correct-match" : ""}
-                ${answerSubmitted && matchingMatches.includes(index) && 
-                  correctMatches[matchingMatches.indexOf(index)] !== index ? "incorrect-match" : ""}
+                ${answerSubmitted && selectedAnswer?.includes(index) && 
+                  currentQ.correctMatches[selectedAnswer.indexOf(index)] === index ? "correct-match" : ""}
+                ${answerSubmitted && selectedAnswer?.includes(index) && 
+                  currentQ.correctMatches[selectedAnswer.indexOf(index)] !== index ? "incorrect-match" : ""}
               `}
-              onClick={() => handleDefinitionClick(index)}
+              onClick={() => {
+                if (answerSubmitted || matchingSelectedTerm === null) return;
+                
+                const newMatches = [...(selectedAnswer || Array(currentQ.terms.length).fill(null))];
+                newMatches[matchingSelectedTerm] = index;
+                
+                handleAnswerSelect(newMatches);
+                setMatchingSelectedTerm(null);
+              }}
             >
               {definition}
             </div>
@@ -1081,9 +1092,9 @@ case 'matching':
         <div className="correct-matches-display">
           <h4>Correct Matches:</h4>
           <ul>
-            {terms.map((term, index) => (
+            {currentQ.terms && currentQ.terms.map((term, index) => (
               <li key={index}>
-                <strong>{term}</strong>: {definitions[correctMatches[index]]}
+                <strong>{term}</strong>: {currentQ.definitions[currentQ.correctMatches[index]]}
               </li>
             ))}
           </ul>
