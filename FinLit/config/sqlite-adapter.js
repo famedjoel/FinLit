@@ -59,6 +59,14 @@ async function initDatabase() {
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Create app_settings table for version tracking
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    `);
     
     return db;
   } catch (error) {

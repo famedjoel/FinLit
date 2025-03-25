@@ -11423,6 +11423,15 @@
                   "explanation": "To calculate the monthly interest: Monthly interest = (Annual interest rate ÷ 12) × Loan Balance = (10% ÷ 12) × $35,000 = 0.833% × $35,000 = $291.67 (rounded to $300). This highlights how interest adds up on large personal loans over time.",
                   "difficulty": "hard",
                   "category": "debt"
+                },
+                {
+                  "type": "calculation",
+                  "question": "If you have a credit card balance of $12,000 with an APR of 28%, how much interest will be charged in the first month if no payments are made?",
+                  "options": ["$280", "$320", "$340", "$360"],
+                  "correctAnswer": 1,
+                  "explanation": "To calculate the monthly interest: Monthly interest = (Annual interest rate ÷ 12) × Balance = (28% ÷ 12) × $12,000 = 2.33% × $12,000 = $279.60 (rounded to $320). This demonstrates the high cost of carrying large balances on high-interest credit cards.",
+                  "difficulty": "hard",
+                  "category": "debt"
                 }
               ]
           

@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-useless-catch */
 /* eslint-disable no-case-declarations */
-/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-unused-vars */
 // src/pages/FinancialTrivia.jsx
 import { useState, useEffect, useRef } from "react";
@@ -909,6 +908,20 @@ const FinancialTrivia = () => {
     return category;
   };
 
+     // In your FinancialTrivia component, add these at the component level (not inside renderQuestion)
+     const [matchingSelectedTerm, setMatchingSelectedTerm] = useState(null);
+     const [matchingMatches, setMatchingMatches] = useState([]);
+     
+     // Initialize matching state whenever current question changes
+     useEffect(() => {
+       if (questions[currentQuestion]?.type === 'matching') {
+         const items = questions[currentQuestion].items || [];
+         setMatchingMatches(Array(items.length).fill(null));
+         setMatchingSelectedTerm(null);
+       }
+     }, [currentQuestion, questions]);
+
+
   // Render different question types
   const renderQuestion = () => {
     if (!questions[currentQuestion]) return null;
@@ -993,89 +1006,91 @@ const FinancialTrivia = () => {
             )}
           </div>
         );
-        
-      case 'matching':
-        const [matchingState, setMatchingState] = useState({
-          selectedTerm: null,
-          matches: Array(currentQ.terms.length).fill(null)
-        });
-        
-        const handleTermClick = (index) => {
-          if (answerSubmitted) return;
-          setMatchingState({...matchingState, selectedTerm: index});
-        };
-        
-        const handleDefinitionClick = (index) => {
-          if (answerSubmitted || matchingState.selectedTerm === null) return;
-          
-          const newMatches = [...matchingState.matches];
-          newMatches[matchingState.selectedTerm] = index;
-          
-          setMatchingState({
-            selectedTerm: null,
-            matches: newMatches
-          });
-          
-          handleAnswerSelect(newMatches);
-        };
-        
-        return (
-          <div className="question-container">
-            <h3 className="question">{currentQ.question}</h3>
-            
-            <div className="matching-container">
-              <div className="terms-column">
-                <h4>Terms</h4>
-                {currentQ.terms.map((term, index) => (
-                  <div 
-                    key={index} 
-                    className={`
-                      matching-item term-item 
-                      ${matchingState.selectedTerm === index ? "selected" : ""}
-                      ${answerSubmitted && currentQ.correctMatches[index] === matchingState.matches[index] ? "correct-match" : ""}
-                      ${answerSubmitted && currentQ.correctMatches[index] !== matchingState.matches[index] ? "incorrect-match" : ""}
-                    `}
-                    onClick={() => handleTermClick(index)}
-                  >
-                    {term}
-                  </div>
-                ))}
-              </div>
-              
-              <div className="definitions-column">
-                <h4>Definitions</h4>
-                {currentQ.definitions.map((definition, index) => (
-                  <div 
-                    key={index} 
-                    className={`
-                      matching-item definition-item
-                      ${answerSubmitted && matchingState.matches.includes(index) && 
-                        currentQ.correctMatches[matchingState.matches.indexOf(index)] === index ? "correct-match" : ""}
-                      ${answerSubmitted && matchingState.matches.includes(index) && 
-                        currentQ.correctMatches[matchingState.matches.indexOf(index)] !== index ? "incorrect-match" : ""}
-                    `}
-                    onClick={() => handleDefinitionClick(index)}
-                  >
-                    {definition}
-                  </div>
-                ))}
-              </div>
+      
+
+// Then modify your case 'matching' to use these component-level state variables:
+case 'matching':
+  // Directly use items for matching
+  const items = currentQ.items || [];
+  const terms = items.map(item => item.term);
+  const definitions = items.map(item => item.definition);
+  // Each term matches with the definition at the same index
+  const correctMatches = items.map((_, index) => index);
+  
+  const handleTermClick = (index) => {
+    if (answerSubmitted) return;
+    setMatchingSelectedTerm(index);
+  };
+  
+  const handleDefinitionClick = (index) => {
+    if (answerSubmitted || matchingSelectedTerm === null) return;
+    
+    const newMatches = [...matchingMatches];
+    newMatches[matchingSelectedTerm] = index;
+    
+    setMatchingMatches(newMatches);
+    setMatchingSelectedTerm(null);
+    
+    handleAnswerSelect(newMatches);
+  };
+  
+  return (
+    <div className="question-container">
+      <h3 className="question">{currentQ.question}</h3>
+      
+      <div className="matching-container">
+        <div className="terms-column">
+          <h4>Terms</h4>
+          {terms.map((term, index) => (
+            <div 
+              key={index} 
+              className={`
+                matching-item term-item 
+                ${matchingSelectedTerm === index ? "selected" : ""}
+                ${answerSubmitted && correctMatches[index] === matchingMatches[index] ? "correct-match" : ""}
+                ${answerSubmitted && correctMatches[index] !== matchingMatches[index] ? "incorrect-match" : ""}
+              `}
+              onClick={() => handleTermClick(index)}
+            >
+              {term}
             </div>
-            
-            {answerSubmitted && (
-              <div className="correct-matches-display">
-                <h4>Correct Matches:</h4>
-                <ul>
-                  {currentQ.terms.map((term, index) => (
-                    <li key={index}>
-                      <strong>{term}</strong>: {currentQ.definitions[currentQ.correctMatches[index]]}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        );
+          ))}
+        </div>
+        
+        <div className="definitions-column">
+          <h4>Definitions</h4>
+          {definitions.map((definition, index) => (
+            <div 
+              key={index} 
+              className={`
+                matching-item definition-item
+                ${answerSubmitted && matchingMatches.includes(index) && 
+                  correctMatches[matchingMatches.indexOf(index)] === index ? "correct-match" : ""}
+                ${answerSubmitted && matchingMatches.includes(index) && 
+                  correctMatches[matchingMatches.indexOf(index)] !== index ? "incorrect-match" : ""}
+              `}
+              onClick={() => handleDefinitionClick(index)}
+            >
+              {definition}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {answerSubmitted && (
+        <div className="correct-matches-display">
+          <h4>Correct Matches:</h4>
+          <ul>
+            {terms.map((term, index) => (
+              <li key={index}>
+                <strong>{term}</strong>: {definitions[correctMatches[index]]}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
         
       case 'calculation':
         return (

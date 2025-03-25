@@ -6,9 +6,9 @@ import User from "./models/User.js";
 import TriviaQuestion from "./models/TriviaQuestion.js";
 import bcrypt from "bcryptjs";
 import connectDB from "./config/db.js"; // Import DB connection
-
+import { updateTriviaQuestions } from './config/dbInit.js';
 dotenv.config();
-connectDB(); // Call function to connect to SQLite
+// connectDB(); // Call function to connect to SQLite
 
 const app = express();
 const PORT = process.env.PORT || 7900;
@@ -20,6 +20,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
+
 
 // Middleware
 app.use(cors(corsOptions));
@@ -481,8 +482,19 @@ app.get("/health", (req, res) => {
   res.json({ status: "Server is running" });
 });
 
-// Start server
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`For other devices on your network, try: http://<your-ip-address>:${PORT}`);
+// Connect to database and initialize it
+connectDB().then(async () => {
+  try {
+    // Initialize trivia questions if needed
+    await updateTriviaQuestions();
+    
+    // Start server after database is ready
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`For other devices on your network, try: http://<your-ip-address>:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    process.exit(1);
+  }
 });
