@@ -314,14 +314,29 @@
 }
   
   /* Enhanced Game Categories Styling */
+/* Games Container */
+.games-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.games-container h2 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #2563eb;
+}
+
+/* Game Categories */
 .game-category {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
 }
 
 .game-category-title {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: #0f172a;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 2px solid #e2e8f0;
   position: relative;
@@ -343,7 +358,7 @@
   gap: 1.5rem;
 }
 
-/* Game Card Enhancement */
+/* Game Card */
 .game-card {
   background: white;
   padding: 1.5rem;
@@ -361,7 +376,7 @@
 }
 
 .game-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border-color: #3b82f6;
 }
@@ -379,7 +394,7 @@
   flex-grow: 1;
 }
 
-/* Coming Soon Badge */
+/* Coming Soon Cards */
 .game-card.coming-soon {
   opacity: 0.8;
   background: #f8fafc;
@@ -406,7 +421,7 @@
   transform: rotate(5deg);
 }
 
-/* Quiz Type Cards Enhancements */
+/* Quiz Type Cards */
 .game-card[href*="type=standard"] {
   background: linear-gradient(to right bottom, #f0f9ff, #e0f2fe);
   border-left: 4px solid #0ea5e9;
@@ -425,6 +440,135 @@
 .game-card[href*="type=marathon"] {
   background: linear-gradient(to right bottom, #eff6ff, #dbeafe);
   border-left: 4px solid #2563eb;
+}
+
+/* Featured Game Card - Enhanced Trivia */
+.game-card.featured-game {
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  transform: scale(1.02);
+  position: relative;
+  box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.5);
+  grid-column: 1 / -1; /* Make it span full width in first row */
+}
+
+.game-card.featured-game:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 12px 25px -4px rgba(59, 130, 246, 0.6);
+}
+
+/* New Feature Badge */
+.new-feature-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transform: rotate(10deg);
+  z-index: 2;
+}
+
+/* Make featured game title stand out */
+.featured-game h3 {
+  color: #1d4ed8;
+  font-size: 1.5rem;
+}
+
+/* Question Types Preview */
+.question-types-preview {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.question-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: white;
+  border-radius: 50%;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.question-type-icon:hover {
+  transform: scale(1.2);
+}
+
+/* Pulse animation for featured game */
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.game-card.featured-game {
+  animation: pulse-border 2s infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .games-container h2 {
+    font-size: 2rem;
+  }
+  
+  .game-category-title {
+    font-size: 1.5rem;
+  }
+  
+  .game-category-items {
+    grid-template-columns: 1fr;
+  }
+  
+  .game-card.featured-game {
+    transform: scale(1);
+  }
+  
+  .game-card.featured-game:hover {
+    transform: translateY(-4px);
+  }
+  
+  .new-feature-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+  }
+  
+  .featured-game h3 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .games-container {
+    padding: 1rem;
+  }
+  
+  .games-container h2 {
+    font-size: 1.7rem;
+  }
+  
+  .game-category-title {
+    font-size: 1.3rem;
+  }
+  
+  .question-types-preview {
+    justify-content: center;
+  }
 }
 
 /* Responsive Design */

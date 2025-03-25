@@ -326,22 +326,21 @@ app.post("/progress/game", async (req, res) => {
 // Get trivia questions with optional difficulty and category filters
 app.get("/trivia/questions", async (req, res) => {
   try {
-    const { difficulty, category, limit = 5 } = req.query;
+    const { difficulty, category, limit = 5, types } = req.query;
     
-    let questions;
-    if (difficulty && category && category !== "all") {
-      // Both difficulty and category filters
-      questions = await TriviaQuestion.getByDifficultyAndCategory(difficulty, category, Number(limit));
-    } else if (difficulty) {
-      // Only difficulty filter
-      questions = await TriviaQuestion.getByDifficulty(difficulty, Number(limit));
-    } else if (category && category !== "all") {
-      // Only category filter
-      questions = await TriviaQuestion.getByCategory(category, Number(limit));
-    } else {
-      // No filters, get random questions
-      questions = await TriviaQuestion.getRandom(Number(limit));
+    // Parse the types parameter if provided
+    let questionTypes = null;
+    if (types) {
+      questionTypes = types.split(',').filter(type => type.trim() !== '');
     }
+    
+    // Use the updated method that supports question types
+    const questions = await TriviaQuestion.getByFilters(
+      difficulty, 
+      category, 
+      questionTypes,
+      Number(limit)
+    );
     
     res.json(questions);
   } catch (error) {

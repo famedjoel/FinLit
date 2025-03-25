@@ -1,10 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-useless-catch */
+/* eslint-disable no-case-declarations */
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+// src/pages/FinancialTrivia.jsx
+import { useState, useEffect, useRef } from "react";
 import "../styles/FinancialTrivia.css";
-// Import quiz types specific CSS
 import "../styles/FinancialTriviaQuizTypes.css";
-import { useRef } from "react";
+import "../styles/QuestionTypes.css"; // Import the new question type styles
 
 const FinancialTrivia = () => {
   // State variables
@@ -30,9 +33,10 @@ const FinancialTrivia = () => {
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [questionCount, setQuestionCount] = useState(5);
   const [showResultsReview, setShowResultsReview] = useState(false);
-const [userAnswers, setUserAnswers] = useState([]);
-const [showCertificate, setShowCertificate] = useState(false);
-const resultsRef = useRef(null);
+  const [userAnswers, setUserAnswers] = useState([]);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const resultsRef = useRef(null);
   
   // Quiz type options
   const [quizType, setQuizType] = useState("standard");
@@ -41,6 +45,15 @@ const resultsRef = useRef(null);
   const [progressiveDifficulty, setProgressiveDifficulty] = useState("easy");
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
   const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
+
+  // New: Selected question types
+  const [selectedQuestionTypes, setSelectedQuestionTypes] = useState({
+    'multiple-choice': true,
+    'true-false': true,
+    'fill-blank': true,
+    'matching': true,
+    'calculation': true
+  });
 
   // Question count options
   const questionCountOptions = [
@@ -88,6 +101,15 @@ const resultsRef = useRef(null);
     }
   ];
 
+  // Question type options
+  const questionTypeOptions = [
+    { value: "multiple-choice", label: "Multiple Choice", icon: "🔠" },
+    { value: "true-false", label: "True/False", icon: "✓✗" },
+    { value: "fill-blank", label: "Fill in the Blank", icon: "📝" },
+    { value: "matching", label: "Matching", icon: "🔄" },
+    { value: "calculation", label: "Financial Calculations", icon: "🧮" }
+  ];
+
   // Financial categories
   const financialCategories = [
     { id: "all", name: "All Topics", icon: "📚" },
@@ -101,7 +123,7 @@ const resultsRef = useRef(null);
     { id: "debt", name: "Debt Management", icon: "⚖️" }
   ];
 
-  // Get the current hostname for API calls (works on all devices)
+  // Get the current hostname for API calls
   const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
   // Load user data if available
@@ -159,7 +181,7 @@ const resultsRef = useRef(null);
     }
   };
 
-  // Modified function to fetch questions based on quiz type
+  // Fetch questions based on quiz type
   const fetchQuestions = async () => {
     try {
       setLoading(true);
@@ -191,107 +213,199 @@ const resultsRef = useRef(null);
     }
   };
 
-  // Fetch standard quiz questions
+  // Fetch standard quiz questions with question types filter
   const fetchStandardQuestions = async () => {
-    let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=${questionCount}`;
-    
-    if (selectedCategory !== "all") {
-      url += `&category=${selectedCategory}`;
+    try {
+      // Get the selected question types
+      const enabledTypes = Object.entries(selectedQuestionTypes)
+        .filter(([_, enabled]) => enabled)
+        .map(([type]) => type);
+      
+      if (enabledTypes.length === 0) {
+        throw new Error("Please select at least one question type");
+      }
+      
+      let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=${questionCount}`;
+      
+      if (selectedCategory !== "all") {
+        url += `&category=${selectedCategory}`;
+      }
+      
+      // Add question types as a parameter
+      url += `&types=${enabledTypes.join(',')}`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch questions");
+      }
+      
+      const data = await response.json();
+      
+      if (data.length === 0) {
+        throw new Error("No questions found for this combination");
+      }
+      
+      setQuestions(data);
+    } catch (error) {
+      throw error;
     }
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error("Failed to fetch questions");
-    }
-    
-    const data = await response.json();
-    
-    if (data.length === 0) {
-      throw new Error("No questions found for this combination of difficulty and category");
-    }
-    
-    setQuestions(data);
   };
 
   // Fetch daily challenge questions
   const fetchDailyChallenge = async () => {
-    // Generate a seed based on the current date
-    const today = new Date();
-    const dateSeed = `${today.getFullYear()}${today.getMonth()}${today.getDate()}`;
-    
-    // Fetch mixed difficulty questions for daily challenge
-    const url = `${API_BASE_URL}/trivia/questions?limit=5&dateSeed=${dateSeed}`;
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error("Failed to fetch daily challenge");
+    try {
+      // Generate a seed based on the current date
+      const today = new Date();
+      const dateSeed = `${today.getFullYear()}${today.getMonth()}${today.getDate()}`;
+      
+      let url = `${API_BASE_URL}/trivia/questions?limit=5&dateSeed=${dateSeed}`;
+      
+      // Get the selected question types
+      const enabledTypes = Object.entries(selectedQuestionTypes)
+        .filter(([_, enabled]) => enabled)
+        .map(([type]) => type);
+      
+      if (enabledTypes.length > 0) {
+        url += `&types=${enabledTypes.join(',')}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch daily challenge");
+      }
+      
+      const data = await response.json();
+      
+      if (data.length === 0) {
+        throw new Error("No questions available for daily challenge");
+      }
+      
+      setQuestions(data);
+    } catch (error) {
+      throw error;
     }
-    
-    const data = await response.json();
-    
-    if (data.length === 0) {
-      throw new Error("No questions available for daily challenge");
-    }
-    
-    setQuestions(data);
   };
 
   // Fetch progressive difficulty questions
   const fetchProgressiveQuestions = async () => {
-    // Fetch questions for all difficulty levels
-    const easyUrl = `${API_BASE_URL}/trivia/questions?difficulty=easy&limit=5`;
-    const mediumUrl = `${API_BASE_URL}/trivia/questions?difficulty=medium&limit=5`;
-    const hardUrl = `${API_BASE_URL}/trivia/questions?difficulty=hard&limit=5`;
-    
-    const [easyResponse, mediumResponse, hardResponse] = await Promise.all([
-      fetch(easyUrl),
-      fetch(mediumUrl),
-      fetch(hardUrl)
-    ]);
-    
-    if (!easyResponse.ok || !mediumResponse.ok || !hardResponse.ok) {
-      throw new Error("Failed to fetch questions for progressive mode");
+    try {
+      // Get the selected question types
+      const enabledTypes = Object.entries(selectedQuestionTypes)
+        .filter(([_, enabled]) => enabled)
+        .map(([type]) => type);
+      
+      if (enabledTypes.length === 0) {
+        throw new Error("Please select at least one question type");
+      }
+      
+      // Fetch questions for all difficulty levels
+      const easyUrl = `${API_BASE_URL}/trivia/questions?difficulty=easy&limit=5&types=${enabledTypes.join(',')}`;
+      const mediumUrl = `${API_BASE_URL}/trivia/questions?difficulty=medium&limit=5&types=${enabledTypes.join(',')}`;
+      const hardUrl = `${API_BASE_URL}/trivia/questions?difficulty=hard&limit=5&types=${enabledTypes.join(',')}`;
+      
+      const [easyResponse, mediumResponse, hardResponse] = await Promise.all([
+        fetch(easyUrl),
+        fetch(mediumUrl),
+        fetch(hardUrl)
+      ]);
+      
+      if (!easyResponse.ok || !mediumResponse.ok || !hardResponse.ok) {
+        throw new Error("Failed to fetch questions for progressive mode");
+      }
+      
+      const easyData = await easyResponse.json();
+      const mediumData = await mediumResponse.json();
+      const hardData = await hardResponse.json();
+      
+      // Combine all questions
+      const combinedQuestions = [...easyData, ...mediumData, ...hardData];
+      
+      if (combinedQuestions.length === 0) {
+        throw new Error("No questions available for progressive difficulty");
+      }
+      
+      setQuestions(combinedQuestions);
+    } catch (error) {
+      throw error;
     }
-    
-    const easyData = await easyResponse.json();
-    const mediumData = await mediumResponse.json();
-    const hardData = await hardResponse.json();
-    
-    // Combine all questions
-    const combinedQuestions = [...easyData, ...mediumData, ...hardData];
-    
-    if (combinedQuestions.length === 0) {
-      throw new Error("No questions available for progressive difficulty");
-    }
-    
-    setQuestions(combinedQuestions);
   };
 
   // Fetch marathon questions
   const fetchMarathonQuestions = async () => {
-    // Start with easy questions for marathon mode
-    const url = `${API_BASE_URL}/trivia/questions?difficulty=easy&limit=20`;
-    
-    if (selectedCategory !== "all") {
-      // eslint-disable-next-line no-const-assign
-      url += `&category=${selectedCategory}`;
+    try {
+      // Get the selected question types
+      const enabledTypes = Object.entries(selectedQuestionTypes)
+        .filter(([_, enabled]) => enabled)
+        .map(([type]) => type);
+      
+      if (enabledTypes.length === 0) {
+        throw new Error("Please select at least one question type");
+      }
+      
+      // Start with easy questions for marathon mode
+      let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=20&types=${enabledTypes.join(',')}`;
+      
+      if (selectedCategory !== "all") {
+        url += `&category=${selectedCategory}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch marathon questions");
+      }
+      
+      const data = await response.json();
+      
+      if (data.length === 0) {
+        throw new Error("No questions available for marathon mode");
+      }
+      
+      setQuestions(data);
+    } catch (error) {
+      throw error;
     }
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error("Failed to fetch marathon questions");
+  };
+
+  // Fetch more questions for marathon mode
+  const fetchMoreMarathonQuestions = async () => {
+    try {
+      // Determine difficulty based on streak
+      let marathonDifficulty = "easy";
+      if (currentStreak >= 20) {
+        marathonDifficulty = "hard";
+      } else if (currentStreak >= 10) {
+        marathonDifficulty = "medium";
+      }
+      
+      // Get the selected question types
+      const enabledTypes = Object.entries(selectedQuestionTypes)
+        .filter(([_, enabled]) => enabled)
+        .map(([type]) => type);
+      
+      let url = `${API_BASE_URL}/trivia/questions?difficulty=${marathonDifficulty}&limit=10&types=${enabledTypes.join(',')}`;
+      
+      if (selectedCategory !== "all") {
+        url += `&category=${selectedCategory}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        console.error("Failed to fetch more marathon questions");
+        return;
+      }
+      
+      const newQuestions = await response.json();
+      
+      if (newQuestions.length > 0) {
+        setQuestions(prev => [...prev, ...newQuestions]);
+      }
+    } catch (error) {
+      console.error("Error fetching more marathon questions:", error);
     }
-    
-    const data = await response.json();
-    
-    if (data.length === 0) {
-      throw new Error("No questions available for marathon mode");
-    }
-    
-    setQuestions(data);
   };
   
   // Load questions when difficulty, category, or quiz type changes
@@ -299,7 +413,7 @@ const resultsRef = useRef(null);
     if (!quizStarted) {
       fetchQuestions();
     }
-  }, [difficulty, selectedCategory, questionCount, quizType]);
+  }, [difficulty, selectedCategory, questionCount, quizType, selectedQuestionTypes]);
 
   // Show notification function
   const showNotification = (message, type) => {
@@ -322,14 +436,17 @@ const resultsRef = useRef(null);
         body: JSON.stringify({
           userId: user.id,
           gameId: "financial-trivia",
-          title: `Financial Trivia - ${quizTypeOptions.find(t => t.value === quizType).label}`,
+          title: `Financial Trivia - ${quizTypeOptions.find(t => t.value === quizType)?.label}`,
           score: finalScore,
           metadata: JSON.stringify({
             difficulty,
             category: selectedCategory,
             quizType,
             questionCount,
-            topStreak: quizType === "marathon" ? topStreak : undefined
+            topStreak: quizType === "marathon" ? topStreak : undefined,
+            questionTypes: Object.entries(selectedQuestionTypes)
+              .filter(([_, enabled]) => enabled)
+              .map(([type]) => type)
           })
         }),
       });
@@ -375,6 +492,8 @@ const resultsRef = useRef(null);
     setCurrentStreak(0);
     setTotalQuestionsAnswered(0);
     setProgressiveDifficulty("easy");
+    setUserAnswers([]);
+    setShowHint(false);
     
     // Shuffle questions for standard and daily modes
     if (quizType === "standard" || quizType === "daily") {
@@ -392,7 +511,37 @@ const resultsRef = useRef(null);
     }
   };
 
-  // Modified next question function for quiz types
+  // Check if answer is correct based on question type
+  const checkAnswer = () => {
+    if (selectedAnswer === null) return false;
+    
+    const currentQ = questions[currentQuestion];
+    const questionType = currentQ.type || "multiple-choice";
+    
+    switch (questionType) {
+      case 'multiple-choice':
+      case 'true-false':
+        return selectedAnswer === currentQ.correctAnswer;
+        
+      case 'fill-blank':
+        // Case insensitive comparison
+        return selectedAnswer.toLowerCase().trim() === currentQ.correctAnswer.toLowerCase().trim();
+        
+      case 'matching':
+        // Check if all matches are correct
+        return JSON.stringify(selectedAnswer) === JSON.stringify(currentQ.correctMatches);
+        
+      case 'calculation':
+        // Allow small tolerance for floating point errors
+        const tolerance = 0.01;
+        return Math.abs(parseFloat(selectedAnswer) - currentQ.correctAnswer) <= tolerance;
+        
+      default:
+        return selectedAnswer === currentQ.correctAnswer;
+    }
+  };
+
+  // Go to next question
   const goToNextQuestion = () => {
     setTotalQuestionsAnswered(prev => prev + 1);
     
@@ -416,6 +565,7 @@ const resultsRef = useRef(null);
       setSelectedAnswer(null);
       setAnswerSubmitted(false);
       setTimeLeft(timerSetting);
+      setShowHint(false);
       
       // For progressive mode, check if we should increase difficulty
       if (quizType === "progressive") {
@@ -451,35 +601,6 @@ const resultsRef = useRef(null);
     }
   };
 
-  // Fetch more questions for marathon mode
-  const fetchMoreMarathonQuestions = async () => {
-    try {
-      // Determine difficulty based on streak
-      let marathonDifficulty = "easy";
-      if (currentStreak >= 20) {
-        marathonDifficulty = "hard";
-      } else if (currentStreak >= 10) {
-        marathonDifficulty = "medium";
-      }
-      
-      const url = `${API_BASE_URL}/trivia/questions?difficulty=${marathonDifficulty}&limit=10`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        console.error("Failed to fetch more marathon questions");
-        return;
-      }
-      
-      const newQuestions = await response.json();
-      
-      if (newQuestions.length > 0) {
-        setQuestions(prev => [...prev, ...newQuestions]);
-      }
-    } catch (error) {
-      console.error("Error fetching more marathon questions:", error);
-    }
-  };
-
   // Handle answer submission
   const handleAnswerSubmit = () => {
     if (selectedAnswer === null) {
@@ -488,21 +609,24 @@ const resultsRef = useRef(null);
     }
     
     setAnswerSubmitted(true);
-    const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer;
+    const isCorrect = checkAnswer();
     setAnswerIsCorrect(isCorrect);
 
     // Save the user's answer for this question
-  setUserAnswers(prev => [
-    ...prev, 
-    {
-      question: questions[currentQuestion].question,
-      userAnswer: selectedAnswer,
-      correctAnswer: questions[currentQuestion].correctAnswer,
-      options: questions[currentQuestion].options,
-      explanation: questions[currentQuestion].explanation,
-      isCorrect: isCorrect
-    }
-  ]);
+    setUserAnswers(prev => [
+      ...prev, 
+      {
+        question: questions[currentQuestion].question,
+        userAnswer: selectedAnswer,
+        correctAnswer: questions[currentQuestion].correctAnswer,
+        questionType: questions[currentQuestion].type || "multiple-choice",
+        options: questions[currentQuestion].options,
+        terms: questions[currentQuestion].terms,
+        definitions: questions[currentQuestion].definitions,
+        explanation: questions[currentQuestion].explanation,
+        isCorrect: isCorrect
+      }
+    ]);
     
     if (isCorrect) {
       // Calculate points based on difficulty and quiz type
@@ -518,9 +642,25 @@ const resultsRef = useRef(null);
                           questions[currentQuestion].difficulty === "medium" ? 20 : 30;
       }
       
+      // Add bonus points for harder question types
+      let questionTypeBonus = 0;
+      switch (questions[currentQuestion].type) {
+        case 'matching':
+          questionTypeBonus = 10;
+          break;
+        case 'calculation':
+          questionTypeBonus = 15;
+          break;
+        case 'fill-blank':
+          questionTypeBonus = 5;
+          break;
+        default:
+          questionTypeBonus = 0;
+      }
+      
       // Add time bonus for timed quizzes
       const timeBonus = timerEnabled && timerSetting > 0 ? Math.round(timeLeft * 0.2) : 0;
-      const totalPoints = difficultyPoints + timeBonus;
+      const totalPoints = difficultyPoints + questionTypeBonus + timeBonus;
       
       setScore(prev => prev + totalPoints);
       
@@ -533,7 +673,11 @@ const resultsRef = useRef(null);
         }
       }
       
-      showNotification(`✅ Correct! +${totalPoints} points${timeBonus > 0 ? ` (includes ${timeBonus} time bonus)` : ''}`, "success");
+      let pointsMessage = `✅ Correct! +${totalPoints} points`;
+      if (timeBonus > 0) pointsMessage += ` (includes ${timeBonus} time bonus)`;
+      if (questionTypeBonus > 0) pointsMessage += ` (includes ${questionTypeBonus} question type bonus)`;
+      
+      showNotification(pointsMessage, "success");
     } else {
       // Reset streak for marathon mode on wrong answer
       if (quizType === "marathon") {
@@ -551,18 +695,19 @@ const resultsRef = useRef(null);
     setAnswerSubmitted(true);
     setAnswerIsCorrect(false);
 
-     // Save the time-up as a skipped answer
-  setUserAnswers(prev => [
-    ...prev, 
-    {
-      question: questions[currentQuestion].question,
-      userAnswer: null, // No answer selected
-      correctAnswer: questions[currentQuestion].correctAnswer,
-      options: questions[currentQuestion].options,
-      explanation: questions[currentQuestion].explanation,
-      isCorrect: false
-    }
-  ]);
+    // Save the time-up as a skipped answer
+    setUserAnswers(prev => [
+      ...prev, 
+      {
+        question: questions[currentQuestion].question,
+        userAnswer: null, // No answer selected
+        correctAnswer: questions[currentQuestion].correctAnswer,
+        questionType: questions[currentQuestion].type || "multiple-choice",
+        options: questions[currentQuestion].options,
+        explanation: questions[currentQuestion].explanation,
+        isCorrect: false
+      }
+    ]);
     
     // Reset streak for marathon mode on time up
     if (quizType === "marathon") {
@@ -576,10 +721,15 @@ const resultsRef = useRef(null);
   };
 
   // Handle answer selection
-  const handleAnswerSelect = (optionIndex) => {
+  const handleAnswerSelect = (answer) => {
     if (!answerSubmitted) {
-      setSelectedAnswer(optionIndex);
+      setSelectedAnswer(answer);
     }
+  };
+
+  // Toggle hint visibility for calculation questions
+  const toggleHint = () => {
+    setShowHint(!showHint);
   };
 
   // Reset the quiz
@@ -598,48 +748,96 @@ const resultsRef = useRef(null);
     setProgressiveDifficulty("easy");
     fetchQuestions();
     setUserAnswers([]);
-  setShowResultsReview(false);
+    setShowResultsReview(false);
+    setShowHint(false);
   };
 
-// Function to export the quiz results as a text file
-const exportResultsAsText = () => {
-  // Create a text representation of the results
-  let resultsText = `Financial Trivia Quiz Results\n`;
-  resultsText += `Quiz Type: ${quizTypeOptions.find(t => t.value === quizType)?.label}\n`;
-  resultsText += `Final Score: ${score}\n`;
-  resultsText += `Correct Answers: ${userAnswers.filter(a => a.isCorrect).length} out of ${userAnswers.length}\n\n`;
-  
-  // Add each question and answer
-  userAnswers.forEach((answer, index) => {
-    resultsText += `Question ${index + 1}: ${answer.question}\n`;
-    resultsText += `Your Answer: ${answer.userAnswer !== null ? answer.options[answer.userAnswer] : "Time's up - No answer"}\n`;
-    resultsText += `Correct Answer: ${answer.options[answer.correctAnswer]}\n`;
-    resultsText += `Result: ${answer.isCorrect ? "Correct" : "Incorrect"}\n`;
-    resultsText += `Explanation: ${answer.explanation}\n\n`;
-  });
-  
-  // Create a download link
-  const element = document.createElement("a");
-  const file = new Blob([resultsText], {type: 'text/plain'});
-  element.href = URL.createObjectURL(file);
-  element.download = "financial_trivia_results.txt";
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
-};
+  // Export results as text file
+  const exportResultsAsText = () => {
+    // Create a text representation of the results
+    let resultsText = `Financial Trivia Quiz Results\n`;
+    resultsText += `Quiz Type: ${quizTypeOptions.find(t => t.value === quizType)?.label}\n`;
+    resultsText += `Final Score: ${score}\n`;
+    resultsText += `Correct Answers: ${userAnswers.filter(a => a.isCorrect).length} out of ${userAnswers.length}\n\n`;
+    
+    // Add each question and answer
+    userAnswers.forEach((answer, index) => {
+      resultsText += `Question ${index + 1} (${answer.questionType}): ${answer.question}\n`;
+      
+      switch (answer.questionType) {
+        case 'multiple-choice':
+        case 'true-false':
+          resultsText += `Your Answer: ${answer.userAnswer !== null ? answer.options[answer.userAnswer] : "Time's up - No answer"}\n`;
+          resultsText += `Correct Answer: ${answer.options[answer.correctAnswer]}\n`;
+          break;
+          
+        case 'fill-blank':
+          resultsText += `Your Answer: ${answer.userAnswer !== null ? answer.userAnswer : "Time's up - No answer"}\n`;
+          resultsText += `Correct Answer: ${answer.correctAnswer}\n`;
+          break;
+          
+        case 'matching':
+          resultsText += `Your Matches: ${answer.userAnswer !== null ? JSON.stringify(answer.userAnswer) : "Time's up - No answer"}\n`;
+          resultsText += `Correct Matches: ${JSON.stringify(answer.correctAnswer)}\n`;
+          break;
+          
+        case 'calculation':
+          resultsText += `Your Answer: ${answer.userAnswer !== null ? answer.userAnswer : "Time's up - No answer"}\n`;
+          resultsText += `Correct Answer: ${answer.correctAnswer}\n`;
+          break;
+          
+        default:
+          resultsText += `Your Answer: ${answer.userAnswer !== null ? answer.userAnswer : "Time's up - No answer"}\n`;
+          resultsText += `Correct Answer: ${answer.correctAnswer}\n`;
+      }
+      
+      resultsText += `Result: ${answer.isCorrect ? "Correct" : "Incorrect"}\n`;
+      resultsText += `Explanation: ${answer.explanation}\n\n`;
+    });
+    
+    // Create a download link
+    const element = document.createElement("a");
+    const file = new Blob([resultsText], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = "financial_trivia_results.txt";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
-// Add a function to generate a certificate if the user performed well
-const generateCertificate = () => {
-  const correctPercentage = (userAnswers.filter(a => a.isCorrect).length / userAnswers.length) * 100;
-  
-  // Only generate a certificate if the user got at least 80% correct
-  if (correctPercentage < 80) {
-    showNotification("Score at least 80% to earn a certificate!", "warning");
-    return;
-  }
-  
-  setShowCertificate(true);
-};
+  // Generate certificate
+  const generateCertificate = () => {
+    const correctPercentage = (userAnswers.filter(a => a.isCorrect).length / userAnswers.length) * 100;
+    
+    // Only generate a certificate if the user got at least 80% correct
+    if (correctPercentage < 80) {
+      showNotification("Score at least 80% to earn a certificate!", "warning");
+      return;
+    }
+    
+    setShowCertificate(true);
+  };
+
+  // Toggle question type
+  const toggleQuestionType = (type) => {
+    setSelectedQuestionTypes(prev => {
+      // Make sure at least one question type is selected
+      const otherTypesSelected = Object.entries(prev)
+        .filter(([key]) => key !== type)
+        .some(([_, enabled]) => enabled);
+      
+      // If trying to unselect the last selected type, prevent it
+      if (prev[type] && !otherTypesSelected) {
+        showNotification("At least one question type must be selected", "warning");
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        [type]: !prev[type]
+      };
+    });
+  };
 
   // Change difficulty level
   const changeDifficulty = (level) => {
@@ -711,6 +909,252 @@ const generateCertificate = () => {
     return category;
   };
 
+  // Render different question types
+  const renderQuestion = () => {
+    if (!questions[currentQuestion]) return null;
+    
+    const currentQ = questions[currentQuestion];
+    const questionType = currentQ.type || "multiple-choice";
+    
+    switch (questionType) {
+      case 'multiple-choice':
+        return (
+          <div className="question-container">
+            <h3 className="question">{currentQ.question}</h3>
+            <div className="options-container">
+              {currentQ.options.map((option, index) => (
+                <div 
+                  key={index} 
+                  className={`
+                    option 
+                    ${selectedAnswer === index ? "selected" : ""} 
+                    ${answerSubmitted && index === currentQ.correctAnswer ? "correct" : ""}
+                    ${answerSubmitted && selectedAnswer === index && index !== currentQ.correctAnswer ? "incorrect" : ""}
+                  `}
+                  onClick={() => handleAnswerSelect(index)}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+        
+      case 'true-false':
+        return (
+          <div className="question-container">
+            <h3 className="question">{currentQ.question}</h3>
+            <div className="options-container true-false-options">
+              {["True", "False"].map((option, index) => (
+                <div 
+                  key={index} 
+                  className={`
+                    option true-false-option 
+                    ${selectedAnswer === index ? "selected" : ""} 
+                    ${answerSubmitted && index === currentQ.correctAnswer ? "correct" : ""}
+                    ${answerSubmitted && selectedAnswer === index && index !== currentQ.correctAnswer ? "incorrect" : ""}
+                  `}
+                  onClick={() => handleAnswerSelect(index)}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+        
+      case 'fill-blank':
+        // Split the question at the blank marker ____ or [blank]
+        const parts = currentQ.question.split(/____|\[blank\]/i);
+        
+        return (
+          <div className="question-container">
+            <div className="question fill-blank-question">
+              {parts[0]}
+              <input 
+                type="text" 
+                value={selectedAnswer || ""}
+                onChange={(e) => handleAnswerSelect(e.target.value)}
+                className={`
+                  blank-input 
+                  ${answerSubmitted && checkAnswer() ? "correct-input" : ""}
+                  ${answerSubmitted && !checkAnswer() ? "incorrect-input" : ""}
+                `}
+                disabled={answerSubmitted}
+                placeholder="Enter your answer"
+              />
+              {parts[1] || ""}
+            </div>
+            
+            {answerSubmitted && !checkAnswer() && (
+              <div className="correct-answer-display">
+                <p>Correct answer: <strong>{currentQ.correctAnswer}</strong></p>
+              </div>
+            )}
+          </div>
+        );
+        
+      case 'matching':
+        const [matchingState, setMatchingState] = useState({
+          selectedTerm: null,
+          matches: Array(currentQ.terms.length).fill(null)
+        });
+        
+        const handleTermClick = (index) => {
+          if (answerSubmitted) return;
+          setMatchingState({...matchingState, selectedTerm: index});
+        };
+        
+        const handleDefinitionClick = (index) => {
+          if (answerSubmitted || matchingState.selectedTerm === null) return;
+          
+          const newMatches = [...matchingState.matches];
+          newMatches[matchingState.selectedTerm] = index;
+          
+          setMatchingState({
+            selectedTerm: null,
+            matches: newMatches
+          });
+          
+          handleAnswerSelect(newMatches);
+        };
+        
+        return (
+          <div className="question-container">
+            <h3 className="question">{currentQ.question}</h3>
+            
+            <div className="matching-container">
+              <div className="terms-column">
+                <h4>Terms</h4>
+                {currentQ.terms.map((term, index) => (
+                  <div 
+                    key={index} 
+                    className={`
+                      matching-item term-item 
+                      ${matchingState.selectedTerm === index ? "selected" : ""}
+                      ${answerSubmitted && currentQ.correctMatches[index] === matchingState.matches[index] ? "correct-match" : ""}
+                      ${answerSubmitted && currentQ.correctMatches[index] !== matchingState.matches[index] ? "incorrect-match" : ""}
+                    `}
+                    onClick={() => handleTermClick(index)}
+                  >
+                    {term}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="definitions-column">
+                <h4>Definitions</h4>
+                {currentQ.definitions.map((definition, index) => (
+                  <div 
+                    key={index} 
+                    className={`
+                      matching-item definition-item
+                      ${answerSubmitted && matchingState.matches.includes(index) && 
+                        currentQ.correctMatches[matchingState.matches.indexOf(index)] === index ? "correct-match" : ""}
+                      ${answerSubmitted && matchingState.matches.includes(index) && 
+                        currentQ.correctMatches[matchingState.matches.indexOf(index)] !== index ? "incorrect-match" : ""}
+                    `}
+                    onClick={() => handleDefinitionClick(index)}
+                  >
+                    {definition}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {answerSubmitted && (
+              <div className="correct-matches-display">
+                <h4>Correct Matches:</h4>
+                <ul>
+                  {currentQ.terms.map((term, index) => (
+                    <li key={index}>
+                      <strong>{term}</strong>: {currentQ.definitions[currentQ.correctMatches[index]]}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+        
+      case 'calculation':
+        return (
+          <div className="question-container">
+            <h3 className="question">{currentQ.question}</h3>
+            
+            <div className="calculation-input-container">
+              <input 
+                type="number" 
+                step="0.01"
+                value={selectedAnswer || ""}
+                onChange={(e) => handleAnswerSelect(parseFloat(e.target.value))}
+                className={`
+                  calculation-input 
+                  ${answerSubmitted && checkAnswer() ? "correct-input" : ""}
+                  ${answerSubmitted && !checkAnswer() ? "incorrect-input" : ""}
+                `}
+                disabled={answerSubmitted}
+                placeholder="Enter your answer"
+              />
+            </div>
+            
+            <button 
+              onClick={toggleHint} 
+              className="hint-button"
+              disabled={answerSubmitted}
+            >
+              {showHint ? "Hide Hint" : "Show Hint"}
+            </button>
+            
+            {showHint && (
+              <div className="hint-container">
+                <p><strong>Hint:</strong> {currentQ.hint}</p>
+                {currentQ.formula && (
+                  <div className="formula-display">
+                    <p><strong>Formula:</strong> {currentQ.formula}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {answerSubmitted && (
+              <div className={`answer-feedback ${checkAnswer() ? "correct-feedback" : "incorrect-feedback"}`}>
+                <p>
+                  {checkAnswer() 
+                    ? "Correct!" 
+                    : `Incorrect. The correct answer is ${currentQ.correctAnswer}.`}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+        
+      default:
+        // Fall back to multiple choice if type is unknown
+        return (
+          <div className="question-container">
+            <h3 className="question">{currentQ.question}</h3>
+            <div className="options-container">
+              {currentQ.options.map((option, index) => (
+                <div 
+                  key={index} 
+                  className={`
+                    option 
+                    ${selectedAnswer === index ? "selected" : ""} 
+                    ${answerSubmitted && index === currentQ.correctAnswer ? "correct" : ""}
+                    ${answerSubmitted && selectedAnswer === index && index !== currentQ.correctAnswer ? "incorrect" : ""}
+                  `}
+                  onClick={() => handleAnswerSelect(index)}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="financial-trivia-container">
       <h2>📘 Financial Trivia Challenge</h2>
@@ -748,6 +1192,26 @@ const generateCertificate = () => {
             </div>
             <p className="quiz-type-description">
               {quizTypeOptions.find(option => option.value === quizType)?.description}
+            </p>
+          </div>
+
+          {/* NEW: Question Types Selection */}
+          <div className="selection-section question-types-selector">
+            <h3>Select Question Types:</h3>
+            <div className="question-type-options">
+              {questionTypeOptions.map((option) => (
+                <button 
+                  key={option.value}
+                  className={`quiz-type-btn ${selectedQuestionTypes[option.value] ? "active" : ""}`}
+                  onClick={() => toggleQuestionType(option.value)}
+                >
+                  <span className="quiz-type-icon">{option.icon}</span>
+                  <span className="quiz-type-label">{option.label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="quiz-type-description">
+              Mix different question types to test your knowledge in various ways.
             </p>
           </div>
 
@@ -942,16 +1406,12 @@ const generateCertificate = () => {
               <span className="quiz-difficulty">
                 {quizType === "progressive" 
                   ? progressiveDifficulty.charAt(0).toUpperCase() + progressiveDifficulty.slice(1)
-                  : questions[currentQuestion].difficulty.charAt(0).toUpperCase() + questions[currentQuestion].difficulty.slice(1)}
+                  : (questions[currentQuestion].difficulty || 'Medium').charAt(0).toUpperCase() + 
+                    (questions[currentQuestion].difficulty || 'Medium').slice(1)}
               </span>
-              <span className="quiz-category">
-                {questions[currentQuestion].category ? 
-                  getCategoryInfo(questions[currentQuestion].category).icon : 
-                  getCategoryInfo("all").icon}
+              <span className="quiz-type-label">
+                {questionTypeOptions.find(t => t.value === questions[currentQuestion].type)?.icon || "🔠"}
               </span>
-            </div>
-            <div className="quiz-type-indicator">
-              {quizTypeOptions.find(t => t.value === quizType)?.icon}
             </div>
             {timerEnabled && timerSetting > 0 && (
               <div className={`quiz-timer ${timeLeft < 10 ? "running-out" : ""}`}>
@@ -961,24 +1421,8 @@ const generateCertificate = () => {
           </div>
           
           <div className="question-container">
-            <h3 className="question">{questions[currentQuestion].question}</h3>
-            
-            <div className="options-container">
-              {questions[currentQuestion].options.map((option, index) => (
-                <div 
-                  key={index} 
-                  className={`
-                    option 
-                    ${selectedAnswer === index ? "selected" : ""} 
-                    ${answerSubmitted && index === questions[currentQuestion].correctAnswer ? "correct" : ""}
-                    ${answerSubmitted && selectedAnswer === index && index !== questions[currentQuestion].correctAnswer ? "incorrect" : ""}
-                  `}
-                  onClick={() => handleAnswerSelect(index)}
-                >
-                  {option}
-                </div>
-              ))}
-            </div>
+            {/* Render the current question based on its type */}
+            {renderQuestion()}
             
             {answerSubmitted && (
               <div className="explanation-box">
@@ -1022,6 +1466,7 @@ const generateCertificate = () => {
           <div className="final-score">
             <p>Your score: <span>{score}</span></p>
             <p>Quiz type: <span>{quizTypeOptions.find(t => t.value === quizType)?.label}</span></p>
+            <p>Correct answers: <span>{userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length}</span></p>
             
             {quizType === "standard" && (
               <>
@@ -1059,125 +1504,106 @@ const generateCertificate = () => {
       )}
 
       {/* Quiz Results Review */}
-{showScore && (
-  <div className="result-actions">
-    <button 
-      onClick={() => setShowResultsReview(!showResultsReview)} 
-      className="show-results-btn"
-    >
-      {showResultsReview ? "Hide Details" : "Show Results Details"}
-    </button>
-  </div>
-)}
+      {showScore && (
+        <div className="result-actions">
+          <button 
+            onClick={() => setShowResultsReview(!showResultsReview)} 
+            className="show-results-btn"
+          >
+            {showResultsReview ? "Hide Details" : "Show Results Details"}
+          </button>
+        </div>
+      )}
 
-{showResultsReview && (
-  <div className="results-review">
-    <h3>Question Review</h3>
-    <p className="results-summary">
-      You answered {userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length} questions correctly.
-    </p>
-    
-    <div className="question-review-list">
-      {userAnswers.map((answer, index) => (
-        <div 
-          key={index} 
-          className={`question-review-item ${answer.isCorrect ? "correct" : "incorrect"}`}
-        >
-          <div className="question-review-header">
-            <span className="question-number">Question {index + 1}</span>
-            <span className={`question-result ${answer.isCorrect ? "correct" : "incorrect"}`}>
-              {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
-            </span>
-          </div>
+      {showResultsReview && (
+        <div className="results-review">
+          <h3>Question Review</h3>
+          <p className="results-summary">
+            You answered {userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length} questions correctly.
+          </p>
           
-          <p className="question-text">{answer.question}</p>
-          
-          <div className="options-review">
-            {answer.options.map((option, optionIndex) => (
+          <div className="question-review-list">
+            {userAnswers.map((answer, index) => (
               <div 
-                key={optionIndex} 
-                className={`
-                  option-review 
-                  ${optionIndex === answer.userAnswer ? "user-selected" : ""} 
-                  ${optionIndex === answer.correctAnswer ? "correct-answer" : ""}
-                `}
+                key={index} 
+                className={`question-review-item ${answer.isCorrect ? "correct" : "incorrect"}`}
               >
-                {option}
-                {optionIndex === answer.userAnswer && optionIndex !== answer.correctAnswer && (
-                  <span className="option-indicator">Your Answer</span>
-                )}
-                {optionIndex === answer.correctAnswer && (
-                  <span className="option-indicator">Correct Answer</span>
-                )}
+                <div className="question-review-header">
+                  <span className="question-number">Question {index + 1}</span>
+                  <span className={`question-result ${answer.isCorrect ? "correct" : "incorrect"}`}>
+                    {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                  </span>
+                </div>
+                
+                <p className="question-text">
+                  <span className="question-type-badge">
+                    {questionTypeOptions.find(t => t.value === answer.questionType)?.icon || "🔠"}
+                  </span>
+                  {answer.question}
+                </p>
+                
+                <div className="explanation-review">
+                  <strong>Explanation:</strong> {answer.explanation}
+                </div>
               </div>
             ))}
           </div>
           
-          <div className="explanation-review">
-            <strong>Explanation:</strong> {answer.explanation}
+          <button 
+            onClick={() => setShowResultsReview(false)} 
+            className="close-review-btn"
+          >
+            Close Review
+          </button>
+
+          <div className="results-actions">
+            <h4>Save Your Results</h4>
+            <div className="results-buttons">
+              <button onClick={exportResultsAsText} className="export-results-btn">
+                Download as Text
+              </button>
+              {userAnswers.filter(a => a.isCorrect).length / userAnswers.length >= 0.8 && (
+                <button onClick={generateCertificate} className="certificate-btn">
+                  View Certificate
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      ))}
-    </div>
-    
-    <button 
-      onClick={() => setShowResultsReview(false)} 
-      className="close-review-btn"
-    >
-      Close Review
-    </button>
+      )}
 
-    <div className="results-actions">
-  <h4>Save Your Results</h4>
-  <div className="results-buttons">
-    <button onClick={exportResultsAsText} className="export-results-btn">
-      Download as Text
-    </button>
-    {userAnswers.filter(a => a.isCorrect).length / userAnswers.length >= 0.8 && (
-      <button onClick={generateCertificate} className="certificate-btn">
-        View Certificate
-      </button>
-    )}
-  </div>
-</div>
-
-{/* Certificate Modal */}
-{showCertificate && (
-  <div className="certificate-modal">
-    <div className="certificate-content">
-      <button 
-        className="close-certificate" 
-        onClick={() => setShowCertificate(false)}
-      >
-        ×
-      </button>
-      <div className="certificate">
-        <div className="certificate-logo">🏆</div>
-        <div className="certificate-title">Certificate of Achievement</div>
-        <p>This certifies that</p>
-        <div className="user-name">{user?.username || "Financial Learner"}</div>
-        <p className="achievement">has successfully completed the</p>
-        <p className="achievement"><strong>{quizTypeOptions.find(t => t.value === quizType)?.label}</strong></p>
-        <p className="achievement">in Financial Literacy</p>
-        <p className="score">with a score of {score} ({(userAnswers.filter(a => a.isCorrect).length / userAnswers.length * 100).toFixed(0)}% correct)</p>
-        <p className="date">Date: {new Date().toLocaleDateString()}</p>
-      </div>
-      <div className="certificate-actions">
-        <button 
-          onClick={() => window.print()} 
-          className="print-certificate-btn"
-        >
-          Print Certificate
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-
-  </div>
-)}
-
+      {/* Certificate Modal */}
+      {showCertificate && (
+        <div className="certificate-modal">
+          <div className="certificate-content">
+            <button 
+              className="close-certificate" 
+              onClick={() => setShowCertificate(false)}
+            >
+              ×
+            </button>
+            <div className="certificate">
+              <div className="certificate-logo">🏆</div>
+              <div className="certificate-title">Certificate of Achievement</div>
+              <p>This certifies that</p>
+              <div className="user-name">{user?.username || "Financial Learner"}</div>
+              <p className="achievement">has successfully completed the</p>
+              <p className="achievement"><strong>{quizTypeOptions.find(t => t.value === quizType)?.label}</strong></p>
+              <p className="achievement">in Financial Literacy</p>
+              <p className="score">with a score of {score} ({(userAnswers.filter(a => a.isCorrect).length / userAnswers.length * 100).toFixed(0)}% correct)</p>
+              <p className="date">Date: {new Date().toLocaleDateString()}</p>
+            </div>
+            <div className="certificate-actions">
+              <button 
+                onClick={() => window.print()} 
+                className="print-certificate-btn"
+              >
+                Print Certificate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quit Confirmation Dialog */}
       {showQuitConfirmation && (

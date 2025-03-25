@@ -1,16 +1,25 @@
+// src/pages/Games.jsx
 import { Link } from "react-router-dom";
 
 function Games() {
   return (
     <div className="games-container">
-      <h2>🎮 Choose Your Game</h2>
+      <h2>🎮 Financial Learning Games</h2>
       <div className="game-options">
         <div className="game-category">
           <h3 className="game-category-title">📘 Financial Trivia Games</h3>
           <div className="game-category-items">
-            <Link to="/games/quiz?type=standard" className="game-card">
-              <h3>📚 Standard Trivia Quiz</h3>
-              <p>Test your financial knowledge with multiple-choice questions across different difficulty levels.</p>
+            <Link to="/games/quiz" className="game-card featured-game">
+              <div className="new-feature-badge">New!</div>
+              <h3>🧠 Enhanced Financial Trivia</h3>
+              <p>Test your knowledge with multiple question types: multiple-choice, true/false, fill in the blank, matching, and financial calculations with hints!</p>
+              <div className="question-types-preview">
+                <span className="question-type-icon" title="Multiple Choice">🔠</span>
+                <span className="question-type-icon" title="True/False">✓✗</span>
+                <span className="question-type-icon" title="Fill in the Blank">📝</span>
+                <span className="question-type-icon" title="Matching">🔄</span>
+                <span className="question-type-icon" title="Financial Calculations">🧮</span>
+              </div>
             </Link>
             
             <Link to="/games/quiz?type=daily" className="game-card">
