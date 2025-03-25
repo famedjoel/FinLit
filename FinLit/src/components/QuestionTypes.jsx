@@ -72,37 +72,99 @@ export const TrueFalseQuestion = ({
 // Question Type: Fill in the Blank
 export const FillInBlankQuestion = ({ 
   question, 
-  correctAnswer, 
+  options,
+  correctAnswer,
   onSelect,
   userInput,
   answerSubmitted,
   isCorrect
 }) => {
-  // Split the question at the blank marker ____ or [blank]
-  const parts = question.split(/____|\[blank\]/i);
+  // Split the question at the blank marker ____ or [blank] or just ___
+  const parts = question.split(/____|\[blank\]|___/i);
+  
+  // Determine if this question has options to choose from
+  const hasOptions = Array.isArray(options) && options.length > 0;
+  
+  // Function to handle selecting an option
+  const handleOptionSelect = (optionIndex) => {
+    if (!answerSubmitted) {
+      onSelect(options[optionIndex]);
+    }
+  };
+  
+  // Function to handle direct text input
+  const handleTextInput = (e) => {
+    if (!answerSubmitted) {
+      onSelect(e.target.value);
+    }
+  };
+  
+  // Determine correct answer text (could be index or direct string)
+  const correctAnswerText = typeof correctAnswer === 'number' && hasOptions 
+    ? options[correctAnswer]
+    : correctAnswer;
   
   return (
     <div className="question-container">
       <div className="question fill-blank-question">
         {parts[0]}
-        <input 
-          type="text" 
-          value={userInput || ""}
-          onChange={(e) => onSelect(e.target.value)}
-          className={`
-            blank-input 
-            ${answerSubmitted && isCorrect ? "correct-input" : ""}
-            ${answerSubmitted && !isCorrect ? "incorrect-input" : ""}
-          `}
-          disabled={answerSubmitted}
-          placeholder="Enter your answer"
-        />
-        {parts[1]}
+        
+        {hasOptions ? (
+          // Display as dropdown if options exist
+          <select 
+            value={userInput || ""}
+            onChange={(e) => handleOptionSelect(parseInt(e.target.value))}
+            className={`
+              blank-dropdown
+              ${answerSubmitted && isCorrect ? "correct-input" : ""}
+              ${answerSubmitted && !isCorrect ? "incorrect-input" : ""}
+            `}
+            disabled={answerSubmitted}
+          >
+            <option value="" disabled>Select answer...</option>
+            {options.map((option, index) => (
+              <option key={index} value={index}>
+                {option}
+              </option>
+            ))}
+          </select>
+        ) : (
+          // Display as text input if no options
+          <input 
+            type="text" 
+            value={userInput || ""}
+            onChange={handleTextInput}
+            className={`
+              blank-input 
+              ${answerSubmitted && isCorrect ? "correct-input" : ""}
+              ${answerSubmitted && !isCorrect ? "incorrect-input" : ""}
+            `}
+            disabled={answerSubmitted}
+            placeholder="Enter your answer"
+          />
+        )}
+        
+        {parts[1] || ""}
       </div>
+      
+      {/* Display options as buttons if available and not displaying as dropdown */}
+      {hasOptions && !answerSubmitted && (
+        <div className="options-buttons">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              className={`option-btn ${userInput === option ? "selected" : ""}`}
+              onClick={() => handleOptionSelect(index)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
       
       {answerSubmitted && !isCorrect && (
         <div className="correct-answer-display">
-          <p>Correct answer: <strong>{correctAnswer}</strong></p>
+          <p>Correct answer: <strong>{correctAnswerText}</strong></p>
         </div>
       )}
     </div>
@@ -112,27 +174,62 @@ export const FillInBlankQuestion = ({
 // Question Type: Matching
 export const MatchingQuestion = ({ 
   question, 
-  terms, 
-  definitions, 
-  correctMatches,
+  terms = [], 
+  definitions = [],
+  items = [],
+  correctMatches = [],
   onSelect,
   userMatches,
   answerSubmitted
 }) => {
   const [selectedTerm, setSelectedTerm] = useState(null);
   
+  // Process the data to handle both formats
+  let processedTerms = [];
+  let processedDefinitions = [];
+  
+  // If items array is provided (new format)
+  if (items && items.length > 0) {
+    processedTerms = items.map(item => item.term);
+    processedDefinitions = items.map(item => item.definition);
+  } else {
+    // Otherwise use the terms and definitions arrays (old format)
+    processedTerms = terms;
+    processedDefinitions = definitions;
+  }
+  
+  // Initialize matches array if not provided
+  const matches = userMatches || Array(processedTerms.length).fill(null);
+  
   const handleTermClick = (index) => {
     if (answerSubmitted) return;
+    // If this term already has a match, unselect it first
+    if (matches[index] !== null) {
+      const updatedMatches = [...matches];
+      updatedMatches[index] = null;
+      onSelect(updatedMatches);
+    }
     setSelectedTerm(index);
   };
   
   const handleDefinitionClick = (index) => {
     if (answerSubmitted || selectedTerm === null) return;
     
-    const newMatches = [...userMatches];
-    newMatches[selectedTerm] = index;
-    onSelect(newMatches);
+    // Update the matches array
+    const updatedMatches = [...matches];
+    updatedMatches[selectedTerm] = index;
+    onSelect(updatedMatches);
     setSelectedTerm(null);
+  };
+  
+  // Check if a definition is already matched
+  const isDefinitionMatched = (defIndex) => {
+    return matches.includes(defIndex);
+  };
+  
+  // Get the term that matches with a definition
+  const getMatchedTermIndex = (defIndex) => {
+    return matches.findIndex(match => match === defIndex);
   };
   
   return (
@@ -140,41 +237,79 @@ export const MatchingQuestion = ({
       <h3 className="question">{question}</h3>
       
       <div className="matching-container">
-        <div className="terms-column">
-          <h4>Terms</h4>
-          {terms.map((term, index) => (
-            <div 
-              key={index} 
-              className={`
-                matching-item term-item 
-                ${selectedTerm === index ? "selected" : ""}
-                ${answerSubmitted && correctMatches[index] === userMatches[index] ? "correct-match" : ""}
-                ${answerSubmitted && correctMatches[index] !== userMatches[index] ? "incorrect-match" : ""}
-              `}
-              onClick={() => handleTermClick(index)}
-            >
-              {term}
-            </div>
-          ))}
+        <div className="matching-instructions">
+          <p>Click on a term, then click on its matching definition</p>
         </div>
         
-        <div className="definitions-column">
-          <h4>Definitions</h4>
-          {definitions.map((definition, index) => (
-            <div 
-              key={index} 
-              className={`
-                matching-item definition-item
-                ${answerSubmitted && userMatches.includes(index) && 
-                  correctMatches[userMatches.indexOf(index)] === index ? "correct-match" : ""}
-                ${answerSubmitted && userMatches.includes(index) && 
-                  correctMatches[userMatches.indexOf(index)] !== index ? "incorrect-match" : ""}
-              `}
-              onClick={() => handleDefinitionClick(index)}
-            >
-              {definition}
-            </div>
-          ))}
+        <div className="matching-interface">
+          <div className="terms-column">
+            <h4>Terms</h4>
+            {processedTerms.map((term, index) => {
+              // Determine the appropriate class for this term
+              let termClass = "matching-item term-item";
+              if (selectedTerm === index) termClass += " selected";
+              if (answerSubmitted) {
+                if (correctMatches[index] === matches[index]) {
+                  termClass += " correct-match";
+                } else {
+                  termClass += " incorrect-match";
+                }
+              } else if (matches[index] !== null) {
+                termClass += " matched";
+              }
+              
+              return (
+                <div 
+                  key={index} 
+                  className={termClass}
+                  onClick={() => handleTermClick(index)}
+                >
+                  <span className="term-number">{index + 1}.</span>
+                  <span className="term-text">{term}</span>
+                  {matches[index] !== null && !answerSubmitted && (
+                    <div className="matched-indicator">
+                      ↔️ {matches[index] + 1}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="definitions-column">
+            <h4>Definitions</h4>
+            {processedDefinitions.map((definition, index) => {
+              // Determine the appropriate class for this definition
+              let defClass = "matching-item definition-item";
+              
+              if (answerSubmitted) {
+                const termIndex = getMatchedTermIndex(index);
+                if (termIndex !== -1 && correctMatches[termIndex] === index) {
+                  defClass += " correct-match";
+                } else if (termIndex !== -1) {
+                  defClass += " incorrect-match";
+                }
+              } else if (isDefinitionMatched(index)) {
+                defClass += " matched";
+              }
+              
+              return (
+                <div 
+                  key={index} 
+                  className={defClass}
+                  onClick={() => handleDefinitionClick(index)}
+                >
+                  <span className="definition-number">{index + 1}.</span>
+                  <span className="definition-text">{definition}</span>
+                  {isDefinitionMatched(index) && !answerSubmitted && (
+                    <div className="matched-indicator">
+                      ↔️ {getMatchedTermIndex(index) + 1}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
       
@@ -182,9 +317,14 @@ export const MatchingQuestion = ({
         <div className="correct-matches-display">
           <h4>Correct Matches:</h4>
           <ul>
-            {terms.map((term, index) => (
-              <li key={index}>
-                <strong>{term}</strong>: {definitions[correctMatches[index]]}
+            {processedTerms.map((term, index) => (
+              <li key={index} className={correctMatches[index] === matches[index] ? "correct" : "incorrect"}>
+                <strong>{term}</strong>: {processedDefinitions[correctMatches[index]]}
+                {correctMatches[index] !== matches[index] && (
+                  <span className="your-match">
+                    Your match: {matches[index] !== null ? processedDefinitions[matches[index]] : "None"}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -198,6 +338,7 @@ export const MatchingQuestion = ({
 export const CalculationQuestion = ({ 
   question, 
   correctAnswer, 
+  options,
   hint,
   formula,
   onSelect,
@@ -207,6 +348,9 @@ export const CalculationQuestion = ({
   showHint,
   onToggleHint
 }) => {
+  // Check if options are provided
+  const hasOptions = Array.isArray(options) && options.length > 0;
+  
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
@@ -215,7 +359,7 @@ export const CalculationQuestion = ({
         <input 
           type="number" 
           step="0.01"
-          value={userInput || ""}
+          value={userInput !== null ? userInput : ""}
           onChange={(e) => onSelect(parseFloat(e.target.value))}
           className={`
             calculation-input 
@@ -226,6 +370,24 @@ export const CalculationQuestion = ({
           placeholder="Enter your answer"
         />
       </div>
+      
+      {/* Display options as buttons if they exist and answer not submitted yet */}
+      {hasOptions && !answerSubmitted && (
+        <div className="calculation-options">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => onSelect(parseFloat(option.replace(/[^0-9.-]+/g, '')))}
+              className={`
+                calculation-option 
+                ${userInput === parseFloat(option.replace(/[^0-9.-]+/g, '')) ? "selected" : ""}
+              `}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
       
       <button 
         onClick={onToggleHint} 
@@ -251,7 +413,11 @@ export const CalculationQuestion = ({
           <p>
             {isCorrect 
               ? "Correct!" 
-              : `Incorrect. The correct answer is ${correctAnswer}.`}
+              : `Incorrect. The correct answer is ${
+                  hasOptions && Number.isInteger(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length
+                    ? options[correctAnswer]
+                    : correctAnswer
+                }.`}
           </p>
         </div>
       )}

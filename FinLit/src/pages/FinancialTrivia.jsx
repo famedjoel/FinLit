@@ -36,6 +36,7 @@ const FinancialTrivia = () => {
   const [showCertificate, setShowCertificate] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const resultsRef = useRef(null);
+  const [selectedTerm, setSelectedTerm] = useState(null);
   
   // Quiz type options
   const [quizType, setQuizType] = useState("standard");
@@ -510,35 +511,70 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Check if answer is correct based on question type
-  const checkAnswer = () => {
-    if (selectedAnswer === null) return false;
-    
-    const currentQ = questions[currentQuestion];
-    const questionType = currentQ.type || "multiple-choice";
-    
-    switch (questionType) {
-      case 'multiple-choice':
-      case 'true-false':
-        return selectedAnswer === currentQ.correctAnswer;
-        
-      case 'fill-blank':
-        // Case insensitive comparison
+ // Check if answer is correct based on question type
+const checkAnswer = () => {
+  if (selectedAnswer === null) return false;
+  
+  const currentQ = questions[currentQuestion];
+  const questionType = currentQ.type || "multiple-choice";
+  
+  switch (questionType) {
+    case 'multiple-choice':
+    case 'true-false':
+      return selectedAnswer === currentQ.correctAnswer;
+      
+    case 'fill-blank':
+      // Case insensitive comparison for free text
+      if (Array.isArray(currentQ.options) && currentQ.options.length > 0) {
+        // Options-based fill-in-blank
+        return selectedAnswer === currentQ.options[currentQ.correctAnswer] || 
+               selectedAnswer === currentQ.correctAnswer;
+      } else {
+        // Free text fill-in-blank
         return selectedAnswer.toLowerCase().trim() === currentQ.correctAnswer.toLowerCase().trim();
-        
-      case 'matching':
-        // Check if all matches are correct
+      }
+      
+    case 'matching':
+      // Handle both formats of matching questions
+      if (Array.isArray(currentQ.items) && currentQ.items.length > 0) {
+        // New format with items array
+        // Compare with sequential matches [0,1,2,3...] since items are already in correct order
+        const expectedMatches = Array.from({ length: currentQ.items.length }, (_, i) => i);
+        return JSON.stringify(selectedAnswer) === JSON.stringify(expectedMatches);
+      } else if (Array.isArray(currentQ.correctMatches)) {
+        // Old format with explicit correctMatches
         return JSON.stringify(selectedAnswer) === JSON.stringify(currentQ.correctMatches);
-        
-      case 'calculation':
-        // Allow small tolerance for floating point errors
-        const tolerance = 0.01;
-        return Math.abs(parseFloat(selectedAnswer) - currentQ.correctAnswer) <= tolerance;
-        
-      default:
-        return selectedAnswer === currentQ.correctAnswer;
-    }
-  };
+      } else {
+        // Fallback for any other format
+        return false;
+      }
+      
+    case 'calculation':
+      // Allow small tolerance for floating point errors
+      const tolerance = 0.01;
+      
+      // Handle calculation questions with options
+      if (Array.isArray(currentQ.options) && currentQ.options.length > 0) {
+        // If correctAnswer is an index into the options array
+        if (Number.isInteger(currentQ.correctAnswer) && 
+            currentQ.correctAnswer >= 0 && 
+            currentQ.correctAnswer < currentQ.options.length) {
+          // Compare with the option at the specified index
+          return Math.abs(parseFloat(selectedAnswer) - 
+                         parseFloat(currentQ.options[currentQ.correctAnswer])) <= tolerance;
+        } else {
+          // Direct numeric comparison - either way is fine
+          return Math.abs(parseFloat(selectedAnswer) - parseFloat(currentQ.correctAnswer)) <= tolerance;
+        }
+      } else {
+        // Standard calculation question without options
+        return Math.abs(parseFloat(selectedAnswer) - parseFloat(currentQ.correctAnswer)) <= tolerance;
+      }
+      
+    default:
+      return selectedAnswer === currentQ.correctAnswer;
+  }
+};
 
   // Go to next question
   const goToNextQuestion = () => {
@@ -601,7 +637,7 @@ const FinancialTrivia = () => {
   };
 
   // Handle answer submission
-  const handleAnswerSubmit = () => {
+  const handleAnswerSubmit = (answer) => {
     if (selectedAnswer === null) {
       showNotification("Please select an answer first!", "warning");
       return;
@@ -610,6 +646,23 @@ const FinancialTrivia = () => {
     setAnswerSubmitted(true);
     const isCorrect = checkAnswer();
     setAnswerIsCorrect(isCorrect);
+
+    if (!answerSubmitted) {
+      // For matching questions, ensure we're setting an array
+      if (questions[currentQuestion].type === 'matching') {
+        // If answer is not already an array, initialize it
+        if (!Array.isArray(selectedAnswer)) {
+          const termsLength = questions[currentQuestion].terms?.length || 
+                             (questions[currentQuestion].items?.length || 0);
+          setSelectedAnswer(Array(termsLength).fill(null));
+        } else {
+          setSelectedAnswer(answer);
+        }
+      } else {
+        // For other question types
+        setSelectedAnswer(answer);
+      }
+    }
 
     // Save the user's answer for this question
     setUserAnswers(prev => [
@@ -912,15 +965,234 @@ const FinancialTrivia = () => {
      const [matchingSelectedTerm, setMatchingSelectedTerm] = useState(null);
      const [matchingMatches, setMatchingMatches] = useState([]);
      
-     // Initialize matching state whenever current question changes
-     useEffect(() => {
-       if (questions[currentQuestion]?.type === 'matching') {
-         const items = questions[currentQuestion].items || [];
-         setMatchingMatches(Array(items.length).fill(null));
-         setMatchingSelectedTerm(null);
-       }
-     }, [currentQuestion, questions]);
+// Initialize matching state whenever current question changes
+useEffect(() => {
+  if (questions[currentQuestion]?.type === 'matching') {
+    const currentQ = questions[currentQuestion];
+    const isNewFormat = Array.isArray(currentQ.items) && currentQ.items.length > 0;
+    
+    // Determine the number of terms based on the format
+    const termsCount = isNewFormat 
+      ? currentQ.items.length 
+      : (currentQ.terms ? currentQ.terms.length : 0);
+    
+    // Reset the matching-related state
+    setSelectedTerm(null);
+    
+    // Initialize selectedAnswer as an array of nulls with the right length
+    setSelectedAnswer(Array(termsCount).fill(null));
+    
+    // You can also reset the matching matches if you're using that state
+    setMatchingMatches(Array(termsCount).fill(null));
+  }
+}, [currentQuestion, questions]);
 
+
+
+// Render the matching question type
+// Render the matching question type
+// Render the matching question type
+
+const renderMatchingQuestion = (currentQ) => {
+  // Determine if using new format (items) or old format (terms/definitions)
+  const isNewFormat = Array.isArray(currentQ.items) && currentQ.items.length > 0;
+  
+  // Extract terms and definitions based on format
+  let terms = [];
+  let definitions = [];
+  
+  if (isNewFormat) {
+    // New format with items array
+    terms = currentQ.items.map(item => item.term);
+    definitions = currentQ.items.map(item => item.definition);
+  } else {
+    // Old format with separate arrays
+    terms = currentQ.terms || [];
+    definitions = currentQ.definitions || [];
+  }
+
+  // Function to remove a match
+  const removeMatch = (termIndex) => {
+    if (answerSubmitted) return;
+    
+    // Create a copy of the current matches and remove the match for this term
+    const updatedMatches = [...selectedAnswer];
+    updatedMatches[termIndex] = null;
+    setSelectedAnswer(updatedMatches);
+  };
+  
+  return (
+    <div className="question-container">
+      <h3 className="question">{currentQ.question}</h3>
+      
+      <div className="matching-instructions">
+        <p>Click on a term, then click on its matching definition</p>
+      </div>
+      
+      <div className="matching-container">
+        <div className="matching-interface">
+          <div className="terms-column">
+            <h4>Terms</h4>
+            {terms.map((term, index) => {
+              // Check if this term has been matched
+              const isMatched = Array.isArray(selectedAnswer) && selectedAnswer[index] !== null;
+              // Get the matched definition index if it exists
+              const matchedDefIndex = isMatched ? selectedAnswer[index] : null;
+              
+              return (
+                <div 
+                  key={index}
+                  onClick={() => {
+                    if (answerSubmitted || isMatched) return;
+                    setSelectedTerm(index);
+                  }}
+                  className={`
+                    matching-item 
+                    term-item
+                    ${selectedTerm === index ? 'selected' : ''}
+                    ${isMatched ? 'matched' : ''}
+                    ${answerSubmitted && isNewFormat && index === matchedDefIndex ? 'correct-match' : ''}
+                    ${answerSubmitted && !isNewFormat && currentQ.correctMatches[index] === matchedDefIndex ? 'correct-match' : ''}
+                    ${answerSubmitted && isNewFormat && index !== matchedDefIndex ? 'incorrect-match' : ''}
+                    ${answerSubmitted && !isNewFormat && currentQ.correctMatches[index] !== matchedDefIndex ? 'incorrect-match' : ''}
+                  `}
+                >
+                  <span className="term-number">{index + 1}</span>
+                  <span className="term-text">{term}</span>
+                  
+                  {isMatched && (
+                    <div className="matched-indicator">
+                      → Matched with {definitions[matchedDefIndex]}
+                      
+                      {/* Undo button */}
+                      {!answerSubmitted && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering the parent click
+                            removeMatch(index);
+                          }}
+                          className="undo-match-btn"
+                          style={{
+                            marginLeft: '10px',
+                            backgroundColor: '#fee2e2',
+                            color: '#b91c1c',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '2px 6px',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Undo
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="definitions-column">
+            <h4>Definitions</h4>
+            {definitions.map((definition, index) => {
+              // Check if this definition has been matched
+              const isMatched = Array.isArray(selectedAnswer) && selectedAnswer.includes(index);
+              // Get the term index that matches to this definition
+              const matchedTermIndex = isMatched ? selectedAnswer.findIndex(val => val === index) : null;
+              
+              return (
+                <div 
+                  key={index}
+                  onClick={() => {
+                    if (answerSubmitted || isMatched || selectedTerm === null) return;
+                    
+                    // Update the selectedAnswer array with the new match
+                    const newMatches = [...(selectedAnswer || Array(terms.length).fill(null))];
+                    newMatches[selectedTerm] = index;
+                    setSelectedAnswer(newMatches);
+                    setSelectedTerm(null);
+                  }}
+                  className={`
+                    matching-item 
+                    definition-item
+                    ${isMatched ? 'matched' : ''}
+                    ${answerSubmitted && isNewFormat && matchedTermIndex === index ? 'correct-match' : ''}
+                    ${answerSubmitted && !isNewFormat && currentQ.correctMatches.indexOf(index) === matchedTermIndex ? 'correct-match' : ''}
+                    ${answerSubmitted && isNewFormat && matchedTermIndex !== index ? 'incorrect-match' : ''}
+                    ${answerSubmitted && !isNewFormat && currentQ.correctMatches.indexOf(index) !== matchedTermIndex ? 'incorrect-match' : ''}
+                  `}
+                >
+                  <span className="definition-number">{index + 1}</span>
+                  <span className="definition-text">{definition}</span>
+                  
+                  {isMatched && (
+                    <div className="matched-indicator">
+                      ← Matched with {terms[matchedTermIndex]}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Completion status */}
+        {!answerSubmitted && (
+          <div className="matching-status" style={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '6px',
+            textAlign: 'center'
+          }}>
+            <p>
+              {Array.isArray(selectedAnswer) && selectedAnswer.every(match => match !== null) 
+                ? '✅ All terms matched! Click Submit when ready.' 
+                : `${Array.isArray(selectedAnswer) ? selectedAnswer.filter(match => match !== null).length : 0} of ${terms.length} terms matched`}
+            </p>
+          </div>
+        )}
+      </div>
+      
+      {/* Show correct matches after submission */}
+      {answerSubmitted && (
+        <div className="correct-matches-display">
+          <h4>Correct Matches:</h4>
+          <ul>
+            {terms.map((term, index) => {
+              // Get the correct definition index based on format
+              let correctDefIndex;
+              if (isNewFormat) {
+                // For new format, matches are sequential
+                correctDefIndex = index;
+              } else {
+                // For old format, use correctMatches array
+                correctDefIndex = currentQ.correctMatches[index];
+              }
+              
+              // Get user's answer
+              const userDefIndex = Array.isArray(selectedAnswer) ? selectedAnswer[index] : null;
+              const isCorrectMatch = userDefIndex === correctDefIndex;
+              
+              return (
+                <li key={index} className={isCorrectMatch ? 'correct' : 'incorrect'}>
+                  <strong>{term}</strong>: {definitions[correctDefIndex]}
+                  
+                  {!isCorrectMatch && userDefIndex !== null && (
+                    <span className="your-match">
+                      Your match: {definitions[userDefIndex]}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
 
   // Render different question types
   const renderQuestion = () => {
@@ -976,184 +1248,173 @@ const FinancialTrivia = () => {
           </div>
         );
         
-      case 'fill-blank':
-        // Split the question at the blank marker ____ or [blank]
-        const parts = currentQ.question.split(/____|\[blank\]/i);
-        
-        return (
-          <div className="question-container">
-            <div className="question fill-blank-question">
-              {parts[0]}
-              <input 
-                type="text" 
-                value={selectedAnswer || ""}
-                onChange={(e) => handleAnswerSelect(e.target.value)}
-                className={`
-                  blank-input 
-                  ${answerSubmitted && checkAnswer() ? "correct-input" : ""}
-                  ${answerSubmitted && !checkAnswer() ? "incorrect-input" : ""}
-                `}
-                disabled={answerSubmitted}
-                placeholder="Enter your answer"
-              />
-              {parts[1] || ""}
-            </div>
-            
-            {answerSubmitted && !checkAnswer() && (
-              <div className="correct-answer-display">
-                <p>Correct answer: <strong>{currentQ.correctAnswer}</strong></p>
+        case 'fill-blank':
+          // Split the question at the blank marker
+          const parts = currentQ.question.split(/____|\[blank\]|___/i);
+          
+          // Check if this question has options
+          const hasOptions = Array.isArray(currentQ.options) && currentQ.options.length > 0;
+          
+          return (
+            <div className="question-container">
+              <div className="question fill-blank-question">
+                {parts[0]}
+                
+                {hasOptions ? (
+                  // Display options as buttons below the question
+                  <input 
+                    type="text" 
+                    value={selectedAnswer || ""}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    className="blank-input"
+                    placeholder="Enter or select an answer"
+                    disabled={answerSubmitted}
+                  />
+                ) : (
+                  // For free text questions
+                  <input 
+                    type="text" 
+                    value={selectedAnswer || ""}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    className="blank-input"
+                    placeholder="Enter your answer"
+                    disabled={answerSubmitted}
+                  />
+                )}
+                
+                {parts[1] || ""}
               </div>
-            )}
-          </div>
-        );
+              
+              {/* Display options as buttons if they exist and answer not submitted yet */}
+              {hasOptions && !answerSubmitted && (
+                <div className="options-container" style={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: '10px',
+                  justifyContent: 'center',
+                  marginTop: '15px' 
+                }}>
+                  {currentQ.options.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswerSelect(option)}
+                      className={`option ${selectedAnswer === option ? "selected" : ""}`}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: selectedAnswer === option ? '#dbeafe' : '#f3f4f6',
+                        border: `1px solid ${selectedAnswer === option ? '#3b82f6' : '#d1d5db'}`,
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {answerSubmitted && !checkAnswer() && (
+                <div className="explanation-box">
+                  <p><strong>Correct Answer:</strong> {
+                    typeof currentQ.correctAnswer === 'number' && hasOptions 
+                      ? currentQ.options[currentQ.correctAnswer] 
+                      : currentQ.correctAnswer
+                  }</p>
+                </div>
+              )}
+            </div>
+          );
       
 
 // Then modify your case 'matching' to use these component-level state variables:
+// In your renderQuestion function's matching case:
 case 'matching':
-  // Directly use items for matching
-  const items = currentQ.items || [];
-  const terms = items.map(item => item.term);
-  const definitions = items.map(item => item.definition);
-  // Each term matches with the definition at the same index
-  const correctMatches = items.map((_, index) => index);
-  
-  const handleTermClick = (index) => {
-    if (answerSubmitted) return;
-    setMatchingSelectedTerm(index);
-  };
-  
-  const handleDefinitionClick = (index) => {
-    if (answerSubmitted || matchingSelectedTerm === null) return;
-    
-    const newMatches = [...matchingMatches];
-    newMatches[matchingSelectedTerm] = index;
-    
-    setMatchingMatches(newMatches);
-    setMatchingSelectedTerm(null);
-    
-    handleAnswerSelect(newMatches);
-  };
+  return renderMatchingQuestion(currentQ);
+        
+// Enhanced Calculation Question handling with options support
+case 'calculation':  
+const hasOption = Array.isArray(currentQ.options) && currentQ.options.length > 0;
   
   return (
     <div className="question-container">
       <h3 className="question">{currentQ.question}</h3>
       
-      <div className="matching-container">
-        <div className="terms-column">
-          <h4>Terms</h4>
-          {currentQ.terms && currentQ.terms.map((term, index) => (
-            <div 
-              key={index} 
-              className={`
-                matching-item term-item 
-                ${matchingSelectedTerm === index ? "selected" : ""}
-                ${answerSubmitted && currentQ.correctMatches[index] === selectedAnswer?.[index] ? "correct-match" : ""}
-                ${answerSubmitted && currentQ.correctMatches[index] !== selectedAnswer?.[index] ? "incorrect-match" : ""}
-              `}
-              onClick={() => {
-                if (answerSubmitted) return;
-                setMatchingSelectedTerm(index);
-              }}
-            >
-              {term}
-            </div>
-          ))}
-        </div>
-        
-        <div className="definitions-column">
-          <h4>Definitions</h4>
-          {currentQ.definitions && currentQ.definitions.map((definition, index) => (
-            <div 
-              key={index} 
-              className={`
-                matching-item definition-item
-                ${answerSubmitted && selectedAnswer?.includes(index) && 
-                  currentQ.correctMatches[selectedAnswer.indexOf(index)] === index ? "correct-match" : ""}
-                ${answerSubmitted && selectedAnswer?.includes(index) && 
-                  currentQ.correctMatches[selectedAnswer.indexOf(index)] !== index ? "incorrect-match" : ""}
-              `}
-              onClick={() => {
-                if (answerSubmitted || matchingSelectedTerm === null) return;
-                
-                const newMatches = [...(selectedAnswer || Array(currentQ.terms.length).fill(null))];
-                newMatches[matchingSelectedTerm] = index;
-                
-                handleAnswerSelect(newMatches);
-                setMatchingSelectedTerm(null);
-              }}
-            >
-              {definition}
-            </div>
-          ))}
-        </div>
+      <div className="calculation-input-container">
+        <input 
+          type="number" 
+          step="0.01"
+          value={selectedAnswer !== null ? selectedAnswer : ""}
+          onChange={(e) => handleAnswerSelect(parseFloat(e.target.value))}
+          className={`
+            calculation-input 
+            ${answerSubmitted && checkAnswer() ? "correct-input" : ""}
+            ${answerSubmitted && !checkAnswer() ? "incorrect-input" : ""}
+          `}
+          disabled={answerSubmitted}
+          placeholder="Enter your answer"
+        />
       </div>
       
+      {/* Display options as buttons if they exist and answer not submitted yet */}
+      {hasOption && !answerSubmitted && (
+        <div className="options-container" style={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: '10px',
+          justifyContent: 'center',
+          marginTop: '15px' 
+        }}>
+          {currentQ.options.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => handleAnswerSelect(parseFloat(option))}
+              className={`option ${selectedAnswer === parseFloat(option) ? "selected" : ""}`}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: selectedAnswer === parseFloat(option) ? '#dbeafe' : '#f3f4f6',
+                border: `1px solid ${selectedAnswer === parseFloat(option) ? '#3b82f6' : '#d1d5db'}`,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      <button 
+        onClick={toggleHint} 
+        className="hint-button"
+        disabled={answerSubmitted}
+      >
+        {showHint ? "Hide Hint" : "Show Hint"}
+      </button>
+      
+      {showHint && (
+        <div className="hint-container">
+          <p><strong>Hint:</strong> {currentQ.hint}</p>
+          {currentQ.formula && (
+            <div className="formula-display">
+              <p><strong>Formula:</strong> {currentQ.formula}</p>
+            </div>
+          )}
+        </div>
+      )}
+      
       {answerSubmitted && (
-        <div className="correct-matches-display">
-          <h4>Correct Matches:</h4>
-          <ul>
-            {currentQ.terms && currentQ.terms.map((term, index) => (
-              <li key={index}>
-                <strong>{term}</strong>: {currentQ.definitions[currentQ.correctMatches[index]]}
-              </li>
-            ))}
-          </ul>
+        <div className={`answer-feedback ${checkAnswer() ? "correct-feedback" : "incorrect-feedback"}`}>
+          <p>
+            {checkAnswer() 
+              ? "Correct!" 
+              : `Incorrect. The correct answer is ${currentQ.correctAnswer}.`}
+          </p>
         </div>
       )}
     </div>
   );
-        
-      case 'calculation':
-        return (
-          <div className="question-container">
-            <h3 className="question">{currentQ.question}</h3>
-            
-            <div className="calculation-input-container">
-              <input 
-                type="number" 
-                step="0.01"
-                value={selectedAnswer || ""}
-                onChange={(e) => handleAnswerSelect(parseFloat(e.target.value))}
-                className={`
-                  calculation-input 
-                  ${answerSubmitted && checkAnswer() ? "correct-input" : ""}
-                  ${answerSubmitted && !checkAnswer() ? "incorrect-input" : ""}
-                `}
-                disabled={answerSubmitted}
-                placeholder="Enter your answer"
-              />
-            </div>
-            
-            <button 
-              onClick={toggleHint} 
-              className="hint-button"
-              disabled={answerSubmitted}
-            >
-              {showHint ? "Hide Hint" : "Show Hint"}
-            </button>
-            
-            {showHint && (
-              <div className="hint-container">
-                <p><strong>Hint:</strong> {currentQ.hint}</p>
-                {currentQ.formula && (
-                  <div className="formula-display">
-                    <p><strong>Formula:</strong> {currentQ.formula}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {answerSubmitted && (
-              <div className={`answer-feedback ${checkAnswer() ? "correct-feedback" : "incorrect-feedback"}`}>
-                <p>
-                  {checkAnswer() 
-                    ? "Correct!" 
-                    : `Incorrect. The correct answer is ${currentQ.correctAnswer}.`}
-                </p>
-              </div>
-            )}
-          </div>
-        );
         
       default:
         // Fall back to multiple choice if type is unknown
