@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
 import express from "express";
 import cors from "cors";
@@ -49,7 +50,6 @@ app.post("/signup", async (req, res) => {
       { courseId: "course3", title: "Advanced Trading", progress: 0 }
     ];
 
-    // eslint-disable-next-line no-unused-vars
     const newUser = await User.create({ 
       username, 
       email, 
@@ -476,6 +476,182 @@ app.post("/admin/trivia/questions/bulk", async (req, res) => {
     res.status(500).json({ message: "Error adding questions", error: error.message });
   }
 });
+
+// Add these routes to server.js
+
+// Get user statistics
+app.get("/stats/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // Get all game progress
+    const gameProgress = user.gameProgress || [];
+    
+    // Extract trivia game data
+    const triviaGames = gameProgress.filter(game => game.gameId === "financial-trivia");
+    
+    // Parse metadata for each game
+    const gameData = triviaGames.map(game => {
+      try {
+        const metadata = JSON.parse(game.metadata || '{}');
+        return {
+          gameId: game.gameId,
+          title: game.title,
+          score: game.highScore,
+          timestamp: game.lastPlayed,
+          metadata
+        };
+      } catch (e) {
+        return {
+          gameId: game.gameId,
+          title: game.title,
+          score: game.highScore,
+          timestamp: game.lastPlayed,
+          metadata: {}
+        };
+      }
+    });
+    
+    // Calculate aggregate statistics
+    
+    // 1. Calculate mastery levels by category
+    const categoryMastery = {};
+    const categoryAttempts = {};
+    
+    gameData.forEach(game => {
+      // Only use games with valid metadata that contains masteryData
+      if (game.metadata && game.metadata.masteryData) {
+        Object.entries(game.metadata.masteryData).forEach(([category, mastery]) => {
+          if (!categoryMastery[category]) {
+            categoryMastery[category] = 0;
+            categoryAttempts[category] = 0;
+          }
+          categoryMastery[category] += mastery;
+          categoryAttempts[category] += 1;
+        });
+      }
+    });
+    
+    // Average the mastery scores
+    const masteryLevels = {};
+    Object.keys(categoryMastery).forEach(category => {
+      masteryLevels[category] = categoryAttempts[category] > 0 
+        ? Math.round(categoryMastery[category] / categoryAttempts[category]) 
+        : 0;
+    });
+    
+    // 2. Performance over time data
+    const performanceOverTime = gameData
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      .map(game => ({
+        date: game.timestamp,
+        score: game.score,
+        correctPercentage: game.metadata.categoryPerformance 
+          ? calculateAveragePerformance(game.metadata.categoryPerformance)
+          : null
+      }));
+    
+    // 3. Strengths and weaknesses
+    const strengths = [];
+    const weaknesses = [];
+    
+    if (Object.keys(masteryLevels).length > 0) {
+      // Determine strongest categories
+      const sortedStrengths = Object.entries(masteryLevels)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+      
+      // Determine weakest categories
+      const sortedWeaknesses = Object.entries(masteryLevels)
+        .sort((a, b) => a[1] - b[1])
+        .slice(0, 3);
+      
+      sortedStrengths.forEach(([category, mastery]) => {
+        if (mastery > 50) {
+          strengths.push({ category, mastery });
+        }
+      });
+      
+      sortedWeaknesses.forEach(([category, mastery]) => {
+        if (mastery < 80) {
+          weaknesses.push({ category, mastery });
+        }
+      });
+    }
+    
+    // 4. Generate recommended topics
+    const recommendedTopics = generateRecommendedTopics(weaknesses, masteryLevels);
+    
+    // Return compiled statistics
+    res.json({
+      masteryLevels,
+      performanceOverTime,
+      strengths,
+      weaknesses,
+      recommendedTopics,
+      recentGames: gameData.slice(-5) // Last 5 games
+    });
+    
+  } catch (error) {
+    console.error("Error fetching user statistics:", error);
+    res.status(500).json({ message: "Error fetching statistics", error: error.message });
+  }
+});
+
+// Helper function to calculate average performance
+function calculateAveragePerformance(categoryPerformance) {
+  let totalCorrect = 0;
+  let totalQuestions = 0;
+  
+  Object.values(categoryPerformance).forEach(data => {
+    totalCorrect += data.correct;
+    totalQuestions += data.total;
+  });
+  
+  return totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+}
+
+// Helper function to generate recommended topics
+function generateRecommendedTopics(weaknesses, masteryLevels) {
+  const recommendations = [];
+  
+  // Add recommendations based on weaknesses
+  weaknesses.forEach(({ category, mastery }) => {
+    // Only recommend topics with low mastery scores
+    if (mastery < 60) {
+      recommendations.push({
+        category,
+        reason: `Your mastery level is only ${mastery}% in this category.`,
+        priority: "high"
+      });
+    } else if (mastery < 80) {
+      recommendations.push({
+        category,
+        reason: `You could improve your mastery level of ${mastery}% in this category.`,
+        priority: "medium"
+      });
+    }
+  });
+  
+  // Check for categories with no attempts
+  ['investing', 'budgeting', 'credit', 'taxes', 'retirement', 'savings', 'debt', 'insurance'].forEach(category => {
+    if (!masteryLevels[category]) {
+      recommendations.push({
+        category,
+        reason: "You haven't tried questions in this category yet.",
+        priority: "low"
+      });
+    }
+  });
+  
+  return recommendations;
+}
+
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {

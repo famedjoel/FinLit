@@ -430,6 +430,60 @@ const FinancialTrivia = () => {
     if (!user) return; // Only track if user is logged in
     
     try {
+      // Calculate category-specific performance data
+      const categoryPerformance = {};
+      const questionTypePerformance = {};
+      const difficultyPerformance = {};
+      
+      // Calculate correct answers per category
+      userAnswers.forEach(answer => {
+        const question = questions.find(q => q.question === answer.question);
+        if (!question) return;
+        
+        // Track by category
+        const category = question.category || 'general';
+        if (!categoryPerformance[category]) {
+          categoryPerformance[category] = { 
+            total: 0, 
+            correct: 0,
+            avgResponseTime: 0,
+            responseTimeCount: 0
+          };
+        }
+        categoryPerformance[category].total += 1;
+        if (answer.isCorrect) {
+          categoryPerformance[category].correct += 1;
+        }
+        
+        // Track by question type
+        const questionType = question.type || 'multiple-choice';
+        if (!questionTypePerformance[questionType]) {
+          questionTypePerformance[questionType] = { total: 0, correct: 0 };
+        }
+        questionTypePerformance[questionType].total += 1;
+        if (answer.isCorrect) {
+          questionTypePerformance[questionType].correct += 1;
+        }
+        
+        // Track by difficulty
+        const questionDifficulty = question.difficulty || 'medium';
+        if (!difficultyPerformance[questionDifficulty]) {
+          difficultyPerformance[questionDifficulty] = { total: 0, correct: 0 };
+        }
+        difficultyPerformance[questionDifficulty].total += 1;
+        if (answer.isCorrect) {
+          difficultyPerformance[questionDifficulty].correct += 1;
+        }
+      });
+      
+      // Calculate mastery percentages
+      const masteryData = {};
+      Object.keys(categoryPerformance).forEach(category => {
+        const data = categoryPerformance[category];
+        masteryData[category] = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+      });
+      
+      // Send enhanced data to the server
       const response = await fetch(`${API_BASE_URL}/progress/game`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -439,11 +493,16 @@ const FinancialTrivia = () => {
           title: `Financial Trivia - ${quizTypeOptions.find(t => t.value === quizType)?.label}`,
           score: finalScore,
           metadata: JSON.stringify({
+            timestamp: new Date().toISOString(),
             difficulty,
             category: selectedCategory,
             quizType,
-            questionCount,
+            questionCount: userAnswers.length,
             topStreak: quizType === "marathon" ? topStreak : undefined,
+            categoryPerformance,
+            questionTypePerformance,
+            difficultyPerformance,
+            masteryData,
             questionTypes: Object.entries(selectedQuestionTypes)
               .filter(([_, enabled]) => enabled)
               .map(([type]) => type)
@@ -452,10 +511,10 @@ const FinancialTrivia = () => {
       });
       
       if (!response.ok) {
-        console.error("Error tracking game progress");
+        console.error("Error tracking enhanced game progress");
       }
     } catch (error) {
-      console.error("Failed to track game progress:", error);
+      console.error("Failed to track enhanced game progress:", error);
     }
   };
 
@@ -1912,5 +1971,6 @@ const hasOption = Array.isArray(currentQ.options) && currentQ.options.length > 0
     </div>
   );
 };
+
 
 export default FinancialTrivia;

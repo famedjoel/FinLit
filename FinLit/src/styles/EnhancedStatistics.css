@@ -1,0 +1,624 @@
+/* src/styles/EnhancedStatistics.css */
+
+.stats-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .stats-container h2 {
+    font-size: 2rem;
+    color: #2563eb;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stats-intro {
+    color: #64748b;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+  }
+  
+  /* Stats Tabs Navigation */
+  .stats-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1rem;
+  }
+  
+  .tab-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .tab-btn:hover {
+    background-color: #f1f5f9;
+    transform: translateY(-2px);
+  }
+  
+  .tab-btn.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+  
+  /* Tab Content Styles */
+  .tab-content {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+  }
+  
+  /* Mastery Level Styles */
+  .mastery-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .mastery-chart {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .mastery-chart h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #334155;
+  }
+  
+  .radar-container {
+    height: 400px;
+    width: 100%;
+  }
+  
+  .mastery-grid h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #334155;
+  }
+  
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .category-card {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+  }
+  
+  .category-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .category-icon {
+    font-size: 1.5rem;
+  }
+  
+  .category-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #334155;
+  }
+  
+  .mastery-progress {
+    margin-top: 1rem;
+  }
+  
+  .progress-bar {
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    border-radius: 6px;
+    background-color: #22c55e;
+    transition: width 0.5s ease;
+  }
+  
+  .mastery-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .mastery-percentage {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #334155;
+  }
+  
+  .mastery-level-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    background-color: #e2e8f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+  }
+  
+  /* Performance Trends Styles */
+  .performance-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .performance-chart {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .performance-chart h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #334155;
+  }
+  
+  .chart-container {
+    height: 400px;
+    width: 100%;
+  }
+  
+  .recent-games h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #334155;
+  }
+  
+  .games-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  .game-item {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .game-info h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: #334155;
+  }
+  
+  .game-date {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  
+  .game-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .score-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+  }
+  
+  .score-label {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+  
+  /* Strengths & Weaknesses Styles */
+  .analysis-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  
+  .strengths-section h3,
+  .weaknesses-section h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+  }
+  
+  .strength-grid,
+  .weakness-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .analysis-card {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 1rem;
+    transition: transform 0.2s ease;
+  }
+  
+  .analysis-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .strength-card {
+    border-left: 4px solid #22c55e;
+  }
+  
+  .weakness-card {
+    border-left: 4px solid #ef4444;
+  }
+  
+  .card-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .card-content {
+    flex: 1;
+  }
+  
+  .card-content h4 {
+    font-size: 1.1rem;
+    color: #334155;
+    margin-bottom: 0.75rem;
+  }
+  
+  .mastery-bar {
+    height: 8px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mastery-fill {
+    height: 100%;
+    background-color: #22c55e;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  
+  .weak-fill {
+    background-color: #ef4444;
+  }
+  
+  .mastery-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+  }
+  
+  .level-classification {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+  
+  /* Recommendations Styles */
+  .recommendations-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  
+  .recommendations-content h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+  }
+  
+  .recommendations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .recommendation-card {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+  }
+  
+  .recommendation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .priority-high {
+    border-left: 4px solid #ef4444;
+  }
+  
+  .priority-medium {
+    border-left: 4px solid #f59e0b;
+  }
+  
+  .priority-low {
+    border-left: 4px solid #3b82f6;
+  }
+  
+  .recommendation-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+  }
+  
+  .rec-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  
+  .recommendation-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #334155;
+    flex: 1;
+  }
+  
+  .priority-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+  }
+  
+  .priority-tag.priority-high {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: none;
+  }
+  
+  .priority-tag.priority-medium {
+    background-color: #fff7ed;
+    color: #c2410c;
+    border: none;
+  }
+  
+  .priority-tag.priority-low {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: none;
+  }
+  
+  .recommendation-reason {
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  
+  .recommendation-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .study-btn {
+    padding: 0.5rem 1rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .study-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+  }
+  
+  .no-recommendations {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f0fdf4;
+    border-radius: 0.75rem;
+  }
+  
+  .no-recommendations p {
+    margin-bottom: 0.75rem;
+    color: #166534;
+  }
+  
+  .practice-btn {
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .practice-btn:hover {
+    background-color: #059669;
+    transform: translateY(-2px);
+  }
+  
+  /* Study Plan */
+  .study-plan {
+    background-color: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .study-plan h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+  }
+  
+  .plan-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .plan-step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 700;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  .step-content h4 {
+    font-size: 1.1rem;
+    color: #334155;
+    margin-bottom: 0.5rem;
+  }
+  
+  .step-content p {
+    color: #64748b;
+    line-height: 1.5;
+  }
+  
+  /* Loading Spinner */
+  .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+  }
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-left-color: #3b82f6;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Error Message */
+  .error-message {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  
+  .retry-btn {
+    background: #ef4444;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .retry-btn:hover {
+    background: #dc2626;
+  }
+  
+  /* No Data Message */
+  .no-data {
+    color: #9ca3af;
+    font-style: italic;
+    margin-top: 1rem;
+    text-align: center;
+    padding: 2rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .stats-container {
+      padding: 1rem;
+    }
+    
+    .stats-tabs {
+      justify-content: center;
+    }
+    
+    .category-grid, 
+    .strength-grid, 
+    .weakness-grid,
+    .recommendations-list,
+    .games-list {
+      grid-template-columns: 1fr;
+    }
+    
+    .tab-content {
+      padding: 1rem;
+    }
+    
+    .radar-container,
+    .chart-container {
+      height: 300px;
+    }
+  }

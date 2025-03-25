@@ -10,6 +10,7 @@ import LemonadeStand from "./pages/LemonadeStand";
 import BattleBudgets from "./pages/BattleBudgets";
 import LoanShark from "./pages/LoanShark";
 import FinancialTrivia from "./pages/FinancialTrivia"; // Enhanced version with quiz types
+import EnhancedStatistics from "./pages/EnhancedStatistics"; 
 import "./styles/styles.css"; 
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
@@ -85,6 +86,7 @@ function App() {
             ) : (
               <>
                 <Link to="/dashboard" className="nav-link" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                <Link to="/stats" className="nav-link" onClick={() => setMenuOpen(false)}>Statistics</Link>
                 <Link to="/profile" className="nav-link" onClick={() => setMenuOpen(false)}>Profile</Link>
                 <button onClick={handleLogout} className="nav-link logout-link">Logout</button>
               </>
@@ -108,6 +110,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/stats" element={<EnhancedStatistics />} />
           </Routes>
         </div>
       </div>
