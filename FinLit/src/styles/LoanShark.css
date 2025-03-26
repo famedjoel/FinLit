@@ -1,199 +1,1317 @@
-/* Reset and base styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  /* body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    color: #e2e2e2;
-    min-height: 100vh;
-  } */
-  
-  /* Game container styles */
-  .loan-shark-game {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  }
-  
-  h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    text-align: center;
-    color: #4ecca3;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  h3 {
-    font-size: 1.5rem;
-    margin: 1.5rem 0 1rem;
-    color: #45b3e7;
-  }
-  
-  /* Stats section */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin: 2rem 0;
-    padding: 1.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-  }
-  
-  .stats p {
-    font-size: 1.1rem;
-  }
-  
-  .stats strong {
-    color: #4ecca3;
-    font-size: 1.2rem;
-  }
-  
-  /* Button styles */
-  .btn {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin: 0.5rem;
-  }
-  
-  .loan-options, .job-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin: 1rem 0;
-  }
-  
-  .loan-btn {
-    background: #4ecca3;
-    color: #1a1a2e;
-  }
-  
-  .loan-btn:hover {
-    background: #3db892;
-    transform: translateY(-2px);
-  }
-  
-  .job-btn {
-    background: #45b3e7;
-    color: #1a1a2e;
-  }
-  
-  .job-btn:hover {
-    background: #3a9fd0;
-    transform: translateY(-2px);
-  }
-  
-  .repay-btn {
-    background: #e7455d;
-    color: white;
-  }
-  
-  .repay-btn:hover {
-    background: #d13850;
-    transform: translateY(-2px);
-  }
-  
-  .next-day-btn {
-    background: #ffd700;
-    color: #1a1a2e;
-    width: 100%;
-    margin-top: 2rem;
-  }
-  
-  .next-day-btn:hover {
-    background: #f0c800;
-    transform: translateY(-2px);
-  }
+/* Enhanced Loan Shark Game Styling */
 
+/* Game container with thematic styling */
+.loan-shark-game {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #e2e2e2;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 
+              0 0 100px rgba(59, 130, 246, 0.2);
+  position: relative;
+  overflow: hidden;
+}
 
+/* Add a subtle underwater pattern to the background */
+.loan-shark-game::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(
+      45deg, 
+      rgba(25, 30, 60, 0.05) 0px, 
+      rgba(25, 30, 60, 0.05) 2px, 
+      transparent 2px, 
+      transparent 10px
+    );
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Content wrapper to place above the pattern */
+.game-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Game title with thematic styling */
+.loan-shark-game h2 {
+  font-size: 2.75rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  color: #4ecca3;
+  text-shadow: 0 2px 10px rgba(78, 204, 163, 0.5),
+               0 2px 20px rgba(78, 204, 163, 0.3);
+  position: relative;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* Shark icon next to the title */
+.loan-shark-game h2::before {
+  content: "🦈";
+  font-size: 3rem;
+  margin-right: 0.75rem;
+  animation: swim 3s infinite alternate ease-in-out;
+  display: inline-block;
+}
+
+@keyframes swim {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  100% {
+    transform: translateX(10px) rotate(5deg);
+  }
+}
+
+/* Game description with better styling */
+.loan-shark-game > p {
+  text-align: center;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: #a8b2d1;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+  font-weight: 300;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Game board layout */
+.game-board {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Left column - action areas */
+.action-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Right column - stats and info */
+.stats-area {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  height: fit-content;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Stats dashboard with enhanced styling */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Each stat item */
+.stat-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Stat icon */
+.stat-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Stat details */
+.stat-details {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #a8b2d1;
+  margin-bottom: 0.25rem;
+  font-weight: 300;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Money stat - green accent */
+.money-stat .stat-icon {
+  background: rgba(78, 204, 163, 0.2);
+  color: #4ecca3;
+}
+
+.money-stat .stat-value {
+  color: #4ecca3;
+}
+
+/* Days stat - yellow accent */
+.days-stat .stat-icon {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.days-stat .stat-value {
+  color: #ffd700;
+}
+
+/* Loan stat - red accent */
+.loan-stat .stat-icon {
+  background: rgba(231, 69, 93, 0.2);
+  color: #e7455d;
+}
+
+.loan-stat .stat-value {
+  color: #e7455d;
+}
+
+/* Interest stat - blue accent */
+.interest-stat .stat-icon {
+  background: rgba(69, 179, 231, 0.2);
+  color: #45b3e7;
+}
+
+.interest-stat .stat-value {
+  color: #45b3e7;
+}
+
+/* Warning indicator for low days */
+.days-warning {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Section styling */
+.game-section {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.game-section:hover {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Section headers */
+.game-section h3 {
+  font-size: 1.4rem;
+  margin-bottom: 1.25rem;
+  color: #45b3e7;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.game-section h3::before {
+  margin-right: 0.75rem;
+  font-size: 1.5rem;
+}
+
+/* Icon for each section */
+.loan-section h3::before {
+  content: "🏦";
+}
+
+.work-section h3::before {
+  content: "💼";
+}
+
+.repay-section h3::before {
+  content: "💳";
+}
+
+/* Option buttons layout */
+.loan-options, .job-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Enhanced button styling */
+.btn {
+  padding: 0.9rem 1.25rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: #1a1a2e;
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Loan button styling */
+.loan-btn {
+  background: linear-gradient(45deg, #4ecca3, #3db892);
+  color: #1a1a2e;
+}
+
+.loan-btn:hover {
+  background: linear-gradient(45deg, #3db892, #2ca981);
+}
+
+/* Job button styling */
+.job-btn {
+  background: linear-gradient(45deg, #45b3e7, #3a9fd0);
+  color: #1a1a2e;
+}
+
+.job-btn:hover {
+  background: linear-gradient(45deg, #3a9fd0, #308bbf);
+}
+
+/* Repay button styling */
+.repay-btn {
+  background: linear-gradient(45deg, #e7455d, #d13850);
+  color: white;
+  font-size: 1.1rem;
+  padding: 1rem 1.5rem;
+  width: 100%;
+}
+
+.repay-btn:hover {
+  background: linear-gradient(45deg, #d13850, #c12840);
+}
+
+/* Button icons */
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+/* Next day button with enhanced styling */
+.next-day-btn {
+  background: linear-gradient(45deg, #ffd700, #f0c800);
+  color: #1a1a2e;
+  width: 100%;
+  margin-top: 2rem;
+  font-size: 1.1rem;
+  padding: 1rem;
+}
+
+.next-day-btn:hover {
+  background: linear-gradient(45deg, #f0c800, #e0bb00);
+}
+
+/* Reset button styling */
 .reset-btn {
-    background: #d32f2f;
-    color: white;
-  }
-  
-  .btn:hover {
-    transform: scale(1.05);
-  }
-  
-/* Notifications */
+  background: #d32f2f;
+  color: white;
+  margin-top: 1.5rem;
+  opacity: 0.8;
+  font-size: 0.9rem;
+  padding: 0.7rem 1rem;
+}
+
+.reset-btn:hover {
+  opacity: 1;
+  background: #b71c1c;
+}
+
+/* Enhanced notifications */
 .notifications {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    min-width: 300px;
-    text-align: center;
+  position: fixed;
+  top: 150px; /* Much higher to ensure it's below navbar */
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 9999; /* Extremely high z-index */
+  pointer-events: none;
+}
+
+.notification {
+  padding: 1.25rem;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  animation: dropDown 0.4s ease-out;
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  width: 300px;
+  max-width: 90vw;
+  pointer-events: auto;
+}
+
+@keyframes dropDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInNotification {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification.success {
+  background: linear-gradient(135deg, #4ecca3, #3db892);
+  color: #fff;
+  border-left: 5px solid #2ca981;
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #e7455d, #d13850);
+  color: #fff;
+  border-left: 5px solid #c12840;
+}
+
+.notification.warning {
+  background: linear-gradient(135deg, #ffd700, #f0c800);
+  color: #1a1a2e;
+  border-left: 5px solid #e0bb00;
+}
+
+/* Game over overlay */
+.game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.game-over-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+  animation: scaleIn 0.5s ease-out;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.game-over-title {
+  font-size: 2.5rem;
+  color: #ffd700;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+}
+
+.game-over-message {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #e2e2e2;
+  line-height: 1.6;
+}
+
+.final-stats {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 0 auto 2rem;
+  max-width: 80%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.final-stat-item {
+  text-align: center;
+}
+
+.final-stat-label {
+  font-size: 0.9rem;
+  color: #a8b2d1;
+  margin-bottom: 0.5rem;
+}
+
+.final-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.final-money {
+  color: #4ecca3;
+}
+
+.final-loan {
+  color: #e7455d;
+}
+
+.final-days {
+  color: #ffd700;
+}
+
+.final-profit {
+  color: #45b3e7;
+}
+
+.game-over-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.play-again-btn {
+  background: linear-gradient(45deg, #4ecca3, #3db892);
+  color: #1a1a2e;
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.play-again-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(45deg, #3db892, #2ca981);
+}
+
+/* Tooltip styles */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted #a8b2d1;
+  cursor: help;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: #16213e;
+  color: #e2e2e2;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0.75rem;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #16213e transparent transparent transparent;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Progress indicator */
+.progress-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.progress-bar-outer {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, #4ecca3, #3db892);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* Underwater decoration elements */
+.bubble {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: bubbleFloat linear infinite;
+}
+
+.bubble-1 {
+  width: 20px;
+  height: 20px;
+  top: 20%;
+  left: 10%;
+  animation-duration: 10s;
+}
+
+.bubble-2 {
+  width: 30px;
+  height: 30px;
+  top: 40%;
+  right: 15%;
+  animation-duration: 15s;
+}
+
+.bubble-3 {
+  width: 15px;
+  height: 15px;
+  bottom: 30%;
+  left: 30%;
+  animation-duration: 12s;
+}
+
+@keyframes bubbleFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-500px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Seaweed decoration */
+.seaweed {
+  position: absolute;
+  bottom: 0;
+  width: 20px;
+  height: 100px;
+  background: rgba(78, 204, 163, 0.2);
+  border-radius: 10px 10px 0 0;
+  transform-origin: bottom center;
+  z-index: 0;
+  pointer-events: none;
+  animation: seaweedSway 8s ease-in-out infinite alternate;
+}
+
+.seaweed-1 {
+  left: 10%;
+  height: 80px;
+  animation-delay: 0s;
+}
+
+.seaweed-2 {
+  left: 20%;
+  height: 120px;
+  animation-delay: 1s;
+}
+
+.seaweed-3 {
+  right: 15%;
+  height: 100px;
+  animation-delay: 2s;
+}
+
+@keyframes seaweedSway {
+  0% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Responsive design adjustments */
+@media (max-width: 900px) {
+  .loan-shark-game {
+    padding: 1.5rem;
+    margin: 1rem;
   }
   
-  .notification {
-    padding: 15px;
-    border-radius: 8px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    animation: fadeIn 0.3s ease-out;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  .loan-shark-game h2 {
+    font-size: 2.25rem;
   }
   
-  .notification.success {
-    background: #dcfce7;
-    color: #16a34a;
+  .game-board {
+    grid-template-columns: 1fr;
   }
   
-  .notification.error {
-    background: #fee2e2;
-    color: #dc2626;
+  .btn {
+    padding: 0.8rem 1rem;
   }
   
-  .notification.warning {
-    background: #fef3c7;
-    color: #d97706;
+  .final-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .loan-options,
+  .job-options {
+    grid-template-columns: 1fr;
   }
   
-  /* Animation */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -60%);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%);
-    }
+  .loan-shark-game h2 {
+    font-size: 1.75rem;
   }
   
-  
-  /* Responsive design */
-  @media (max-width: 768px) {
-    .loan-shark-game {
-      margin: 1rem;
-      padding: 1rem;
-    }
-  
-    .stats {
-      grid-template-columns: 1fr;
-    }
-  
-    .btn {
-      width: 100%;
-      margin: 0.5rem 0;
-    }
-  
-    .loan-options, .job-options {
-      flex-direction: column;
-    }
+  .stat-item {
+    padding: 0.6rem 0.75rem;
   }
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .game-over-content {
+    padding: 1.5rem;
+  }
+  
+  .game-over-title {
+    font-size: 2rem;
+  }
+}
+
+
+/* City Map Styles for Loan Shark Game */
+
+.city-map-container {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  margin: 2rem auto;
+  background: linear-gradient(135deg, #1a4562 0%, #0f2b3d 100%);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  border: 2px solid #2a5980;
+}
+
+/* Water effect for the bay/harbor */
+.water-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  height: 70%;
+  background: linear-gradient(180deg, #0c4a6e 0%, #0c4a6e 100%);
+  clip-path: polygon(0 30%, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* Water animation */
+.water-area::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20"><path fill="%230ea5e9" fill-opacity="0.2" d="M0 10 C5 5, 15 5, 20 10 C15 15, 5 15, 0 10 Z" /></svg>');
+  animation: waterMove 15s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes waterMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}
+
+/* City map grid */
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 5px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+}
+
+/* Different district styles */
+.district {
+  position: relative;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.district::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.25;
+  transition: all 0.3s ease;
+  z-index: -1;
+}
+
+.district:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.district:hover::before {
+  opacity: 0.4;
+  transform: scale(1.05);
+}
+
+.district.active {
+  box-shadow: 0 0 20px rgba(78, 204, 163, 0.7);
+  transform: translateY(-3px);
+}
+
+.district.active::before {
+  opacity: 0.6;
+}
+
+/* Current player location indicator */
+.player-location {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffd700;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  animation: pulse 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+  }
+}
+
+/* District Types */
+.district.financial {
+  background-color: rgba(59, 130, 246, 0.3);
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.district.financial::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%233b82f6" d="M4 10h16v8h-16v-8zm2-6h12v4h-12v-4zm10 16v-2h-8v2h8z"/></svg>');
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+}
+
+.district.harbor {
+  background-color: rgba(99, 102, 241, 0.3);
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.district.harbor::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%236366f1" d="M20 21c-1.39 0-2.78-.47-4-1.32-2.44 1.71-5.56 1.71-8 0C6.78 20.53 5.39 21 4 21H2v-2h2c1.38 0 2.74-.35 4-.99 2.52 1.29 5.48 1.29 8 0 1.26.65 2.62.99 4 .99h2v2h-2zM3.95 19H4c1.6 0 3.02-.88 4-2 .98 1.12 2.4 2 4 2s3.02-.88 4-2c.98 1.12 2.4 2 4 2h.05l1.89-6.68c.08-.26.06-.54-.06-.78s-.34-.42-.6-.5L20 10.62V6c0-1.1-.9-2-2-2h-3V1H9v3H6c-1.1 0-2 .9-2 2v4.62l-1.29.42c-.26.08-.48.26-.6.5s-.15.52-.06.78L3.95 19zM6 6h12v3.97L12 8 6 9.97V6z"/></svg>');
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+}
+
+.district.residential {
+  background-color: rgba(16, 185, 129, 0.3);
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.district.residential::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%2310b981" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>');
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+}
+
+.district.commercial {
+  background-color: rgba(245, 158, 11, 0.3);
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.district.commercial::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23f59e0b" d="M19 13H5v-2h14v2zm0-8H5v2h14V5zm0 12H5v2h14v-2z"/></svg>');
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+}
+
+.district.industrial {
+  background-color: rgba(239, 68, 68, 0.3);
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.district.industrial::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ef4444" d="M15.5 19h-7c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5h3v-1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5V11h1c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5zM22 19h-1.5v-7.5h-1v-1.5c0-1.5 1.34-2.25 2.25-2.25s2.25.75 2.25 2.25v1.5h-1V19zM5.5 19H4V5h1.5V19z"/></svg>');
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+}
+
+.district.waterfront {
+  background-color: rgba(20, 184, 166, 0.3);
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.district.waterfront::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%2314b8a6" d="M13 21h-2V6.83L9.41 8.41 8 7l4-4 4 4-1.41 1.41L13 6.83V21z"/></svg>');
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center 30%;
+}
+
+/* Location label */
+.district-label {
+  font-size: 0.85rem;
+  margin-top: 2.5rem;
+  max-width: 100%;
+  z-index: 2;
+}
+
+/* Job availability indicator */
+.job-indicator, .loan-indicator {
+  position: absolute;
+  top: 10px;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.job-indicator {
+  right: 10px;
+  background-color: #10b981;
+  color: white;
+}
+
+.loan-indicator {
+  left: 10px;
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Map Legend */
+.map-legend {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.7rem;
+  color: white;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-financial {
+  background-color: rgba(59, 130, 246, 0.7);
+}
+
+.legend-harbor {
+  background-color: rgba(99, 102, 241, 0.7);
+}
+
+.legend-residential {
+  background-color: rgba(16, 185, 129, 0.7);
+}
+
+.legend-commercial {
+  background-color: rgba(245, 158, 11, 0.7);
+}
+
+.legend-industrial {
+  background-color: rgba(239, 68, 68, 0.7);
+}
+
+.legend-waterfront {
+  background-color: rgba(20, 184, 166, 0.7);
+}
+
+/* District info popup */
+.district-info {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 400px;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 12px;
+  padding: 15px;
+  color: white;
+  z-index: 10;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.3s ease-out;
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.district-info.active {
+  display: block;
+}
+
+.district-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.district-info-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+.district-info-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.district-info-close:hover {
+  opacity: 1;
+}
+
+.district-info-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.district-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.district-option:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.option-label {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-icon {
+  font-size: 1.2rem;
+}
+
+.option-reward {
+  font-weight: bold;
+  color: #4ecca3;
+}
+
+.travel-btn {
+  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: bold;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.travel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+}
+
+/* Movement points indicator */
+.movement-points {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.movement-icon {
+  color: #ffd700;
+}
+
+/* Time of day indicator */
+.time-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.time-icon {
+  color: #f59e0b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .city-map-container {
+    height: 400px;
+  }
+  
+  .district-label {
+    font-size: 0.7rem;
+  }
+  
+  .job-indicator, .loan-indicator {
+    font-size: 0.6rem;
+    padding: 1px 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .city-map-container {
+    height: 350px;
+  }
+  
+  .city-grid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+  }
+  
+  .district {
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+  }
+  
+  .district-label {
+    margin-top: 1.5rem;
+  }
+}
