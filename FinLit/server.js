@@ -8,6 +8,10 @@ import TriviaQuestion from "./models/TriviaQuestion.js";
 import bcrypt from "bcryptjs";
 import connectDB from "./config/db.js"; // Import DB connection
 import { updateTriviaQuestions } from './config/dbInit.js';
+import { initCourseTables } from './config/dbInitCourses.js'; // Import course tables initialization
+import { initSampleCourseData } from './config/sampleCoursesData.js'; // Import sample course data
+import { setupCourseRoutes } from './routes/courseRoutes.js'; // Import course routes
+
 dotenv.config();
 // connectDB(); // Call function to connect to SQLite
 
@@ -652,6 +656,8 @@ function generateRecommendedTopics(weaknesses, masteryLevels) {
   return recommendations;
 }
 
+// Add course routes to the application
+setupCourseRoutes(app);
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {
@@ -661,6 +667,12 @@ app.get("/health", (req, res) => {
 // Connect to database and initialize it
 connectDB().then(async () => {
   try {
+    // Initialize course tables
+    await initCourseTables();
+    
+    // Initialize sample course data
+    await initSampleCourseData();
+    
     // Initialize trivia questions if needed
     await updateTriviaQuestions();
     

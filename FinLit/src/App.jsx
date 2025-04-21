@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CourseDashboard from "./pages/CourseDashboard";
+import CourseContent from "./pages/CourseContent"; // Import the new component
 import Games from "./pages/Games";
 import MoneyMatch from "./pages/MoneyMatch";
 import SavingsChallenge from "./pages/SavingsChallenge";
@@ -103,6 +104,7 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/courses" element={<CourseDashboard />} />
+              <Route path="/courses/:courseId" element={<CourseContent />} /> {/* Route for Course Content */}
               <Route path="/games" element={<Games />} />
               <Route path="/games/money-match" element={<MoneyMatch />} />
               <Route path="/games/30-day-savings" element={<SavingsChallenge />} />
