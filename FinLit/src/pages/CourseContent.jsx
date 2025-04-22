@@ -34,22 +34,33 @@ const CourseContent = () => {
     const fetchCourseData = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        // Add debugging logs
+        console.log(`Attempting to fetch course ${courseId} details`);
         
         // Fetch course details
         const courseResponse = await fetch(`${API_BASE_URL}/api/courses/${courseId}`);
+        console.log(`Course response status: ${courseResponse.status}`);
+        
         if (!courseResponse.ok) {
-          throw new Error("Failed to fetch course details");
+          throw new Error(`Failed to fetch course details: ${courseResponse.status}`);
         }
         
         const courseData = await courseResponse.json();
+        console.log("Course data received:", courseData);
         
         // Fetch chapters for this course
+        console.log(`Fetching chapters for course ${courseId}`);
         const chaptersResponse = await fetch(`${API_BASE_URL}/api/courses/${courseId}/chapters`);
+        console.log(`Chapters response status: ${chaptersResponse.status}`);
+        
         if (!chaptersResponse.ok) {
-          throw new Error("Failed to fetch course chapters");
+          throw new Error(`Failed to fetch course chapters: ${chaptersResponse.status}`);
         }
         
         const chaptersData = await chaptersResponse.json();
+        console.log(`Received ${chaptersData.length} chapters`);
         
         // Set current course with chapters
         setCurrentCourse({
@@ -59,9 +70,13 @@ const CourseContent = () => {
         
         // Fetch user progress if logged in
         if (user) {
+          console.log(`Fetching progress for user ${user.id} and course ${courseId}`);
           const progressResponse = await fetch(`${API_BASE_URL}/api/users/${user.id}/courses/${courseId}/progress`);
+          console.log(`Progress response status: ${progressResponse.status}`);
+          
           if (progressResponse.ok) {
             const progressData = await progressResponse.json();
+            console.log("Progress data received:", progressData);
             
             if (progressData.enrolled) {
               // Set progress data
@@ -95,6 +110,8 @@ const CourseContent = () => {
                 }
               }
             }
+          } else {
+            console.warn(`Failed to fetch progress: ${progressResponse.status}`);
           }
         }
         
@@ -126,12 +143,16 @@ const CourseContent = () => {
       const lessonId = chapter.lessons[currentLessonIndex].id;
       
       try {
+        console.log(`Fetching content for lesson ${lessonId}`);
         const lessonResponse = await fetch(`${API_BASE_URL}/api/lessons/${lessonId}`);
+        console.log(`Lesson response status: ${lessonResponse.status}`);
+        
         if (!lessonResponse.ok) {
-          throw new Error("Failed to fetch lesson content");
+          throw new Error(`Failed to fetch lesson content: ${lessonResponse.status}`);
         }
         
         const lessonData = await lessonResponse.json();
+        console.log("Lesson data received:", lessonData);
         
         // Update lesson content in current course
         const updatedChapters = [...currentCourse.chapters];
@@ -149,6 +170,7 @@ const CourseContent = () => {
         if (user) {
           const chapterId = chapter.id;
           
+          console.log(`Marking lesson ${lessonId} as visited for user ${user.id}`);
           await fetch(`${API_BASE_URL}/api/progress/lesson`, {
             method: 'POST',
             headers: {
@@ -208,7 +230,8 @@ const CourseContent = () => {
     try {
       if (user) {
         // Update server with completed status
-        await fetch(`${API_BASE_URL}/api/progress/lesson`, {
+        console.log(`Marking lesson ${lesson.id} as completed for user ${user.id}`);
+        const lessonResponse = await fetch(`${API_BASE_URL}/api/progress/lesson`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -220,6 +243,37 @@ const CourseContent = () => {
             position: 100 // 100% progress
           })
         });
+        
+        if (!lessonResponse.ok) {
+          console.error("Error updating lesson progress:", await lessonResponse.text());
+        } else {
+          console.log("Lesson progress updated successfully");
+        }
+        
+        // Explicitly update course progress
+        const completedLessonsCount = calculateCompletedLessonsCount();
+        const totalLessonsCount = calculateTotalLessonsCount();
+        const overallProgress = Math.round((completedLessonsCount / totalLessonsCount) * 100);
+        
+        console.log(`Updating course progress: ${overallProgress}% (${completedLessonsCount}/${totalLessonsCount})`);
+        const courseResponse = await fetch(`${API_BASE_URL}/progress/course`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            courseId: currentCourse.id,
+            title: currentCourse.title,
+            progress: overallProgress
+          })
+        });
+        
+        if (!courseResponse.ok) {
+          console.error("Error updating course progress:", await courseResponse.text());
+        } else {
+          console.log("Course progress updated successfully");
+        }
       }
       
       // Update local progress state
@@ -266,6 +320,34 @@ const CourseContent = () => {
     }
   };
 
+  // Calculate the total number of lessons in the course
+  const calculateTotalLessonsCount = () => {
+    if (!currentCourse) return 0;
+    
+    let totalLessons = 0;
+    currentCourse.chapters.forEach(chapter => {
+      totalLessons += chapter.lessons.length;
+    });
+    
+    return totalLessons;
+  };
+
+  // Calculate the number of completed lessons
+  const calculateCompletedLessonsCount = () => {
+    if (!currentCourse) return 0;
+    
+    let completedLessons = 0;
+    currentCourse.chapters.forEach(chapter => {
+      chapter.lessons.forEach(lesson => {
+        if (progress[chapter.id]?.[lesson.id]?.completed) {
+          completedLessons++;
+        }
+      });
+    });
+    
+    return completedLessons;
+  };
+
   // Handle quiz answer selection
   const handleQuizAnswerSelect = (questionIndex, answerIndex) => {
     if (!quizSubmitted) {
@@ -287,6 +369,7 @@ const CourseContent = () => {
     try {
       if (user && lesson.quiz) {
         // Submit quiz to server
+        console.log(`Submitting quiz ${lesson.quiz.id} for user ${user.id}`);
         const response = await fetch(`${API_BASE_URL}/api/progress/quiz`, {
           method: 'POST',
           headers: {
@@ -301,11 +384,14 @@ const CourseContent = () => {
         
         if (response.ok) {
           const result = await response.json();
+          console.log("Quiz result:", result);
           setQuizScore(result.score);
           setQuizSubmitted(true);
           
           // If passed, the server already marked the lesson as completed
           return;
+        } else {
+          console.error("Error submitting quiz:", await response.text());
         }
       }
       
@@ -343,17 +429,8 @@ const CourseContent = () => {
   const calculateOverallProgress = () => {
     if (!currentCourse) return 0;
     
-    let completedLessons = 0;
-    let totalLessons = 0;
-    
-    currentCourse.chapters.forEach(chapter => {
-      chapter.lessons.forEach(lesson => {
-        totalLessons++;
-        if (progress[chapter.id]?.[lesson.id]?.completed) {
-          completedLessons++;
-        }
-      });
-    });
+    const completedLessons = calculateCompletedLessonsCount();
+    const totalLessons = calculateTotalLessonsCount();
     
     return totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
   };

@@ -7,10 +7,12 @@ import User from "./models/User.js";
 import TriviaQuestion from "./models/TriviaQuestion.js";
 import bcrypt from "bcryptjs";
 import connectDB from "./config/db.js"; // Import DB connection
+import populateCourseData from './scripts/populate-course-data.js';
 import { updateTriviaQuestions } from './config/dbInit.js';
 import { initCourseTables } from './config/dbInitCourses.js'; // Import course tables initialization
 import { initSampleCourseData } from './config/sampleCoursesData.js'; // Import sample course data
 import { setupCourseRoutes } from './routes/courseRoutes.js'; // Import course routes
+
 
 dotenv.config();
 // connectDB(); // Call function to connect to SQLite
@@ -675,6 +677,13 @@ connectDB().then(async () => {
     
     // Initialize trivia questions if needed
     await updateTriviaQuestions();
+
+    // Set up course routes 
+    setupCourseRoutes(app);
+    
+    // Populate course content data
+    await populateCourseData();
+    console.log("Course data population complete or already exists");
     
     // Start server after database is ready
     app.listen(PORT, "0.0.0.0", () => {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import "../styles/dashboard.css";
+// import CourseProgressSection from './CourseProgressSection';
 
 // Get the current hostname for API calls (works on all devices)
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
@@ -11,6 +13,26 @@ function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [validCourseIds, setValidCourseIds] = useState([]);
+
+  // Fetch valid course IDs when the component loads
+useEffect(() => {
+  const fetchValidCourses = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/courses`);
+      if (response.ok) {
+        const courses = await response.json();
+        // Extract just the IDs
+        const ids = courses.map(course => course.id);
+        setValidCourseIds(ids);
+      }
+    } catch (error) {
+      console.error("Error fetching valid courses:", error);
+    }
+  };
+  
+  fetchValidCourses();
+}, []);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -115,39 +137,45 @@ function Dashboard() {
       <h2>Welcome, {user?.username || "User"}!</h2>
 
       <div className="dashboard-content">
-        {/* Progress Section */}
-        <div className="progress-section">
-          <h3>Your Learning Progress</h3>
-          <div className="progress-bar">
-            <div 
-              className="progress" 
-              style={{ width: `${dashboardData?.overallProgress || 0}%` }}
-            ></div>
-          </div>
-          <p>{dashboardData?.overallProgress || 0}% Completed</p>
-          
-          {dashboardData?.courseProgress && dashboardData.courseProgress.length > 0 ? (
-            <div className="courses-list">
-              <h4>Your Courses</h4>
-              {dashboardData.courseProgress.map((course, index) => (
-                <div key={index} className="course-item">
-                  <div className="course-info">
-                    <span className="course-title">{course.title}</span>
-                    <span className="course-progress">{course.progress}%</span>
-                  </div>
-                  <div className="course-progress-bar">
-                    <div 
-                      className="course-progress-fill" 
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+  {/* Progress Section */}
+  <div className="progress-section">
+    <h3>Your Learning Progress</h3>
+    <div className="progress-bar">
+      <div 
+        className="progress" 
+        style={{ width: `${dashboardData?.overallProgress || 0}%` }}
+      ></div>
+    </div>
+    <p>{dashboardData?.overallProgress || 0}% Completed</p>
+    
+    {dashboardData?.courseProgress && dashboardData.courseProgress.length > 0 ? (
+      <div className="courses-list">
+        <h4>Your Courses</h4>
+        {dashboardData.courseProgress
+      // Filter out courses that don't exist in the database anymore
+      .filter(course => validCourseIds.includes(course.courseId))
+      .map((course, index) => (
+          <div key={index} className="course-item">
+            <div className="course-info">
+              <span className="course-title">{course.title}</span>
+              <span className="course-progress">{course.progress}%</span>
             </div>
-          ) : (
-            <p className="no-data">No courses in progress yet</p>
-          )}
-        </div>
+            <div className="course-progress-bar">
+              <div 
+                className="course-progress-fill" 
+                style={{ width: `${course.progress}%` }}
+              ></div>
+            </div>
+            <Link to={`/courses/${course.courseId}`} className="continue-btn">
+              {course.progress > 0 ? 'Continue' : 'Start'}
+            </Link>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="no-data">No courses in progress yet</p>
+    )}
+  </div>
 
         {/* Recent Activity */}
         <div className="recent-activity">

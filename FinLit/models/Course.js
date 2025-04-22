@@ -1,5 +1,6 @@
 // models/Course.js
 import { connect } from '../config/sqlite-adapter.js';
+import Chapter from './Chapter.js'; // Import the Chapter model
 
 // Course model
 const Course = {
@@ -102,20 +103,13 @@ const Course = {
       if (!course) return null;
       
       // Get chapters for this course
-      const chapters = await connection.all(
-        'SELECT * FROM chapters WHERE course_id = ? ORDER BY `order`',
-        id
-      );
-      
+      const chapters = await Chapter.findByCourseId(id); // uses the existing method you already built
+
       const processedCourse = processCoursesData(course);
       
-      // Add chapters to course
-      processedCourse.chapters = chapters.map(chapter => ({
-        id: chapter.id,
-        title: chapter.title,
-        description: chapter.description,
-        order: chapter.order
-      }));
+      // This now includes lessons inside each chapter
+      processedCourse.chapters = chapters;
+      
       
       return processedCourse;
     } catch (error) {

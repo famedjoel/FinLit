@@ -29,58 +29,64 @@ function CourseDashboard() {
       setLoading(true);
       setError(null);
       
-      // Build query string for filtering
-      const queryParams = new URLSearchParams();
-      if (selectedLevel !== "All") {
-        queryParams.append("level", selectedLevel);
-      }
-      
-      const response = await fetch(`${API_BASE_URL}/api/courses?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch courses");
-      }
-      
-      const coursesData = await response.json();
-      
-      // If user is logged in, fetch their progress for each course
-      if (user) {
-        const coursesWithProgress = await Promise.all(
-          coursesData.map(async (course) => {
-            try {
-              const progressResponse = await fetch(`${API_BASE_URL}/api/users/${user.id}/courses/${course.id}/progress`);
-              
-              if (progressResponse.ok) {
-                const progressData = await progressResponse.json();
-                
-                return {
-                  ...course,
-                  progress: progressData.progress || 0,
-                  status: progressData.status || 'not-started',
-                  enrolled: progressData.enrolled || false
-                };
-              }
-              
-              return course;
-            } catch (err) {
-              console.error(`Error fetching progress for course ${course.id}:`, err);
-              return course;
-            }
-          })
-        );
-        
-        setCourses(coursesWithProgress);
-      } else {
-        // If no user is logged in, use courses as-is
-        setCourses(coursesData);
-      }
-      
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching courses:", err);
-      setError(err.message);
-      setLoading(false);
+        // Fetch basic course data
+    const response = await fetch(`${API_BASE_URL}/api/courses`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch courses");
     }
-  };
+    
+    const coursesData = await response.json();
+    
+    // If user is logged in, fetch progress for each course
+    if (user) {
+      console.log("Fetching course progress for user:", user.id);
+      
+      const coursesWithProgress = await Promise.all(
+        coursesData.map(async (course) => {
+          try {
+            const progressResponse = await fetch(
+              `${API_BASE_URL}/api/users/${user.id}/courses/${course.id}/progress`,
+              {
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            console.log(`Progress response for course ${course.id}:`, progressResponse.status);
+            
+            if (progressResponse.ok) {
+              const progressData = await progressResponse.json();
+              console.log(`Progress data for course ${course.id}:`, progressData);
+              
+              return {
+                ...course,
+                progress: progressData.progress || 0,
+                status: progressData.status || 'not-started',
+                enrolled: progressData.enrolled || false
+              };
+            }
+            
+            return course;
+          } catch (err) {
+            console.error(`Error fetching progress for course ${course.id}:`, err);
+            return course;
+          }
+        })
+      );
+      
+      setCourses(coursesWithProgress);
+    } else {
+      setCourses(coursesData);
+    }
+    
+    setLoading(false);
+  } catch (err) {
+    console.error("Error fetching courses:", err);
+    setError(err.message);
+    setLoading(false);
+  }
+};
 
   // Loading state
   if (loading) {
@@ -107,6 +113,7 @@ function CourseDashboard() {
     );
   }
 
+  
   return (
     <div className="courses-dashboard">
       <div className="courses-header">
