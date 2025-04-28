@@ -14,6 +14,7 @@ import { initSampleCourseData } from './config/sampleCoursesData.js'; // Import 
 import { setupCourseRoutes } from './routes/courseRoutes.js'; // Import course routes
 import { initMultiplayerTables } from './config/dbInitMultiplayer.js';
 import challengeRoutes from './routes/challengeRoutes.js';
+import { addQuizSettingsColumn } from './migrations.js';
 
 
 dotenv.config();
@@ -332,15 +333,18 @@ app.post("/progress/game", async (req, res) => {
 // API routes for the trivia game
 // Add these endpoints to your server.js file
 
-// Get trivia questions with optional difficulty and category filters
+// Get trivia questions with optional difficulty, category, and types filters
 app.get("/trivia/questions", async (req, res) => {
   try {
     const { difficulty, category, limit = 5, types } = req.query;
+    
+    console.log("Query params:", { difficulty, category, limit, types });
     
     // Parse the types parameter if provided
     let questionTypes = null;
     if (types) {
       questionTypes = types.split(',').filter(type => type.trim() !== '');
+      console.log("Filtering by question types:", questionTypes);
     }
     
     // Use the updated method that supports question types
@@ -350,6 +354,8 @@ app.get("/trivia/questions", async (req, res) => {
       questionTypes,
       Number(limit)
     );
+    
+    console.log(`Returning ${questions.length} questions`);
     
     res.json(questions);
   } catch (error) {
@@ -671,6 +677,9 @@ app.get("/health", (req, res) => {
 // Connect to database and initialize it
 connectDB().then(async () => {
   try {
+        // Run migration to add quiz_settings column if needed
+        await addQuizSettingsColumn();
+        
     // Initialize course tables
     await initCourseTables();
     

@@ -23,12 +23,17 @@ const FinancialTrivia = () => {
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizFinished, setQuizFinished] = useState(false);
   const [difficulty, setDifficulty] = useState("easy");
+  const [gameType, setGameType] = useState("standard");
+  const [timer, setTimer] = useState(30);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [categories, setCategories] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [gameActive, setGameActive] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [showQuitConfirmation, setShowQuitConfirmation] = useState(false);
   const [timerSetting, setTimerSetting] = useState(30);
   const [timerEnabled, setTimerEnabled] = useState(true);
@@ -45,13 +50,72 @@ const navigate = useNavigate();
 const [message, setMessage] = useState(""); // <-- New: To show submission message
 const [challengeSettings, setChallengeSettings] = useState(null);
   const [loadingChallenge, setLoadingChallenge] = useState(false);
+ const [currentChallenge, setCurrentChallenge] = useState(null);
+const [challengeMode, setChallengeMode] = useState(false);
+const [resultMessage, setResultMessage] = useState("");
+const [masteryData, setMasteryData] = useState({});
+const [categoryPerformance, setCategoryPerformance] = useState({});
 
     // Load challenge settings when in challenge mode
     useEffect(() => {
-      if (challengeId) {
-        fetchChallengeSettings();
-      }
-    }, [challengeId]);
+      const fetchInitialData = async () => {
+        try {
+          // Check if user is logged in
+          const storedUser = localStorage.getItem("user");
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+  
+          // Fetch categories
+          const categoriesResponse = await fetch(`${API_BASE_URL}/trivia/categories`);
+          if (categoriesResponse.ok) {
+            const categoriesData = await categoriesResponse.json();
+            setCategories(categoriesData);
+          }
+  
+          // Check URL parameters
+          const params = new URLSearchParams(window.location.search);
+          const challengeId = params.get('challengeId');
+          const urlDifficulty = params.get('difficulty');
+          const urlCategory = params.get('category');
+          const urlType = params.get('type');
+  
+          if (challengeId) {
+            // This is a challenge - fetch challenge-specific questions
+            await fetchQuestionsForChallenge(challengeId);
+          } else if (urlType === 'daily') {
+            // Daily challenge mode
+            const today = new Date().toDateString();
+            const dateSeed = Date.parse(today);
+            fetchDailyChallenge(dateSeed);
+          } else if (urlType === 'progressive') {
+            // Progressive difficulty mode
+            setGameType('progressive');
+            fetchQuestions('easy', urlCategory || selectedCategory, 5);
+          } else if (urlType === 'marathon') {
+            // Marathon mode
+            setGameType('marathon');
+            fetchQuestions(urlDifficulty || difficulty, urlCategory || selectedCategory, 20);
+          } else {
+            // Regular trivia mode - fetch questions based on URL params or defaults
+            if (urlDifficulty) setDifficulty(urlDifficulty);
+            if (urlCategory) setSelectedCategory(urlCategory);
+            
+            fetchQuestions(
+              urlDifficulty || difficulty, 
+              urlCategory || selectedCategory,
+              questionCount
+            );
+          }
+        } catch (err) {
+          console.error("Error during initialization:", err);
+          setError("Failed to initialize the game. Please try again.");
+          setLoading(false);
+        }
+      };
+  
+      fetchInitialData();
+    }, []);
 
   
   // Quiz type options
@@ -198,11 +262,41 @@ const [challengeSettings, setChallengeSettings] = useState(null);
   };
 
   // Fetch questions based on quiz type
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (difficulty, category, limit = 10) => {
     try {
       setLoading(true);
       setError("");
       
+      // Get the selected question types
+      const questionTypes = Object.entries(selectedQuestionTypes)
+        .filter(([_, enabled]) => enabled)
+        .map(([type]) => type);
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (difficulty) params.append("difficulty", difficulty);
+      if (category && category !== "all") params.append("category", category);
+      params.append("limit", limit.toString());
+      if (questionTypes.length > 0) params.append("types", questionTypes.join(','));
+
+      const response = await fetch(`${API_BASE_URL}/trivia/questions?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch questions");
+      }
+
+      const data = await response.json();
+      setQuestions(data);
+      setCurrentQuestionIndex(0);
+      setScore(0);
+      setShowResults(false);
+      
+      // Only auto-start in non-setup mode (direct link with params)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('type') || urlParams.get('difficulty') || urlParams.get('category')) {
+        setGameActive(true);
+        setTimeLeft(timer);
+      }
+
       // Handle different quiz types
       switch (quizType) {
         case "daily":
@@ -304,8 +398,12 @@ const [challengeSettings, setChallengeSettings] = useState(null);
   };
 
   // Fetch daily challenge questions
-  const fetchDailyChallenge = async () => {
+  const fetchDailyChallenge = async (dateSeed) => {
     try {
+      setLoading(true);
+      setError(null);
+      setGameType("daily");
+      
       // Generate a seed based on the current date
       const today = new Date();
       const dateSeed = `${today.getFullYear()}${today.getMonth()}${today.getDate()}`;
@@ -334,6 +432,12 @@ const [challengeSettings, setChallengeSettings] = useState(null);
       }
       
       setQuestions(data);
+      setCurrentQuestionIndex(0);
+      setScore(0);
+      setShowResults(false);
+      setGameActive(true);
+      setTimeLeft(timer);
+      setLoading(false);
     } catch (error) {
       throw error;
     }
@@ -686,57 +790,155 @@ const checkAnswer = () => {
   }
 };
 
+
+const fetchQuestionsForChallenge = async (challengeId) => {
+  try {
+    setLoading(true);
+    setError(null);
+    
+    // First, fetch the challenge details to get quiz settings
+    const challengeResponse = await fetch(`${API_BASE_URL}/challenges/${challengeId}`);
+    if (!challengeResponse.ok) {
+      throw new Error("Failed to fetch challenge details");
+    }
+    
+    const challengeData = await challengeResponse.json();
+    console.log("Challenge data:", challengeData);
+    
+    if (!challengeData.quizSettings) {
+      throw new Error("Challenge has no quiz settings");
+    }
+    
+    // Extract settings from the challenge
+    const settings = challengeData.quizSettings;
+    
+    // Build the query parameters
+    const params = new URLSearchParams();
+    
+    if (settings.difficulty) {
+      params.append("difficulty", settings.difficulty);
+    }
+    
+    if (settings.category && settings.category !== "all") {
+      params.append("category", settings.category);
+    }
+    
+    if (settings.questionCount) {
+      params.append("limit", settings.questionCount);
+    }
+    
+    // Most importantly, add the question types if specified
+    if (settings.questionTypes && settings.questionTypes.length > 0) {
+      params.append("types", settings.questionTypes.join(','));
+    }
+    
+    // Now fetch questions with these parameters
+    const questionsUrl = `${API_BASE_URL}/trivia/questions?${params.toString()}`;
+    console.log("Fetching questions from:", questionsUrl);
+    
+    const questionsResponse = await fetch(questionsUrl);
+    if (!questionsResponse.ok) {
+      throw new Error("Failed to fetch questions");
+    }
+    
+    const questionsData = await questionsResponse.json();
+    
+    // Set game settings from challenge
+    setDifficulty(settings.difficulty || "medium");
+    setGameType(settings.quizType || "standard");
+    setTimer(settings.timer || 30);
+    setQuestions(questionsData);
+    
+    // Start the game
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setShowResults(false);
+    setGameActive(true);
+    setChallengeMode(true);
+    setCurrentChallenge(challengeData);
+    
+    setLoading(false);
+  } catch (error) {
+    console.error("Error fetching challenge questions:", error);
+    setError(error.message || "Failed to load challenge questions");
+    setLoading(false);
+  }
+};
+
+// Submit the score for a challenge
+const submitChallengeScore = async () => {
+  if (!challengeMode || !currentChallenge || !user) return;
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/challenges/${currentChallenge.id}/score`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: user.id,
+        score: score
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to submit challenge score');
+    }
+    
+    const result = await response.json();
+    console.log('Challenge score submitted:', result);
+    
+    // If both players have completed, show the final result
+    if (result.status === 'completed') {
+      // Update current challenge with results
+      setCurrentChallenge(result);
+      
+      // Show a special message for challenge completion
+      setResultMessage(
+        result.winnerId === user.id 
+          ? '🏆 You won the challenge!'
+          : result.winnerId === null
+            ? '🤝 It\'s a tie!'
+            : '❌ You lost the challenge.'
+      );
+    } else {
+      // Show message that opponent still needs to play
+      setResultMessage(
+        'Your score has been submitted. Waiting for your opponent to play.'
+      );
+    }
+  } catch (error) {
+    console.error('Error submitting challenge score:', error);
+    setResultMessage('Failed to submit your challenge score. Please try again.');
+  }
+};
+
+// Function to handle game start
+const startGame = () => {
+  setGameActive(true);
+  setCurrentQuestionIndex(0);
+  setScore(0);
+  setShowResults(false);
+  setTimeLeft(timer);
+  setCategoryPerformance({});
+  setMasteryData({});
+};
 // some other functions here (like trackGameProgress, fetchMoreMarathonQuestions, etc.)
 
 // Update the endGame function in your FinancialTrivia.jsx file
 
 const endGame = async () => {
+  // Set UI states
   setShowScore(true);
   setQuizFinished(true);
-
-  if (user) {
-    await trackGameProgress(score);
-    
-    // Add this section to update the leaderboard
-    try {
-      // Update leaderboard
-      const leaderboardResponse = await fetch(`${API_BASE_URL}/leaderboard/financial-trivia`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          gameType: "financial-trivia",
-          score: score
-        })
-      });
-      
-      if (!leaderboardResponse.ok) {
-        console.error("Failed to update leaderboard");
-      }
-      
-      // Award completion points
-      const pointsResponse = await fetch(`${API_BASE_URL}/challenges/award-points`, {
-        method: "POST",  
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          points: 10, // Base points for completing a game
-          reason: 'game_completed'
-        })
-      });
-      
-      if (!pointsResponse.ok) {
-        console.error("Failed to award points");
-      }
-    } catch (error) {
-      console.error("Error updating leaderboard or points:", error);
-    }
-  }
-
+  
+  // Calculate score percentage for messages
+  const percentage = calculateScorePercentage();
+  
+  // Calculate mastery levels
+  calculateMastery();
+  
+  // Handle challenge mode
   if (challengeId && user && score > 0) {
     try {
       const challengeResponse = await fetch(`${API_BASE_URL}/challenges/${challengeId}/score`, {
@@ -762,6 +964,149 @@ const endGame = async () => {
       console.error("Error submitting challenge score:", error);
       setMessage("Failed to submit challenge score. Please try again.");
     }
+  } else {
+    // Set a generic result message for normal mode
+    if (percentage >= 90) {
+      setMessage("Outstanding! You're a financial genius!");
+    } else if (percentage >= 70) {
+      setMessage("Great job! You have solid financial knowledge!");
+    } else if (percentage >= 50) {
+      setMessage("Good effort! Keep learning to improve your score!");
+    } else {
+      setMessage("Keep practicing! Financial literacy is a journey.");
+    }
+  }
+
+  // If user is logged in, track progress
+  if (user) {
+    await trackGameProgress(score);
+    
+    // Update the leaderboard
+    try {
+      // Update leaderboard
+      const leaderboardResponse = await fetch(`${API_BASE_URL}/leaderboard/financial-trivia`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          gameType: "financial-trivia",
+          score: score
+        })
+      });
+      
+      if (!leaderboardResponse.ok) {
+        console.error("Failed to update leaderboard");
+      }
+      
+      // Award completion points (only for regular games, not challenges)
+      if (!challengeId) {
+        const pointsResponse = await fetch(`${API_BASE_URL}/challenges/award-points`, {
+          method: "POST",  
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            points: 10, // Base points for completing a game
+            reason: 'game_completed'
+          })
+        });
+        
+        if (!pointsResponse.ok) {
+          console.error("Failed to award points");
+        }
+      }
+      
+      // Save detailed stats
+      saveUserStats(masteryData, categoryPerformance);
+    } catch (error) {
+      console.error("Error updating leaderboard or points:", error);
+    }
+  }
+};
+
+// Calculate score percentage
+const calculateScorePercentage = () => {
+  if (questions.length === 0) return 0;
+  return Math.round((score / questions.length) * 100);
+};
+
+// Calculate mastery levels based on performance
+const calculateMastery = () => {
+  // Calculate mastery levels for each category
+  const mastery = {};
+  const performance = {...categoryPerformance};
+  
+  // Initialize all categories with 0% mastery
+  categories.forEach(category => {
+    mastery[category] = 0;
+    // Initialize performance tracking if not already set
+    if (!performance[category]) {
+      performance[category] = { correct: 0, total: 0 };
+    }
+  });
+  
+  // Update based on current quiz session
+  questions.forEach((question, index) => {
+    const category = question.category || 'general';
+    if (!performance[category]) {
+      performance[category] = { correct: 0, total: 0 };
+    }
+    
+    performance[category].total++;
+    
+    // Check if question was answered correctly - adapt this to match your answer tracking
+    if (userAnswers[index] && userAnswers[index].isCorrect) {
+      performance[category].correct++;
+    }
+  });
+  
+  // Calculate mastery percentages
+  Object.keys(performance).forEach(category => {
+    if (performance[category].total > 0) {
+      mastery[category] = Math.round(
+        (performance[category].correct / performance[category].total) * 100
+      );
+    }
+  });
+  
+  setMasteryData(mastery);
+  setCategoryPerformance(performance);
+};
+
+// Save user statistics to the server
+const saveUserStats = async (mastery, performance) => {
+  try {
+    if (!user) return;
+    
+    const gameData = {
+      userId: user.id,
+      gameId: "financial-trivia",
+      title: "Financial Trivia",
+      score: score,
+      metadata: {
+        difficulty: difficulty,
+        questionsAnswered: questions.length,
+        categoryPerformance: performance,
+        masteryData: mastery
+      }
+    };
+    
+    const response = await fetch(`${API_BASE_URL}/progress/game`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(gameData)
+    });
+    
+    if (!response.ok) {
+      console.error('Error saving game progress');
+    }
+  } catch (err) {
+    console.error('Error saving game progress:', err);
   }
 };
 

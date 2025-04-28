@@ -23,6 +23,7 @@ function Challenges() {
   const [selectedTimer, setSelectedTimer] = useState(30);
   const [selectedQuestionCount, setSelectedQuestionCount] = useState(10);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState({
     'multiple-choice': true,
     'true-false': true,
@@ -128,52 +129,75 @@ function Challenges() {
     }
   };
 
-  const handleCreateChallenge = async () => {
-    if (!selectedUser) return;
+// Update the handleCreateChallenge function in your Challenges.jsx file
+
+const handleCreateChallenge = async () => {
+  if (!selectedUser) return;
+  
+  try {
+    // Make sure at least one question type is selected
+    const selectedTypes = Object.entries(selectedQuestionTypes)
+      .filter(([_, enabled]) => enabled)
+      .map(([type]) => type);
     
-    try {
-      // Prepare quiz settings
-      const quizSettings = {
-        quizType: selectedQuizType,
-        difficulty: selectedDifficulty,
-        timer: selectedTimer,
-        questionCount: selectedQuestionCount,
-        category: selectedCategory,
-        questionTypes: Object.entries(selectedQuestionTypes)
-          .filter(([_, enabled]) => enabled)
-          .map(([type]) => type)
-      };
-      
-      const response = await fetch(`${API_BASE_URL}/challenges`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          challengerId: user.id,
-          challengedId: selectedUser,
-          gameType: "financial-trivia",
-          gameMode: "standard",
-          quizSettings: quizSettings
-        })
-      });
-      
-      if (!response.ok) throw new Error("Failed to create challenge");
-      
-      setShowCreateModal(false);
-      setSelectedUser("");
-      fetchChallenges();
-    } catch (err) {
-      console.error("Error creating challenge:", err);
-      alert("Failed to create challenge");
+    if (selectedTypes.length === 0) {
+      alert("Please select at least one question type");
+      return;
     }
-  };
+    
+    // Prepare quiz settings
+    const quizSettings = {
+      quizType: selectedQuizType,
+      difficulty: selectedDifficulty,
+      timer: selectedTimer,
+      questionCount: selectedQuestionCount,
+      category: selectedCategory,
+      questionTypes: selectedTypes
+    };
+    
+    console.log("Creating challenge with settings:", quizSettings);
+    
+    const response = await fetch(`${API_BASE_URL}/challenges`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        challengerId: user.id,
+        challengedId: selectedUser,
+        gameType: "financial-trivia",
+        gameMode: "standard",
+        quizSettings: quizSettings
+      })
+    });
+    
+    if (!response.ok) throw new Error("Failed to create challenge");
+    
+    setShowCreateModal(false);
+    setSelectedUser("");
+    fetchChallenges();
+  } catch (err) {
+    console.error("Error creating challenge:", err);
+    alert("Failed to create challenge");
+  }
+};
 
     // Function to format quiz settings for display
     const formatQuizSettings = (settings) => {
       if (!settings) return "Standard Settings";
       
       return `${settings.quizType} • ${settings.difficulty} • ${settings.questionCount}Q • ${settings.timer}s`;
+    };
+
+    const formatDateTime = (dateString) => {
+      const options = { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(dateString).toLocaleString(undefined, options);
     };
 
   const handleAcceptChallenge = async (challengeId) => {
@@ -198,6 +222,32 @@ function Challenges() {
   const handlePlayChallenge = (challenge) => {
     // Navigate to the trivia game with challenge context
     navigate(`/games/quiz?challengeId=${challenge.id}`);
+  };
+
+  // Handle deletion of a challenge
+  const handleDeleteChallenge = async (challengeId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) throw new Error("Failed to delete challenge");
+      
+      // Close confirmation dialog
+      setDeleteConfirmation(null);
+      
+      // Show success message
+      alert("Challenge deleted successfully");
+      
+      // Refresh the challenges list
+      fetchChallenges();
+    } catch (err) {
+      console.error("Error deleting challenge:", err);
+      alert("Failed to delete challenge");
+    }
   };
 
   const getChallengeStatus = (challenge) => {
@@ -233,8 +283,8 @@ function Challenges() {
           </span>
         </div>
         
-      {/* Quiz Settings Display */}
-      {challenge.quizSettings && (
+        {/* Quiz Settings Display */}
+        {challenge.quizSettings && (
           <div className="challenge-settings">
             <span className="settings-badge">
               {formatQuizSettings(challenge.quizSettings)}
@@ -242,7 +292,6 @@ function Challenges() {
           </div>
         )}
 
-        
         <div className="challenge-players">
           <div className="player">
             <span className="player-label">You</span>
@@ -281,17 +330,26 @@ function Challenges() {
                challenge.winnerId === null ? "🤝 It's a Tie!" : "❌ You Lost"}
             </div>
           )}
+
+          {/* Delete button - only visible for challenges created by the user */}
+          {isChallenger && (
+            <button 
+              className="btn-delete" 
+              onClick={() => setDeleteConfirmation(challenge.id)}
+              title="Delete this challenge"
+            >
+              🗑️ Delete
+            </button>
+          )}
         </div>
         
         <div className="challenge-footer">
           <span className="prize">🏆 {challenge.prizePoints} points</span>
-          <span className="date">{new Date(challenge.createdAt).toLocaleDateString()}</span>
+          <span className="date">{formatDateTime(challenge.createdAt)}</span>
         </div>
       </div>
     );
   };
-    
-
 
   if (loading) {
     return (
@@ -345,6 +403,7 @@ function Challenges() {
         )}
       </div>
   
+      {/* Create Challenge Modal */}
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-content wide-modal">
@@ -473,9 +532,27 @@ function Challenges() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal">
+            <h3>Delete Challenge</h3>
+            <p>Are you sure you want to delete this challenge?</p>
+            <div className="modal-actions">
+              <button onClick={() => setDeleteConfirmation(null)}>Cancel</button>
+              <button 
+                onClick={() => handleDeleteChallenge(deleteConfirmation)}
+                className="btn-delete-confirm"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-  
 }
 
 export default Challenges;

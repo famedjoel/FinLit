@@ -3,6 +3,7 @@ import express from 'express';
 import Challenge from '../models/Challenge.js';
 import Leaderboard from '../models/Leaderboard.js';
 import User from '../models/User.js';
+import { connect } from '../config/sqlite-adapter.js';
 
 const router = express.Router();
 
@@ -81,34 +82,183 @@ router.post('/challenges/:id/accept', async (req, res) => {
 });
 
 // Submit score for a challenge
+// Add this route to your challengeRoutes.js file
+
+// POST challenge score
 router.post('/challenges/:id/score', async (req, res) => {
   try {
-    const { userId, score } = req.body;
     const challengeId = req.params.id;
+    const { userId, score } = req.body;
     
-    const challenge = await Challenge.findById(challengeId);
+    if (!userId || score === undefined) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    
+    const connection = await connect();
+    
+    // Get the challenge
+    const challenge = await connection.get(
+      `SELECT * FROM challenges WHERE id = ?`,
+      [challengeId]
+    );
+    
     if (!challenge) {
       return res.status(404).json({ message: "Challenge not found" });
     }
     
-    // Verify the user is part of this challenge
-    if (userId !== challenge.challengerId && userId !== challenge.challengedId) {
+    // Check if user is part of this challenge
+    if (challenge.challenger_id !== userId && challenge.challenged_id !== userId) {
       return res.status(403).json({ message: "User is not part of this challenge" });
     }
     
-    // Update the challenge with the score
-    const updatedChallenge = await Challenge.updateScore(challengeId, userId, score);
+    // Update the correct score field based on user
+    const isChallenger = challenge.challenger_id === userId;
+    const scoreField = isChallenger ? 'challenger_score' : 'challenged_score';
     
-    // Update leaderboard
-    await Leaderboard.updateScore(userId, challenge.gameType, score);
+    await connection.run(
+      `UPDATE challenges SET ${scoreField} = ? WHERE id = ?`,
+      [score, challengeId]
+    );
     
-    // Award points for completing the challenge
-    await Challenge.awardPoints(userId, 10, 'challenge_played', challengeId);
+    // Check if both players have completed
+    const updatedChallenge = await connection.get(
+      `SELECT * FROM challenges WHERE id = ?`,
+      [challengeId]
+    );
     
-    res.json(updatedChallenge);
+    // If both scores are submitted, determine the winner
+    if (updatedChallenge.challenger_score !== null && updatedChallenge.challenged_score !== null) {
+      let winnerId = null;
+      
+      if (updatedChallenge.challenger_score > updatedChallenge.challenged_score) {
+        winnerId = updatedChallenge.challenger_id;
+      } else if (updatedChallenge.challenged_score > updatedChallenge.challenger_score) {
+        winnerId = updatedChallenge.challenged_id;
+      }
+      // If scores are equal, winnerId remains null (it's a tie)
+      
+      // Update challenge status to completed
+      await connection.run(
+        `UPDATE challenges SET status = 'completed', winner_id = ?, completed_at = ? WHERE id = ?`,
+        [winnerId, new Date().toISOString(), challengeId]
+      );
+      
+      // Award points to the winner
+      if (winnerId) {
+        // Add 5 points for each participant
+        const pointsPool = updatedChallenge.prize_points || 50;
+        
+        // Insert or update user points for the winner
+        await connection.run(
+          `INSERT INTO user_points (user_id, total_points, challenges_won, challenges_played, last_updated)
+           VALUES (?, ?, 1, 1, ?)
+           ON CONFLICT(user_id) DO UPDATE SET
+           total_points = total_points + ?,
+           challenges_won = challenges_won + 1,
+           challenges_played = challenges_played + 1,
+           last_updated = ?`,
+          [winnerId, pointsPool, new Date().toISOString(), pointsPool, new Date().toISOString()]
+        );
+        
+        // Update points history
+        await connection.run(
+          `INSERT INTO points_history (user_id, points_change, reason, reference_id, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [winnerId, pointsPool, 'challenge_win', challengeId, new Date().toISOString()]
+        );
+        
+        // Update loser's played count
+        const loserId = winnerId === updatedChallenge.challenger_id 
+          ? updatedChallenge.challenged_id 
+          : updatedChallenge.challenger_id;
+        
+        await connection.run(
+          `INSERT INTO user_points (user_id, total_points, challenges_won, challenges_played, last_updated)
+           VALUES (?, 0, 0, 1, ?)
+           ON CONFLICT(user_id) DO UPDATE SET
+           challenges_played = challenges_played + 1,
+           last_updated = ?`,
+          [loserId, new Date().toISOString(), new Date().toISOString()]
+        );
+      } else {
+        // It's a tie - update both players' played count
+        await connection.run(
+          `INSERT INTO user_points (user_id, total_points, challenges_won, challenges_played, last_updated)
+           VALUES (?, 0, 0, 1, ?)
+           ON CONFLICT(user_id) DO UPDATE SET
+           challenges_played = challenges_played + 1,
+           last_updated = ?`,
+          [updatedChallenge.challenger_id, new Date().toISOString(), new Date().toISOString()]
+        );
+        
+        await connection.run(
+          `INSERT INTO user_points (user_id, total_points, challenges_won, challenges_played, last_updated)
+           VALUES (?, 0, 0, 1, ?)
+           ON CONFLICT(user_id) DO UPDATE SET
+           challenges_played = challenges_played + 1,
+           last_updated = ?`,
+          [updatedChallenge.challenged_id, new Date().toISOString(), new Date().toISOString()]
+        );
+      }
+      
+      // Get user data for response
+      const challenger = await connection.get(
+        `SELECT username FROM users WHERE id = ?`,
+        [updatedChallenge.challenger_id]
+      );
+      
+      const challenged = await connection.get(
+        `SELECT username FROM users WHERE id = ?`,
+        [updatedChallenge.challenged_id]
+      );
+      
+      // Return final challenge state
+      return res.json({
+        id: updatedChallenge.id,
+        challengerId: updatedChallenge.challenger_id,
+        challengedId: updatedChallenge.challenged_id,
+        challengerUsername: challenger ? challenger.username : null,
+        challengedUsername: challenged ? challenged.username : null,
+        status: 'completed',
+        gameType: updatedChallenge.game_type,
+        gameMode: updatedChallenge.game_mode,
+        challengerScore: updatedChallenge.challenger_score,
+        challengedScore: updatedChallenge.challenged_score,
+        winnerId: winnerId,
+        prizePoints: updatedChallenge.prize_points,
+        message: winnerId ? `${winnerId === userId ? 'You won' : 'Your opponent won'} the challenge!` : "It's a tie!"
+      });
+    }
+    
+    // If we get here, only one player has completed
+    // Get user data for response
+    const challenger = await connection.get(
+      `SELECT username FROM users WHERE id = ?`,
+      [updatedChallenge.challenger_id]
+    );
+    
+    const challenged = await connection.get(
+      `SELECT username FROM users WHERE id = ?`,
+      [updatedChallenge.challenged_id]
+    );
+    
+    return res.json({
+      id: updatedChallenge.id,
+      challengerId: updatedChallenge.challenger_id,
+      challengedId: updatedChallenge.challenged_id,
+      challengerUsername: challenger ? challenger.username : null,
+      challengedUsername: challenged ? challenged.username : null,
+      status: 'accepted',
+      gameType: updatedChallenge.game_type,
+      gameMode: updatedChallenge.game_mode,
+      challengerScore: updatedChallenge.challenger_score,
+      challengedScore: updatedChallenge.challenged_score,
+      message: "Your score has been submitted. Waiting for your opponent to complete the challenge."
+    });
+    
   } catch (error) {
-    console.error('Error submitting score:', error);
-    res.status(500).json({ message: "Error submitting score", error: error.message });
+    console.error("Error submitting challenge score:", error);
+    res.status(500).json({ message: "Error submitting challenge score", error: error.message });
   }
 });
 
@@ -196,4 +346,63 @@ router.get('/points/user/:userId', async (req, res) => {
   }
 });
 
+// DELETE endpoint to delete a challenge
+router.delete('/challenges/:id', async (req, res) => {
+  try {
+    const challengeId = req.params.id;
+    const connection = await connect();
+    
+    // Get the challenge to check if it exists and verify ownership
+    const challenge = await connection.get(
+      `SELECT * FROM challenges WHERE id = ?`,
+      [challengeId]
+    );
+    
+    if (!challenge) {
+      return res.status(404).json({ message: "Challenge not found" });
+    }
+    
+    // Delete the challenge
+    await connection.run(
+      `DELETE FROM challenges WHERE id = ?`,
+      [challengeId]
+    );
+    
+    res.json({ message: "Challenge deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting challenge:", error);
+    res.status(500).json({ message: "Error deleting challenge", error: error.message });
+  }
+});
+
+// Update a challenge with quiz settings
+router.post('/challenges/:id/update-settings', async (req, res) => {
+  try {
+    const challengeId = req.params.id;
+    const { quizSettings } = req.body;
+    
+    const connection = await connect();
+    
+    // Get the challenge
+    const challenge = await connection.get(
+      `SELECT * FROM challenges WHERE id = ?`,
+      [challengeId]
+    );
+    
+    if (!challenge) {
+      return res.status(404).json({ message: "Challenge not found" });
+    }
+    
+    // Update quiz settings
+    await connection.run(
+      `UPDATE challenges SET quiz_settings = ? WHERE id = ?`,
+      [JSON.stringify(quizSettings), challengeId]
+    );
+    
+    res.json({ message: "Challenge settings updated successfully" });
+  } catch (error) {
+    console.error("Error updating challenge settings:", error);
+    res.status(500).json({ message: "Error updating challenge settings", error: error.message });
+  }
+});
 export default router;
