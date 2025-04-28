@@ -796,74 +796,93 @@ const fetchQuestionsForChallenge = async (challengeId) => {
     setLoading(true);
     setError(null);
     
-    // First, fetch the challenge details to get quiz settings
+    // Fetch challenge details first
     const challengeResponse = await fetch(`${API_BASE_URL}/challenges/${challengeId}`);
     if (!challengeResponse.ok) {
-      throw new Error("Failed to fetch challenge details");
+      throw new Error("Failed to fetch challenge details.");
     }
-    
     const challengeData = await challengeResponse.json();
     console.log("Challenge data:", challengeData);
     
     if (!challengeData.quizSettings) {
-      throw new Error("Challenge has no quiz settings");
+      throw new Error("Challenge has no quiz settings.");
     }
-    
-    // Extract settings from the challenge
+
     const settings = challengeData.quizSettings;
-    
-    // Build the query parameters
+
+    // Build query parameters
     const params = new URLSearchParams();
-    
+
     if (settings.difficulty) {
       params.append("difficulty", settings.difficulty);
     }
-    
     if (settings.category && settings.category !== "all") {
       params.append("category", settings.category);
     }
-    
     if (settings.questionCount) {
       params.append("limit", settings.questionCount);
     }
-    
-    // Most importantly, add the question types if specified
     if (settings.questionTypes && settings.questionTypes.length > 0) {
       params.append("types", settings.questionTypes.join(','));
     }
-    
-    // Now fetch questions with these parameters
+
     const questionsUrl = `${API_BASE_URL}/trivia/questions?${params.toString()}`;
     console.log("Fetching questions from:", questionsUrl);
-    
+
     const questionsResponse = await fetch(questionsUrl);
     if (!questionsResponse.ok) {
-      throw new Error("Failed to fetch questions");
+      throw new Error("Failed to fetch challenge questions.");
     }
-    
+
     const questionsData = await questionsResponse.json();
-    
-    // Set game settings from challenge
+
+    if (!questionsData || questionsData.length === 0) {
+      throw new Error("No questions found for this challenge. Maybe invalid settings?");
+    }
+
+    // Apply settings
     setDifficulty(settings.difficulty || "medium");
     setGameType(settings.quizType || "standard");
     setTimer(settings.timer || 30);
+    setTimerSetting(settings.timer || 30);
+    setTimerEnabled(settings.timer !== 0);
+    setSelectedCategory(settings.category || "all");
+    setQuestionCount(settings.questionCount || 10);
+
+    // Update selected question types
+    const updatedQuestionTypes = {
+      'multiple-choice': false,
+      'true-false': false,
+      'fill-blank': false,
+      'matching': false,
+      'calculation': false
+    };
+    if (settings.questionTypes && settings.questionTypes.length > 0) {
+      settings.questionTypes.forEach(type => {
+        // eslint-disable-next-line no-prototype-builtins
+        if (updatedQuestionTypes.hasOwnProperty(type)) {
+          updatedQuestionTypes[type] = true;
+        }
+      });
+    }
+    setSelectedQuestionTypes(updatedQuestionTypes);
+
     setQuestions(questionsData);
-    
-    // Start the game
     setCurrentQuestionIndex(0);
     setScore(0);
     setShowResults(false);
     setGameActive(true);
     setChallengeMode(true);
     setCurrentChallenge(challengeData);
-    
+
     setLoading(false);
   } catch (error) {
     console.error("Error fetching challenge questions:", error);
-    setError(error.message || "Failed to load challenge questions");
+    setError(error.message || "An unexpected error occurred while loading the challenge.");
     setLoading(false);
   }
 };
+
 
 // Submit the score for a challenge
 const submitChallengeScore = async () => {

@@ -385,13 +385,7 @@
   margin-bottom: 1rem;
 }
 
-.question-types-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
+/* Improved checkbox styling */
 .question-type-checkbox {
   display: flex;
   align-items: center;
@@ -401,15 +395,43 @@
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
   transition: all 0.2s ease;
+  background-color: white;
 }
 
 .question-type-checkbox:hover {
   background-color: #f7fafc;
+  border-color: #cbd5e0;
 }
 
+/* Style for checked state */
+.question-type-checkbox input[type="checkbox"]:checked + span {
+  font-weight: 600;
+  color: #3182ce;
+}
+
+/* Make sure the checkboxes themselves are visible and properly sized */
 .question-type-checkbox input[type="checkbox"] {
   width: 16px;
   height: 16px;
+  margin: 0;
+  cursor: pointer;
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+  appearance: checkbox;
+  display: inline-block;
+}
+
+/* Fix for the grid layout */
+.question-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Ensure the container shows the checked state visually */
+.question-type-checkbox input[type="checkbox"]:checked ~ span {
+  color: #3182ce;
 }
 
 /* Quiz settings display in challenge card */

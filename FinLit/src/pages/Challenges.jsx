@@ -500,23 +500,31 @@ const handleCreateChallenge = async () => {
               </div>
               
               <div className="form-group">
-                <label>Question Types</label>
-                <div className="question-types-grid">
-                  {questionTypes.map(type => (
-                    <label key={type.value} className="question-type-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={selectedQuestionTypes[type.value]}
-                        onChange={(e) => setSelectedQuestionTypes({
-                          ...selectedQuestionTypes,
-                          [type.value]: e.target.checked
-                        })}
-                      />
-                      <span>{type.icon} {type.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+  <label>Question Types</label>
+  <div className="question-types-grid">
+    {[
+      { value: "multiple-choice", label: "Multiple Choice", icon: "🔠" },
+      { value: "true-false", label: "True/False", icon: "✓✗" },
+      { value: "fill-blank", label: "Fill in the Blank", icon: "📝" },
+      { value: "matching", label: "Matching", icon: "🔄" },
+      { value: "calculation", label: "Financial Calculations", icon: "🧮" }
+    ].map(type => (
+      <label key={type.value} className="question-type-checkbox">
+        <input
+          type="checkbox"
+          checked={selectedQuestionTypes[type.value]} 
+          onChange={() => {
+            setSelectedQuestionTypes({
+              ...selectedQuestionTypes,
+              [type.value]: !selectedQuestionTypes[type.value]
+            });
+          }}
+        />
+        <span>{type.icon} {type.label}</span>
+      </label>
+    ))}
+  </div>
+</div>
             </div>
             
             <div className="modal-actions">
