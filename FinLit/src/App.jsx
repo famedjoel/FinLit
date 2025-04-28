@@ -19,6 +19,8 @@ import Dashboard from "./components/Dashboard";
 import Profile from "./components/Profile";
 import ThemeToggle from "./components/ThemeToggle"; // Import ThemeToggle component
 import { ThemeProvider } from "./context/ThemeContext"; // Import ThemeProvider
+import Leaderboard from "./pages/Leaderboard";
+import Challenges from "./pages/Challenges";
 
 // Create a custom event for login status changes
 const loginStatusChange = new Event('loginStatusChange');
@@ -79,24 +81,32 @@ function App() {
               ☰
             </div>
             <div className={`nav-links ${menuOpen ? "show" : ""}`}>
-              <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>Home</Link>
-              <Link to="/courses" className="nav-link" onClick={() => setMenuOpen(false)}>Courses</Link>
-              <Link to="/games" className="nav-link" onClick={() => setMenuOpen(false)}>Games</Link>
-              {!user ? (
-                <>
-                  <Link to="/signup" className="nav-link" onClick={() => setMenuOpen(false)}>Sign Up</Link>
-                  <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Login</Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/dashboard" className="nav-link" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-                  <Link to="/stats" className="nav-link" onClick={() => setMenuOpen(false)}>Statistics</Link>
-                  <Link to="/profile" className="nav-link" onClick={() => setMenuOpen(false)}>Profile</Link>
-                  <button onClick={handleLogout} className="nav-link logout-link">Logout</button>
-                </>
-              )}
-              <ThemeToggle /> {/* Add Theme Toggle Component */}
-            </div>
+  <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>Home</Link>
+  <Link to="/courses" className="nav-link" onClick={() => setMenuOpen(false)}>Courses</Link>
+  <Link to="/games" className="nav-link" onClick={() => setMenuOpen(false)}>Games</Link>
+
+  {!user ? (
+    <>
+      <Link to="/signup" className="nav-link" onClick={() => setMenuOpen(false)}>Sign Up</Link>
+      <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Login</Link>
+    </>
+  ) : (
+    <>
+      <Link to="/dashboard" className="nav-link" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+      <Link to="/stats" className="nav-link" onClick={() => setMenuOpen(false)}>Statistics</Link>
+      <Link to="/profile" className="nav-link" onClick={() => setMenuOpen(false)}>Profile</Link>
+      
+      {/* ✨ ADD THESE NEW LINKS */}
+      <Link to="/leaderboard" className="nav-link" onClick={() => setMenuOpen(false)}>Leaderboard</Link>
+      <Link to="/challenges" className="nav-link" onClick={() => setMenuOpen(false)}>Challenges</Link>
+      
+      <button onClick={handleLogout} className="nav-link logout-link">Logout</button>
+    </>
+  )}
+
+  <ThemeToggle /> {/* Keep ThemeToggle here */}
+</div>
+
           </nav>
 
           {/* Main Content */}
@@ -117,6 +127,8 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/stats" element={<EnhancedStatistics />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/challenges" element={<Challenges />} />
             </Routes>
           </div>
         </div>

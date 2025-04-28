@@ -7,6 +7,8 @@ import { useState, useEffect, useRef } from "react";
 import "../styles/FinancialTrivia.css";
 import "../styles/FinancialTriviaQuizTypes.css";
 import "../styles/QuestionTypes.css"; // Import the new question type styles
+import { useSearchParams, useNavigate } from "react-router-dom";
+
 
 const FinancialTrivia = () => {
   // State variables
@@ -37,6 +39,20 @@ const FinancialTrivia = () => {
   const [showHint, setShowHint] = useState(false);
   const resultsRef = useRef(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
+  const [searchParams] = useSearchParams();
+const challengeId = searchParams.get('challengeId');
+const navigate = useNavigate();
+const [message, setMessage] = useState(""); // <-- New: To show submission message
+const [challengeSettings, setChallengeSettings] = useState(null);
+  const [loadingChallenge, setLoadingChallenge] = useState(false);
+
+    // Load challenge settings when in challenge mode
+    useEffect(() => {
+      if (challengeId) {
+        fetchChallengeSettings();
+      }
+    }, [challengeId]);
+
   
   // Quiz type options
   const [quizType, setQuizType] = useState("standard");
@@ -212,6 +228,41 @@ const FinancialTrivia = () => {
       showNotification(`Error: ${error.message}`, "error");
     }
   };
+
+  const fetchChallengeSettings = async () => {
+    try {
+      setLoadingChallenge(true);
+      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`);
+      
+      if (!response.ok) throw new Error("Failed to fetch challenge settings");
+      
+      const challenge = await response.json();
+      
+      if (challenge.quizSettings) {
+        // Apply challenge settings
+        setChallengeSettings(challenge.quizSettings);
+        setQuizType(challenge.quizSettings.quizType);
+        setDifficulty(challenge.quizSettings.difficulty);
+        setTimerSetting(challenge.quizSettings.timer);
+        setTimerEnabled(challenge.quizSettings.timer > 0);
+        setQuestionCount(challenge.quizSettings.questionCount);
+        setSelectedCategory(challenge.quizSettings.category);
+        
+        // Set selected question types
+        const selectedTypes = {};
+        questionTypeOptions.forEach(type => {
+          selectedTypes[type.value] = challenge.quizSettings.questionTypes.includes(type.value);
+        });
+        setSelectedQuestionTypes(selectedTypes);
+      }
+      
+      setLoadingChallenge(false);
+    } catch (error) {
+      console.error("Error fetching challenge settings:", error);
+      setLoadingChallenge(false);
+    }
+  };
+
 
   // Fetch standard quiz questions with question types filter
   const fetchStandardQuestions = async () => {
@@ -635,65 +686,123 @@ const checkAnswer = () => {
   }
 };
 
-  // Go to next question
-  const goToNextQuestion = () => {
-    setTotalQuestionsAnswered(prev => prev + 1);
+// some other functions here (like trackGameProgress, fetchMoreMarathonQuestions, etc.)
+
+// Update the endGame function in your FinancialTrivia.jsx file
+
+const endGame = async () => {
+  setShowScore(true);
+  setQuizFinished(true);
+
+  if (user) {
+    await trackGameProgress(score);
     
-    // Handle marathon mode - continue until wrong answer
-    if (quizType === "marathon" && !answerIsCorrect) {
-      setShowScore(true);
-      setQuizFinished(true);
-      if (user) {
-        trackGameProgress(score);
+    // Add this section to update the leaderboard
+    try {
+      // Update leaderboard
+      const leaderboardResponse = await fetch(`${API_BASE_URL}/leaderboard/financial-trivia`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          gameType: "financial-trivia",
+          score: score
+        })
+      });
+      
+      if (!leaderboardResponse.ok) {
+        console.error("Failed to update leaderboard");
       }
-      return;
+      
+      // Award completion points
+      const pointsResponse = await fetch(`${API_BASE_URL}/challenges/award-points`, {
+        method: "POST",  
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          points: 10, // Base points for completing a game
+          reason: 'game_completed'
+        })
+      });
+      
+      if (!pointsResponse.ok) {
+        console.error("Failed to award points");
+      }
+    } catch (error) {
+      console.error("Error updating leaderboard or points:", error);
     }
-    
-    // For regular progression
-    const nextQuestion = currentQuestion + 1;
-    
-    // Check if we've reached the end of questions
-    if (nextQuestion < questions.length) {
-      // Continue to next question
-      setCurrentQuestion(nextQuestion);
-      setSelectedAnswer(null);
-      setAnswerSubmitted(false);
-      setTimeLeft(timerSetting);
-      setShowHint(false);
-      
-      // For progressive mode, check if we should increase difficulty
-      if (quizType === "progressive") {
-        const currentProgress = totalQuestionsAnswered + 1;
-        if (currentProgress === 5) {
-          setProgressiveDifficulty("medium");
-          showNotification("Difficulty increased to Medium!", "info");
-        } else if (currentProgress === 10) {
-          setProgressiveDifficulty("hard");
-          showNotification("Difficulty increased to Hard!", "info");
-        }
+  }
+
+  if (challengeId && user && score > 0) {
+    try {
+      const challengeResponse = await fetch(`${API_BASE_URL}/challenges/${challengeId}/score`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          score: score
+        })
+      });
+
+      if (!challengeResponse.ok) {
+        throw new Error("Failed to submit challenge score");
       }
-      
-      // For marathon mode, fetch more questions if needed
-      if (quizType === "marathon" && nextQuestion >= questions.length - 5) {
-        fetchMoreMarathonQuestions();
-      }
-    } else {
-      // End of quiz reached
-      setShowScore(true);
-      setQuizFinished(true);
-      
-      // Mark daily challenge as completed if applicable
-      if (quizType === "daily") {
-        setDailyChallengeCompleted(true);
-        localStorage.setItem("dailyChallengeCompleted", new Date().toISOString());
-      }
-      
-      // Track game progress
-      if (user) {
-        trackGameProgress(score);
+
+      setMessage("Challenge score submitted! Redirecting to Challenges...");
+      setTimeout(() => {
+        navigate("/challenges");
+      }, 2000);
+    } catch (error) {
+      console.error("Error submitting challenge score:", error);
+      setMessage("Failed to submit challenge score. Please try again.");
+    }
+  }
+};
+
+// ✅ THEN define goToNextQuestion BELOW
+
+const goToNextQuestion = () => {
+  setTotalQuestionsAnswered(prev => prev + 1);
+
+  if (quizType === "marathon" && !answerIsCorrect) {
+    endGame(); 
+    return;
+  }
+
+  const nextQuestion = currentQuestion + 1;
+
+  if (nextQuestion < questions.length) {
+    setCurrentQuestion(nextQuestion);
+    setSelectedAnswer(null);
+    setAnswerSubmitted(false);
+    setTimeLeft(timerSetting);
+    setShowHint(false);
+
+    if (quizType === "progressive") {
+      const currentProgress = totalQuestionsAnswered + 1;
+      if (currentProgress === 5) {
+        setProgressiveDifficulty("medium");
+        showNotification("Difficulty increased to Medium!", "info");
+      } else if (currentProgress === 10) {
+        setProgressiveDifficulty("hard");
+        showNotification("Difficulty increased to Hard!", "info");
       }
     }
-  };
+
+    if (quizType === "marathon" && nextQuestion >= questions.length - 5) {
+      fetchMoreMarathonQuestions();
+    }
+  } else {
+    endGame(); 
+  }
+};
+
 
   // Handle answer submission
   const handleAnswerSubmit = (answer) => {
@@ -1501,475 +1610,544 @@ const hasOption = Array.isArray(currentQ.options) && currentQ.options.length > 0
     }
   };
 
-  return (
-    <div className="financial-trivia-container">
-      <h2>📘 Financial Trivia Challenge</h2>
-      
-      {/* Notifications */}
-      <div className="notifications">
-        {notifications.map((note) => (
-          <div key={note.id} className={`notification ${note.type}`}>
-            {note.message}
-          </div>
-        ))}
+// Complete render section for FinancialTrivia.jsx
+
+return (
+  <div className="financial-trivia-container">
+    <h2>📘 Financial Trivia Challenge</h2>
+
+    {challengeId && (
+      <div className="challenge-mode-banner">
+        <span className="challenge-icon">⚔️</span>
+        <span className="challenge-text">Challenge Mode Active!</span>
       </div>
-      
-      {/* Quiz Selection UI */}
-      {!quizStarted && (
-        <div className="quiz-selection">
-          {/* Quiz Type Selection */}
-          <div className="selection-section quiz-type-selector">
-            <h3>Select Quiz Type:</h3>
-            <div className="quiz-type-options">
-              {quizTypeOptions.map((option) => (
-                <button 
-                  key={option.value}
-                  className={`quiz-type-btn ${quizType === option.value ? "active" : ""} ${option.value === "daily" && dailyChallengeCompleted ? "completed" : ""}`}
-                  onClick={() => changeQuizType(option.value)}
-                  disabled={option.value === "daily" && dailyChallengeCompleted}
-                >
-                  <span className="quiz-type-icon">{option.icon}</span>
-                  <span className="quiz-type-label">{option.label}</span>
-                  {option.value === "daily" && dailyChallengeCompleted && (
-                    <span className="daily-completed-badge">✅ Completed Today</span>
+    )}
+    
+    {message && (
+      <div className="challenge-message">
+        {message}
+      </div>
+    )}
+    
+    {/* Show challenge settings */}
+    {challengeId && challengeSettings && !quizStarted && (
+      <div className="challenge-settings-info">
+        <h3>Challenge Settings</h3>
+        <p>Both players will use these settings:</p>
+        <div className="settings-summary">
+          <div className="setting-item">
+            <strong>Quiz Type:</strong> {challengeSettings.quizType}
+          </div>
+          <div className="setting-item">
+            <strong>Difficulty:</strong> {challengeSettings.difficulty}
+          </div>
+          <div className="setting-item">
+            <strong>Timer:</strong> {challengeSettings.timer} seconds
+          </div>
+          <div className="setting-item">
+            <strong>Questions:</strong> {challengeSettings.questionCount}
+          </div>
+          <div className="setting-item">
+            <strong>Category:</strong> {financialCategories.find(c => c.id === challengeSettings.category)?.name}
+          </div>
+          <div className="setting-item">
+            <strong>Question Types:</strong> {challengeSettings.questionTypes.join(', ')}
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Notifications */}
+    <div className="notifications">
+      {notifications.map((note) => (
+        <div key={note.id} className={`notification ${note.type}`}>
+          {note.message}
+        </div>
+      ))}
+    </div>
+    
+    {/* Quiz Selection UI - Only show if not in challenge mode or challenge settings not loaded */}
+    {!quizStarted && !loadingChallenge && (
+      <div className="quiz-selection">
+        {!challengeId ? (
+          <>
+            {/* Quiz Type Selection */}
+            <div className="selection-section quiz-type-selector">
+              <h3>Select Quiz Type:</h3>
+              <div className="quiz-type-options">
+                {quizTypeOptions.map((option) => (
+                  <button 
+                    key={option.value}
+                    className={`quiz-type-btn ${quizType === option.value ? "active" : ""} ${option.value === "daily" && dailyChallengeCompleted ? "completed" : ""}`}
+                    onClick={() => changeQuizType(option.value)}
+                    disabled={option.value === "daily" && dailyChallengeCompleted}
+                  >
+                    <span className="quiz-type-icon">{option.icon}</span>
+                    <span className="quiz-type-label">{option.label}</span>
+                    {option.value === "daily" && dailyChallengeCompleted && (
+                      <span className="daily-completed-badge">✅ Completed Today</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <p className="quiz-type-description">
+                {quizTypeOptions.find(option => option.value === quizType)?.description}
+              </p>
+            </div>
+
+            {/* Question Types Selection */}
+            <div className="selection-section question-types-selector">
+              <h3>Select Question Types:</h3>
+              <div className="question-type-options">
+                {questionTypeOptions.map((option) => (
+                  <button 
+                    key={option.value}
+                    className={`quiz-type-btn ${selectedQuestionTypes[option.value] ? "active" : ""}`}
+                    onClick={() => toggleQuestionType(option.value)}
+                  >
+                    <span className="quiz-type-icon">{option.icon}</span>
+                    <span className="quiz-type-label">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="quiz-type-description">
+                Mix different question types to test your knowledge in various ways.
+              </p>
+            </div>
+
+            {/* Difficulty Selection */}
+            {(quizType === "standard" || quizType === "marathon") && (
+              <div className="selection-section difficulty-selector">
+                <h3>Select Difficulty Level:</h3>
+                <div className="difficulty-buttons">
+                  <button 
+                    className={`difficulty-btn ${difficulty === "easy" ? "active" : ""}`}
+                    onClick={() => changeDifficulty("easy")}
+                  >
+                    Easy
+                  </button>
+                  <button 
+                    className={`difficulty-btn ${difficulty === "medium" ? "active" : ""}`}
+                    onClick={() => changeDifficulty("medium")}
+                  >
+                    Medium
+                  </button>
+                  <button 
+                    className={`difficulty-btn ${difficulty === "hard" ? "active" : ""}`}
+                    onClick={() => changeDifficulty("hard")}
+                  >
+                    Hard
+                  </button>
+                </div>
+                <p className="difficulty-description">
+                  {difficulty === "easy" ? 
+                    "Basic financial concepts and terminology." : 
+                    difficulty === "medium" ? 
+                    "Intermediate financial knowledge and concepts." : 
+                    "Advanced financial strategies and market knowledge."}
+                </p>
+              </div>
+            )}
+
+            {/* Timer Settings */}
+            {(quizType === "standard" || quizType === "marathon") && (
+              <div className="selection-section timer-selector">
+                <h3>Timer Settings:</h3>
+                <div className="timer-options">
+                  {timerOptions.map((option) => (
+                    <button 
+                      key={option.value} 
+                      className={`timer-btn ${timerSetting === option.value ? "active" : ""}`}
+                      onClick={() => {
+                        setTimerSetting(option.value);
+                        setTimerEnabled(option.value > 0);
+                      }}
+                      disabled={quizType === "marathon" && option.value === 0}
+                    >
+                      {option.label}
+                      {quizType === "marathon" && option.value === 0 && " (Not available for Marathon)"}
+                    </button>
+                  ))}
+                </div>
+                <p className="timer-description">
+                  {timerSetting > 0 
+                    ? `You'll have ${timerSetting} seconds to answer each question.` 
+                    : "Take your time. There's no time limit for answering questions."}
+                </p>
+              </div>
+            )}
+
+            {/* Question Count */}
+            {quizType === "standard" && (
+              <div className="selection-section question-count-selector">
+                <h3>Number of Questions:</h3>
+                <div className="question-count-options">
+                  {questionCountOptions.map((option) => (
+                    <button 
+                      key={option.value} 
+                      className={`question-count-btn ${questionCount === option.value ? "active" : ""}`}
+                      onClick={() => setQuestionCount(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="question-count-description">
+                  {questionCount <= 5 
+                    ? "A short quiz to test your knowledge." 
+                    : questionCount <= 10 
+                    ? "A medium-length quiz to challenge you." 
+                    : "A comprehensive quiz to thoroughly test your knowledge."}
+                </p>
+              </div>
+            )}
+
+            {/* Category Selection */}
+            {(quizType === "standard" || quizType === "marathon") && (
+              <div className="selection-section category-selector">
+                <h3>Select Category:</h3>
+                <div className="category-buttons">
+                  {financialCategories.map((category) => (
+                    <button 
+                      key={category.id}
+                      className={`category-btn ${selectedCategory === category.id ? "active" : ""}`}
+                      onClick={() => changeCategory(category.id)}
+                    >
+                      <span className="category-icon">{category.icon}</span>
+                      <span className="category-name">{category.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Quiz Mode Information */}
+            <div className="quiz-mode-info">
+              {quizType === "daily" && (
+                <div className="daily-challenge-info">
+                  <h3>About Daily Challenge</h3>
+                  <p>
+                    Test your knowledge with a new set of 5 curated questions each day.
+                    Covers various financial topics and difficulty levels. Challenge
+                    resets at midnight.
+                  </p>
+                  {dailyChallengeCompleted && (
+                    <div className="daily-completed-message">
+                      <p>You&apos;ve already completed today&apos;s challenge! Come back tomorrow for a new set of questions.</p>
+                    </div>
                   )}
-                </button>
-              ))}
+                </div>
+              )}
+              
+              {quizType === "progressive" && (
+                <div className="progressive-info">
+                  <h3>About Progressive Difficulty</h3>
+                  <p>
+                    You&apos;ll start with 5 easy questions, then move to 5 medium questions,
+                    and finish with 5 hard questions. Each level awards more points!
+                  </p>
+                </div>
+              )}
+              
+              {quizType === "marathon" && (
+                <div className="marathon-info">
+                  <h3>About Marathon Mode</h3>
+                  <p>
+                    Keep answering questions as long as you can. The quiz ends when you
+                    answer incorrectly or run out of time. The difficulty increases as
+                    your streak builds. How many can you get right in a row?
+                  </p>
+                </div>
+              )}
             </div>
-            <p className="quiz-type-description">
-              {quizTypeOptions.find(option => option.value === quizType)?.description}
-            </p>
-          </div>
-
-          {/* NEW: Question Types Selection */}
-          <div className="selection-section question-types-selector">
-            <h3>Select Question Types:</h3>
-            <div className="question-type-options">
-              {questionTypeOptions.map((option) => (
-                <button 
-                  key={option.value}
-                  className={`quiz-type-btn ${selectedQuestionTypes[option.value] ? "active" : ""}`}
-                  onClick={() => toggleQuestionType(option.value)}
-                >
-                  <span className="quiz-type-icon">{option.icon}</span>
-                  <span className="quiz-type-label">{option.label}</span>
-                </button>
-              ))}
-            </div>
-            <p className="quiz-type-description">
-              Mix different question types to test your knowledge in various ways.
-            </p>
-          </div>
-
-          {/* Only show difficulty for standard and marathon modes */}
-          {(quizType === "standard" || quizType === "marathon") && (
-            <div className="selection-section difficulty-selector">
-              <h3>Select Difficulty Level:</h3>
-              <div className="difficulty-buttons">
-                <button 
-                  className={`difficulty-btn ${difficulty === "easy" ? "active" : ""}`}
-                  onClick={() => changeDifficulty("easy")}
-                >
-                  Easy
-                </button>
-                <button 
-                  className={`difficulty-btn ${difficulty === "medium" ? "active" : ""}`}
-                  onClick={() => changeDifficulty("medium")}
-                >
-                  Medium
-                </button>
-                <button 
-                  className={`difficulty-btn ${difficulty === "hard" ? "active" : ""}`}
-                  onClick={() => changeDifficulty("hard")}
-                >
-                  Hard
-                </button>
-              </div>
-              <p className="difficulty-description">
-                {difficulty === "easy" ? 
-                  "Basic financial concepts and terminology." : 
-                  difficulty === "medium" ? 
-                  "Intermediate financial knowledge and concepts." : 
-                  "Advanced financial strategies and market knowledge."}
-              </p>
-            </div>
-          )}
-
-          {/* Only show timer settings for standard and marathon modes */}
-          {(quizType === "standard" || quizType === "marathon") && (
-            <div className="selection-section timer-selector">
-              <h3>Timer Settings:</h3>
-              <div className="timer-options">
-                {timerOptions.map((option) => (
-                  <button 
-                    key={option.value} 
-                    className={`timer-btn ${timerSetting === option.value ? "active" : ""}`}
-                    onClick={() => {
-                      setTimerSetting(option.value);
-                      setTimerEnabled(option.value > 0);
-                    }}
-                    disabled={quizType === "marathon" && option.value === 0}
-                  >
-                    {option.label}
-                    {quizType === "marathon" && option.value === 0 && " (Not available for Marathon)"}
-                  </button>
-                ))}
-              </div>
-              <p className="timer-description">
-                {timerSetting > 0 
-                  ? `You'll have ${timerSetting} seconds to answer each question.` 
-                  : "Take your time. There's no time limit for answering questions."}
-              </p>
-            </div>
-          )}
-
-          {/* Only show question count for standard mode */}
-          {quizType === "standard" && (
-            <div className="selection-section question-count-selector">
-              <h3>Number of Questions:</h3>
-              <div className="question-count-options">
-                {questionCountOptions.map((option) => (
-                  <button 
-                    key={option.value} 
-                    className={`question-count-btn ${questionCount === option.value ? "active" : ""}`}
-                    onClick={() => setQuestionCount(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-              <p className="question-count-description">
-                {questionCount <= 5 
-                  ? "A short quiz to test your knowledge." 
-                  : questionCount <= 10 
-                  ? "A medium-length quiz to challenge you." 
-                  : "A comprehensive quiz to thoroughly test your knowledge."}
-              </p>
-            </div>
-          )}
-
-          {/* Only show category selection for standard and marathon modes */}
-          {(quizType === "standard" || quizType === "marathon") && (
-            <div className="selection-section category-selector">
-              <h3>Select Category:</h3>
-              <div className="category-buttons">
-                {financialCategories.map((category) => (
-                  <button 
-                    key={category.id}
-                    className={`category-btn ${selectedCategory === category.id ? "active" : ""}`}
-                    onClick={() => changeCategory(category.id)}
-                  >
-                    <span className="category-icon">{category.icon}</span>
-                    <span className="category-name">{category.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Show information about the quiz type */}
-          <div className="quiz-mode-info">
-            {quizType === "daily" && (
-              <div className="daily-challenge-info">
-                <h3>About Daily Challenge</h3>
-                <p>
-                  Test your knowledge with a new set of 5 curated questions each day.
-                  Covers various financial topics and difficulty levels. Challenge
-                  resets at midnight.
-                </p>
-                {dailyChallengeCompleted && (
-                  <div className="daily-completed-message">
-                    <p>You&apos;ve already completed today&apos;s challenge! Come back tomorrow for a new set of questions.</p>
-                  </div>
-                )}
-              </div>
-            )}
             
-            {quizType === "progressive" && (
-              <div className="progressive-info">
-                <h3>About Progressive Difficulty</h3>
-                <p>
-                  You&apos;ll start with 5 easy questions, then move to 5 medium questions,
-                  and finish with 5 hard questions. Each level awards more points!
-                </p>
+            {/* Start Button for Non-Challenge Mode */}
+            {loading ? (
+              <div className="loading-spinner">
+                <div className="spinner"></div>
+                <p>Loading questions...</p>
               </div>
-            )}
-            
-            {quizType === "marathon" && (
-              <div className="marathon-info">
-                <h3>About Marathon Mode</h3>
-                <p>
-                  Keep answering questions as long as you can. The quiz ends when you
-                  answer incorrectly or run out of time. The difficulty increases as
-                  your streak builds. How many can you get right in a row?
-                </p>
+            ) : error ? (
+              <div className="error-message">
+                <p>{error}</p>
+                <button onClick={fetchQuestions} className="retry-btn">
+                  Try Again
+                </button>
               </div>
-            )}
-          </div>
-          
-          {/* Loading/error states and start button */}
-          {loading ? (
-            <div className="loading-spinner">
-              <div className="spinner"></div>
-              <p>Loading questions...</p>
-            </div>
-          ) : error ? (
-            <div className="error-message">
-              <p>{error}</p>
-              <button onClick={fetchQuestions} className="retry-btn">
-                Try Again
+            ) : (
+              <button 
+                onClick={startQuiz} 
+                className="start-quiz-btn"
+                disabled={quizType === "daily" && dailyChallengeCompleted}
+              >
+                {quizType === "daily" && dailyChallengeCompleted 
+                  ? "Today's Challenge Completed" 
+                  : `Start ${quizTypeOptions.find(t => t.value === quizType)?.label}`}
               </button>
-            </div>
-          ) : (
+            )}
+          </>
+        ) : (
+          /* Challenge Mode Start Section */
+          <div className="challenge-start">
+            <p>Your opponent has set up this challenge with specific settings.</p>
+            <p>Both players will use the same settings for a fair competition.</p>
             <button 
               onClick={startQuiz} 
               className="start-quiz-btn"
-              disabled={quizType === "daily" && dailyChallengeCompleted}
+              disabled={loading}
             >
-              {quizType === "daily" && dailyChallengeCompleted 
-                ? "Today's Challenge Completed" 
-                : `Start ${quizTypeOptions.find(t => t.value === quizType)?.label}`}
+              Start Challenge
             </button>
+          </div>
+        )}
+      </div>
+    )}
+    
+    {/* Loading Challenge Settings */}
+    {loadingChallenge && (
+      <div className="loading-spinner">
+        <div className="spinner"></div>
+        <p>Loading challenge settings...</p>
+      </div>
+    )}
+    
+    {/* Quiz in progress */}
+    {quizStarted && !showScore && questions.length > 0 && (
+      <div className="quiz-container">
+        <div className="quiz-header">
+          <div className="quiz-progress">
+            {quizType === "marathon" ? (
+              <span>Streak: {currentStreak} questions</span>
+            ) : (
+              <span>Question {currentQuestion + 1}/{quizType === "progressive" ? 15 : quizType === "daily" ? 5 : questions.length}</span>
+            )}
+          </div>
+          <div className="quiz-score">
+            Score: {score}
+          </div>
+          <div className="quiz-info">
+            <span className="quiz-difficulty">
+              {quizType === "progressive" 
+                ? progressiveDifficulty.charAt(0).toUpperCase() + progressiveDifficulty.slice(1)
+                : (questions[currentQuestion].difficulty || 'Medium').charAt(0).toUpperCase() + 
+                  (questions[currentQuestion].difficulty || 'Medium').slice(1)}
+            </span>
+            <span className="quiz-type-label">
+              {questionTypeOptions.find(t => t.value === questions[currentQuestion].type)?.icon || "🔠"}
+            </span>
+          </div>
+          {timerEnabled && timerSetting > 0 && (
+            <div className={`quiz-timer ${timeLeft < 10 ? "running-out" : ""}`}>
+              Time: {timeLeft}s
+            </div>
           )}
         </div>
-      )}
-      
-      {/* Quiz in progress */}
-      {quizStarted && !showScore && questions.length > 0 && (
-        <div className="quiz-container">
-          <div className="quiz-header">
-            <div className="quiz-progress">
-              {quizType === "marathon" ? (
-                <span>Streak: {currentStreak} questions</span>
-              ) : (
-                <span>Question {currentQuestion + 1}/{quizType === "progressive" ? 15 : quizType === "daily" ? 5 : questions.length}</span>
-              )}
-            </div>
-            <div className="quiz-score">
-              Score: {score}
-            </div>
-            <div className="quiz-info">
-              <span className="quiz-difficulty">
-                {quizType === "progressive" 
-                  ? progressiveDifficulty.charAt(0).toUpperCase() + progressiveDifficulty.slice(1)
-                  : (questions[currentQuestion].difficulty || 'Medium').charAt(0).toUpperCase() + 
-                    (questions[currentQuestion].difficulty || 'Medium').slice(1)}
-              </span>
-              <span className="quiz-type-label">
-                {questionTypeOptions.find(t => t.value === questions[currentQuestion].type)?.icon || "🔠"}
-              </span>
-            </div>
-            {timerEnabled && timerSetting > 0 && (
-              <div className={`quiz-timer ${timeLeft < 10 ? "running-out" : ""}`}>
-                Time: {timeLeft}s
-              </div>
-            )}
-          </div>
+        
+        <div className="question-container">
+          {/* Render the current question based on its type */}
+          {renderQuestion()}
           
-          <div className="question-container">
-            {/* Render the current question based on its type */}
-            {renderQuestion()}
-            
-            {answerSubmitted && (
-              <div className="explanation-box">
-                <p><strong>Explanation:</strong> {questions[currentQuestion].explanation}</p>
-              </div>
-            )}
-            
-            <div className="quiz-buttons">
-              {!answerSubmitted && (
-                <button 
-                  onClick={handleAnswerSubmit} 
-                  className="submit-btn"
-                  disabled={selectedAnswer === null}
-                >
-                  Submit Answer
-                </button>
-              )}
-              
-              <button onClick={handleQuitClick} className="quit-btn">
-                Quit Quiz
-              </button>
+          {answerSubmitted && (
+            <div className="explanation-box">
+              <p><strong>Explanation:</strong> {questions[currentQuestion].explanation}</p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quiz results */}
-      {showScore && (
-        <div className="results-container">
-          <h3>Quiz Completed!</h3>
+          )}
           
-          {quizType === "marathon" ? (
-            <div className="marathon-results">
-              <div className="streak-display">
-                <p>Your marathon streak: <span>{topStreak}</span></p>
-                <p>Total questions answered: <span>{totalQuestionsAnswered}</span></p>
-              </div>
-            </div>
-          ) : null}
-          
-          <div className="final-score">
-            <p>Your score: <span>{score}</span></p>
-            <p>Quiz type: <span>{quizTypeOptions.find(t => t.value === quizType)?.label}</span></p>
-            <p>Correct answers: <span>{userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length}</span></p>
-            
-            {quizType === "standard" && (
-              <>
-                <p>Difficulty: <span>{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span></p>
-                <p>Category: <span>{getCategoryInfo(selectedCategory).name}</span></p>
-              </>
-            )}
-            
-            {quizType === "daily" && dailyChallengeCompleted && (
-              <div className="daily-badge">
-                <p>🏆 Daily Challenge Complete!</p>
-                <p>Come back tomorrow for a new set of questions</p>
-              </div>
-            )}
-          </div>
-          
-          <div className="result-buttons">
-            <button onClick={() => {
-              if (quizType === "standard") {
-                changeDifficulty(difficulty);
-                changeCategory(selectedCategory);
-              } else {
-                changeQuizType(quizType);
-              }
-            }} className="play-again-btn">
-              {quizType === "daily" && dailyChallengeCompleted 
-                ? "Try Another Quiz Type" 
-                : "Play Again"}
-            </button>
-            <button onClick={resetQuiz} className="change-settings-btn">
-              Change Settings
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Quiz Results Review */}
-      {showScore && (
-        <div className="result-actions">
-          <button 
-            onClick={() => setShowResultsReview(!showResultsReview)} 
-            className="show-results-btn"
-          >
-            {showResultsReview ? "Hide Details" : "Show Results Details"}
-          </button>
-        </div>
-      )}
-
-      {showResultsReview && (
-        <div className="results-review">
-          <h3>Question Review</h3>
-          <p className="results-summary">
-            You answered {userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length} questions correctly.
-          </p>
-          
-          <div className="question-review-list">
-            {userAnswers.map((answer, index) => (
-              <div 
-                key={index} 
-                className={`question-review-item ${answer.isCorrect ? "correct" : "incorrect"}`}
-              >
-                <div className="question-review-header">
-                  <span className="question-number">Question {index + 1}</span>
-                  <span className={`question-result ${answer.isCorrect ? "correct" : "incorrect"}`}>
-                    {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
-                  </span>
-                </div>
-                
-                <p className="question-text">
-                  <span className="question-type-badge">
-                    {questionTypeOptions.find(t => t.value === answer.questionType)?.icon || "🔠"}
-                  </span>
-                  {answer.question}
-                </p>
-                
-                <div className="explanation-review">
-                  <strong>Explanation:</strong> {answer.explanation}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <button 
-            onClick={() => setShowResultsReview(false)} 
-            className="close-review-btn"
-          >
-            Close Review
-          </button>
-
-          <div className="results-actions">
-            <h4>Save Your Results</h4>
-            <div className="results-buttons">
-              <button onClick={exportResultsAsText} className="export-results-btn">
-                Download as Text
-              </button>
-              {userAnswers.filter(a => a.isCorrect).length / userAnswers.length >= 0.8 && (
-                <button onClick={generateCertificate} className="certificate-btn">
-                  View Certificate
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Certificate Modal */}
-      {showCertificate && (
-        <div className="certificate-modal">
-          <div className="certificate-content">
-            <button 
-              className="close-certificate" 
-              onClick={() => setShowCertificate(false)}
-            >
-              ×
-            </button>
-            <div className="certificate">
-              <div className="certificate-logo">🏆</div>
-              <div className="certificate-title">Certificate of Achievement</div>
-              <p>This certifies that</p>
-              <div className="user-name">{user?.username || "Financial Learner"}</div>
-              <p className="achievement">has successfully completed the</p>
-              <p className="achievement"><strong>{quizTypeOptions.find(t => t.value === quizType)?.label}</strong></p>
-              <p className="achievement">in Financial Literacy</p>
-              <p className="score">with a score of {score} ({(userAnswers.filter(a => a.isCorrect).length / userAnswers.length * 100).toFixed(0)}% correct)</p>
-              <p className="date">Date: {new Date().toLocaleDateString()}</p>
-            </div>
-            <div className="certificate-actions">
+          <div className="quiz-buttons">
+            {!answerSubmitted && (
               <button 
-                onClick={() => window.print()} 
-                className="print-certificate-btn"
+                onClick={handleAnswerSubmit} 
+                className="submit-btn"
+                disabled={selectedAnswer === null}
               >
-                Print Certificate
+                Submit Answer
               </button>
-            </div>
+            )}
+            
+            <button onClick={handleQuitClick} className="quit-btn">
+              Quit Quiz
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    )}
+    
+    {/* Quiz Results */}
+    {showScore && (
+      <div className="results-container">
+        <h3>Quiz Completed!</h3>
+        
+        {quizType === "marathon" ? (
+          <div className="marathon-results">
+            <div className="streak-display">
+              <p>Your marathon streak: <span>{topStreak}</span></p>
+              <p>Total questions answered: <span>{totalQuestionsAnswered}</span></p>
+            </div>
+          </div>
+        ) : null}
+        
+        <div className="final-score">
+          <p>Your score: <span>{score}</span></p>
+          <p>Quiz type: <span>{quizTypeOptions.find(t => t.value === quizType)?.label}</span></p>
+          <p>Correct answers: <span>{userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length}</span></p>
+          
+          {quizType === "standard" && (
+            <>
+              <p>Difficulty: <span>{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span></p>
+              <p>Category: <span>{getCategoryInfo(selectedCategory).name}</span></p>
+            </>
+          )}
+          
+          {quizType === "daily" && dailyChallengeCompleted && (
+            <div className="daily-badge">
+              <p>🏆 Daily Challenge Complete!</p>
+              <p>Come back tomorrow for a new set of questions</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="result-buttons">
+          <button onClick={() => {
+            if (quizType === "standard") {
+              changeDifficulty(difficulty);
+              changeCategory(selectedCategory);
+            } else {
+              changeQuizType(quizType);
+            }
+          }} className="play-again-btn">
+            {quizType === "daily" && dailyChallengeCompleted 
+              ? "Try Another Quiz Type" 
+              : "Play Again"}
+          </button>
+          <button onClick={resetQuiz} className="change-settings-btn">
+            Change Settings
+          </button>
+        </div>
+      </div>
+    )}
+    
+    {/* Show Results Review Button */}
+    {showScore && (
+      <div className="result-actions">
+        <button 
+          onClick={() => setShowResultsReview(!showResultsReview)} 
+          className="show-results-btn"
+        >
+          {showResultsReview ? "Hide Details" : "Show Results Details"}
+        </button>
+      </div>
+    )}
+    
+    {/* Results Review */}
+    {showResultsReview && (
+      <div className="results-review">
+        <h3>Question Review</h3>
+        <p className="results-summary">
+          You answered {userAnswers.filter(a => a.isCorrect).length} out of {userAnswers.length} questions correctly.
+        </p>
+        
+        <div className="question-review-list">
+          {userAnswers.map((answer, index) => (
+            <div 
+              key={index} 
+              className={`question-review-item ${answer.isCorrect ? "correct" : "incorrect"}`}
+            >
+              <div className="question-review-header">
+                <span className="question-number">Question {index + 1}</span>
+                <span className={`question-result ${answer.isCorrect ? "correct" : "incorrect"}`}>
+                  {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                </span>
+              </div>
+              
+              <p className="question-text">
+                <span className="question-type-badge">
+                  {questionTypeOptions.find(t => t.value === answer.questionType)?.icon || "🔠"}
+                </span>
+                {answer.question}
+              </p>
+              
+              <div className="explanation-review">
+                <strong>Explanation:</strong> {answer.explanation}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <button 
+          onClick={() => setShowResultsReview(false)} 
+          className="close-review-btn"
+        >
+          Close Review
+        </button>
 
-      {/* Quit Confirmation Dialog */}
-      {showQuitConfirmation && (
-        <div className="confirmation-overlay">
-          <div className="confirmation-dialog">
-            <h3>Quit Quiz?</h3>
-            <p>Are you sure you want to quit? Your current progress will be saved, but you won&apos;t be able to continue this quiz.</p>
-            <div className="confirmation-buttons">
-              <button onClick={handleConfirmQuit} className="confirm-btn">
-                Yes, Quit
+        <div className="results-actions">
+          <h4>Save Your Results</h4>
+          <div className="results-buttons">
+            <button onClick={exportResultsAsText} className="export-results-btn">
+              Download as Text
+            </button>
+            {userAnswers.filter(a => a.isCorrect).length / userAnswers.length >= 0.8 && (
+              <button onClick={generateCertificate} className="certificate-btn">
+                View Certificate
               </button>
-              <button onClick={handleCancelQuit} className="cancel-btn">
-                No, Continue
-              </button>
-            </div>
+            )}
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+    
+    {/* Certificate Modal */}
+    {showCertificate && (
+      <div className="certificate-modal">
+        <div className="certificate-content">
+          <button 
+            className="close-certificate" 
+            onClick={() => setShowCertificate(false)}
+          >
+            ×
+          </button>
+          <div className="certificate">
+            <div className="certificate-logo">🏆</div>
+            <div className="certificate-title">Certificate of Achievement</div>
+            <p>This certifies that</p>
+            <div className="user-name">{user?.username || "Financial Learner"}</div>
+            <p className="achievement">has successfully completed the</p>
+            <p className="achievement"><strong>{quizTypeOptions.find(t => t.value === quizType)?.label}</strong></p>
+            <p className="achievement">in Financial Literacy</p>
+            <p className="score">with a score of {score} ({(userAnswers.filter(a => a.isCorrect).length / userAnswers.length * 100).toFixed(0)}% correct)</p>
+            <p className="date">Date: {new Date().toLocaleDateString()}</p>
+          </div>
+          <div className="certificate-actions">
+            <button 
+              onClick={() => window.print()} 
+              className="print-certificate-btn"
+            >
+              Print Certificate
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Quit Confirmation Dialog */}
+    {showQuitConfirmation && (
+      <div className="confirmation-overlay">
+        <div className="confirmation-dialog">
+          <h3>Quit Quiz?</h3>
+          <p>Are you sure you want to quit? Your current progress will be saved, but you won&apos;t be able to continue this quiz.</p>
+          <div className="confirmation-buttons">
+            <button onClick={handleConfirmQuit} className="confirm-btn">
+              Yes, Quit
+            </button>
+            <button onClick={handleCancelQuit} className="cancel-btn">
+              No, Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+);
 };
 
 

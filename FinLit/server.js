@@ -12,6 +12,8 @@ import { updateTriviaQuestions } from './config/dbInit.js';
 import { initCourseTables } from './config/dbInitCourses.js'; // Import course tables initialization
 import { initSampleCourseData } from './config/sampleCoursesData.js'; // Import sample course data
 import { setupCourseRoutes } from './routes/courseRoutes.js'; // Import course routes
+import { initMultiplayerTables } from './config/dbInitMultiplayer.js';
+import challengeRoutes from './routes/challengeRoutes.js';
 
 
 dotenv.config();
@@ -672,6 +674,8 @@ connectDB().then(async () => {
     // Initialize course tables
     await initCourseTables();
     
+    await initMultiplayerTables();
+    
     // Initialize sample course data
     await initSampleCourseData();
     
@@ -680,6 +684,9 @@ connectDB().then(async () => {
 
     // Set up course routes 
     setupCourseRoutes(app);
+
+     // Set up challenge routes
+     app.use('/', challengeRoutes);
     
     // Populate course content data
     await populateCourseData();
@@ -693,5 +700,22 @@ connectDB().then(async () => {
   } catch (error) {
     console.error("Failed to initialize database:", error);
     process.exit(1);
+  }
+});
+
+// Add this endpoint to get all users (for challenge creation)
+app.get("/users", async (req, res) => {
+  try {
+    const connection = await import('./config/sqlite-adapter.js').then(m => m.connect());
+    
+    // Get all users but only return basic info (id, username, avatar)
+    const users = await connection.all(
+      'SELECT id, username, avatar FROM users'
+    );
+    
+    res.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Error fetching users", error: error.message });
   }
 });
