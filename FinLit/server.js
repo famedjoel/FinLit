@@ -15,6 +15,10 @@ import { setupCourseRoutes } from './routes/courseRoutes.js'; // Import course r
 import { initMultiplayerTables } from './config/dbInitMultiplayer.js';
 import challengeRoutes from './routes/challengeRoutes.js';
 import { addQuizSettingsColumn } from './migrations.js';
+import Achievement from './models/Achievement.js';
+import Reward from './models/Reward.js';
+import UserStats from './models/UserStats.js';
+import { initAchievementsSystem } from './config/dbInitAchievements.js';
 
 
 dotenv.config();
@@ -490,6 +494,374 @@ app.post("/admin/trivia/questions/bulk", async (req, res) => {
     res.status(500).json({ message: "Error adding questions", error: error.message });
   }
 });
+
+// Achievements routes
+app.get("/achievements", async (req, res) => {
+  try {
+    const achievements = await Achievement.getAll();
+    res.json(achievements);
+  } catch (error) {
+    console.error("Error fetching achievements:", error);
+    res.status(500).json({ message: "Error fetching achievements", error: error.message });
+  }
+});
+
+app.get("/achievements/user/:userId", async (req, res) => {
+  try {
+    const userAchievements = await Achievement.getUserAchievements(req.params.userId);
+    res.json(userAchievements);
+  } catch (error) {
+    console.error("Error fetching user achievements:", error);
+    res.status(500).json({ message: "Error fetching user achievements", error: error.message });
+  }
+});
+
+app.get("/achievements/new/:userId", async (req, res) => {
+  try {
+    const newAchievements = await Achievement.getNewlyCompletedAchievements(req.params.userId);
+    res.json(newAchievements);
+  } catch (error) {
+    console.error("Error fetching new achievements:", error);
+    res.status(500).json({ message: "Error fetching new achievements", error: error.message });
+  }
+});
+
+// Rewards routes
+app.get("/rewards", async (req, res) => {
+  try {
+    const rewards = await Reward.getAll();
+    res.json(rewards);
+  } catch (error) {
+    console.error("Error fetching rewards:", error);
+    res.status(500).json({ message: "Error fetching rewards", error: error.message });
+  }
+});
+
+app.get("/rewards/user/:userId", async (req, res) => {
+  try {
+    const userRewards = await Reward.getUserRewards(req.params.userId);
+    res.json(userRewards);
+  } catch (error) {
+    console.error("Error fetching user rewards:", error);
+    res.status(500).json({ message: "Error fetching user rewards", error: error.message });
+  }
+});
+
+app.get("/rewards/equipped/:userId", async (req, res) => {
+  try {
+    const equippedRewards = await Reward.getEquippedRewards(req.params.userId);
+    res.json(equippedRewards);
+  } catch (error) {
+    console.error("Error fetching equipped rewards:", error);
+    res.status(500).json({ message: "Error fetching equipped rewards", error: error.message });
+  }
+});
+
+app.post("/rewards/purchase", async (req, res) => {
+  try {
+    const { userId, rewardId } = req.body;
+    
+    if (!userId || !rewardId) {
+      return res.status(400).json({ message: "User ID and reward ID are required" });
+    }
+    
+    const result = await Reward.purchaseReward(userId, rewardId);
+    
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
+    }
+    
+    res.json({ message: "Reward purchased successfully", reward: result.reward });
+  } catch (error) {
+    console.error("Error purchasing reward:", error);
+    res.status(500).json({ message: "Error purchasing reward", error: error.message });
+  }
+});
+
+app.post("/rewards/equip", async (req, res) => {
+  try {
+    const { userId, rewardId, equipped } = req.body;
+    
+    if (!userId || !rewardId) {
+      return res.status(400).json({ message: "User ID and reward ID are required" });
+    }
+    
+    const result = await Reward.toggleEquipStatus(userId, rewardId, equipped !== false);
+    
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
+    }
+    
+    res.json({ message: equipped !== false ? "Reward equipped" : "Reward unequipped" });
+  } catch (error) {
+    console.error("Error toggling reward equipped status:", error);
+    res.status(500).json({ message: "Error updating reward status", error: error.message });
+  }
+});
+
+// User stats routes
+app.get("/stats/progress/:userId", async (req, res) => {
+  try {
+    const stats = await UserStats.getForUser(req.params.userId);
+    
+    // Also fetch user achievements
+    const achievements = await Achievement.getUserAchievements(req.params.userId);
+    
+    // Calculate completion percentages for each category
+    const categories = [...new Set(achievements.map(a => a.category))];
+    const categoryProgress = {};
+    
+    categories.forEach(category => {
+      const categoryAchievements = achievements.filter(a => a.category === category);
+      const completed = categoryAchievements.filter(a => a.completed).length;
+      const total = categoryAchievements.length;
+      
+      categoryProgress[category] = {
+        completed,
+        total,
+        percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+      };
+    });
+    
+    // Get total stats
+    const totalCompleted = achievements.filter(a => a.completed).length;
+    const totalAchievements = achievements.length;
+    
+    res.json({
+      stats,
+      achievements: {
+        total: totalAchievements,
+        completed: totalCompleted,
+        percentage: totalAchievements > 0 ? Math.round((totalCompleted / totalAchievements) * 100) : 0,
+        categories: categoryProgress
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ message: "Error fetching user stats", error: error.message });
+  }
+});
+
+// Enhanced route for tracking quiz completion with achievements
+app.post("/progress/quiz-with-achievements", async (req, res) => {
+  try {
+    const { userId, score, questionsAnswered } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+    
+    // Track quiz completion and get achievement updates
+    const { stats, newAchievements } = await UserStats.trackQuizCompleted(
+      userId, 
+      score, 
+      questionsAnswered || 1
+    );
+    
+    // Track game activity using the existing method
+    await fetch(`${API_BASE_URL}/progress/game`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        gameId: "financial-trivia",
+        title: "Financial Trivia",
+        score
+      })
+    });
+    
+    res.json({ 
+      message: "Quiz progress updated with achievements", 
+      stats,
+      newAchievements
+    });
+  } catch (error) {
+    console.error("Error updating quiz progress with achievements:", error);
+    res.status(500).json({ 
+      message: "Error updating quiz progress", 
+      error: error.message 
+    });
+  }
+});
+
+// Enhanced route for tracking course completion with achievements
+app.post("/progress/course-with-achievements", async (req, res) => {
+  try {
+    const { userId, courseId, title, progress } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+    
+    // Use the existing course progress route logic
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Get current course progress
+    const courseProgress = user.courseProgress || [];
+    
+    // Find if course already exists in user progress
+    const courseIndex = courseProgress.findIndex(c => c.courseId === courseId);
+    
+    // Check if course was just completed
+    let courseJustCompleted = false;
+    
+    // Update or add course progress
+    if (courseIndex >= 0) {
+      courseProgress[courseIndex].progress = progress;
+      courseProgress[courseIndex].lastAccessed = new Date();
+      
+      // Check if course was just completed
+      if (progress >= 100 && !courseProgress[courseIndex].completed) {
+        courseProgress[courseIndex].completed = true;
+        user.totalCoursesCompleted += 1;
+        courseJustCompleted = true;
+        
+        // Add completion activity
+        const activities = user.recentActivity || [];
+        activities.unshift({
+          type: 'course',
+          title: title,
+          action: 'completed',
+          timestamp: new Date()
+        });
+        
+        // Keep only the 10 most recent activities
+        if (activities.length > 10) {
+          activities.length = 10;
+        }
+        
+        user.recentActivity = activities;
+      }
+    } else {
+      // Add new course to progress
+      courseProgress.push({
+        courseId,
+        title,
+        progress,
+        lastAccessed: new Date(),
+        completed: progress >= 100
+      });
+      
+      if (progress >= 100) {
+        courseJustCompleted = true;
+        user.totalCoursesCompleted += 1;
+      }
+      
+      // Add started course activity
+      const activities = user.recentActivity || [];
+      activities.unshift({
+        type: 'course',
+        title: title,
+        action: progress >= 100 ? 'completed' : 'started',
+        timestamp: new Date()
+      });
+      
+      // Keep only the 10 most recent activities
+      if (activities.length > 10) {
+        activities.length = 10;
+      }
+      
+      user.recentActivity = activities;
+    }
+    
+    // Update user's course progress
+    user.courseProgress = courseProgress;
+    
+    // Calculate overall progress
+    const totalProgress = courseProgress.reduce((sum, course) => sum + course.progress, 0) / courseProgress.length;
+    user.overallProgress = Math.round(totalProgress);
+    
+    await user.save();
+    
+    // Track course completion for achievements if applicable
+    let achievementUpdate = { newAchievements: [] };
+    if (courseJustCompleted) {
+      achievementUpdate = await UserStats.trackCourseCompleted(userId);
+    }
+    
+    res.json({ 
+      message: "Course progress updated", 
+      progress,
+      achievements: achievementUpdate.newAchievements
+    });
+  } catch (error) {
+    console.error("Course progress error:", error);
+    res.status(500).json({ message: "Error updating course progress", error: error.message });
+  }
+});
+
+// Update challenge route to track achievements when a challenge is completed
+app.post("/challenges/:challengeId/score", async (req, res) => {
+  try {
+    const { challengeId } = req.params;
+    const { userId, score } = req.body;
+    
+    // Existing challenge score logic...
+    const challenge = await fetch(`${API_BASE_URL}/challenges/${challengeId}`).then(res => res.json());
+    if (!challenge) {
+      return res.status(404).json({ message: "Challenge not found" });
+    }
+    
+    const isChallenger = userId === challenge.challengerId;
+    const scoreField = isChallenger ? 'challengerScore' : 'challengedScore';
+    
+    // Update challenge with score
+    const updatedChallenge = await fetch(`${API_BASE_URL}/challenges/${challengeId}/update-score`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, score })
+    }).then(res => res.json());
+    
+    // Track achievement if challenge was just completed and this user won
+    if (updatedChallenge.status === 'completed' && updatedChallenge.winnerId === userId) {
+      const { newAchievements } = await UserStats.trackChallengeWon(userId);
+      
+      // Add achievements to response
+      return res.json({
+        ...updatedChallenge,
+        achievements: newAchievements
+      });
+    }
+    
+    res.json(updatedChallenge);
+  } catch (error) {
+    console.error("Error updating challenge score:", error);
+    res.status(500).json({ message: "Error updating challenge score", error: error.message });
+  }
+});
+
+// Update the create challenge route to track challenge sent achievement
+app.post("/challenges", async (req, res) => {
+  try {
+    const { challengerId, challengedId, gameType, gameMode, quizSettings } = req.body;
+    
+    // Create challenge using existing logic...
+    const challenge = await fetch(`${API_BASE_URL}/challenges/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ challengerId, challengedId, gameType, gameMode, quizSettings })
+    }).then(res => res.json());
+    
+    // Track achievement for sending a challenge
+    const { newAchievements } = await UserStats.trackChallengeSent(challengerId);
+    
+    res.status(201).json({
+      ...challenge,
+      achievements: newAchievements
+    });
+  } catch (error) {
+    console.error("Error creating challenge:", error);
+    res.status(500).json({ message: "Error creating challenge", error: error.message });
+  }
+});
+
+// Add this inside the connectDB().then() block before app.listen()
+// Initialize achievements and rewards system
+await initAchievementsSystem();
+await Achievement.initDefaultAchievements();
+await Reward.initDefaultRewards();
+console.log("Achievements and rewards system initialized");
 
 // Add these routes to server.js
 
