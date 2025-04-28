@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import "../styles/landing-page.css";
+import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
 
 function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const { theme } = useContext(ThemeContext); // Get current theme
   
   // Check login status
   useEffect(() => {
@@ -96,7 +98,7 @@ function LandingPage() {
   }, [testimonials.length]);
 
   return (
-    <div className="landing-page">
+    <div className={`landing-page ${theme === "dark" ? "dark-theme" : ""}`}>
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">

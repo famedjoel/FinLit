@@ -1,168 +1,207 @@
 /* src/styles/theme.css */
 
 :root {
-    /* Light theme variables (default) */
-    --bg-primary: #f8f9fa;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #e9ecef;
-    --text-primary: #1e293b;
-    --text-secondary: #475569;
-    --text-tertiary: #64748b;
-    --accent-primary: #3b82f6;
-    --accent-secondary: #60a5fa;
-    --accent-tertiary: #93c5fd;
-    --border-color: #e2e8f0;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --error-color: #ef4444;
-    --info-color: #0ea5e9;
-    
-    /* Game-specific colors */
-    --essentials-color: #38b2ac;
-    --luxuries-color: #ed8936;
-    --savings-color: #4299e1;
-    
-    /* Card and container backgrounds */
-    --card-bg: #ffffff;
-    --container-bg: #ffffff;
-    --navbar-bg: linear-gradient(90deg, #007bff, #00d4ff);
-    --footer-bg: #0f172a;
-    
-    /* Transitions for smooth theme switching */
-    --transition-speed: 0.3s;
-  }
+  /* Light theme variables (default) */
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e9ecef;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #60a5fa;
+  --accent-tertiary: #93c5fd;
+  --border-color: #e2e8f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --info-color: #0ea5e9;
   
-  [data-theme="dark"] {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --text-primary: #f8fafc;
-    --text-secondary: #e2e8f0;
-    --text-tertiary: #cbd5e1;
-    --accent-primary: #60a5fa;
-    --accent-secondary: #3b82f6;
-    --accent-tertiary: #2563eb;
-    --border-color: #475569;
-    --shadow-color: rgba(0, 0, 0, 0.3);
-    --success-color: #34d399;
-    --warning-color: #fbbf24;
-    --error-color: #f87171;
-    --info-color: #38bdf8;
-    
-    /* Game-specific colors - slightly brighter for dark mode */
-    --essentials-color: #4fd1cb;
-    --luxuries-color: #fbb97f;
-    --savings-color: #7dd3fc;
-    
-    /* Card and container backgrounds */
-    --card-bg: #1e293b;
-    --container-bg: #0f172a;
-    --navbar-bg: linear-gradient(90deg, #1e40af, #0369a1);
-    --footer-bg: #020617;
-  }
+  /* Game-specific colors */
+  --essentials-color: #38b2ac;
+  --luxuries-color: #ed8936;
+  --savings-color: #4299e1;
   
-  /* Apply theme variables to body */
-  body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-  }
+  /* Card and container backgrounds */
+  --card-bg: #ffffff;
+  --container-bg: #ffffff;
+  --navbar-bg: linear-gradient(90deg, #007bff, #00d4ff);
+  --footer-bg: #0f172a;
   
-  /* Theme toggle button styling */
-  .theme-toggle-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color var(--transition-speed);
-  }
+  /* Transitions for smooth theme switching */
+  --transition-speed: 0.3s;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-tertiary: #cbd5e1;
+  --accent-primary: #60a5fa;
+  --accent-secondary: #3b82f6;
+  --accent-tertiary: #2563eb;
+  --border-color: #475569;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+  --error-color: #f87171;
+  --info-color: #38bdf8;
   
-  .theme-toggle-btn:hover {
-    background-color: var(--bg-tertiary);
-  }
+  /* Game-specific colors - slightly brighter for dark mode */
+  --essentials-color: #4fd1cb;
+  --luxuries-color: #fbb97f;
+  --savings-color: #7dd3fc;
   
-  .toggle-icon {
-    color: var(--text-primary);
-  }
-  
-  /* Dark mode styles for common components */
-  
-  /* Content container */
-  .content-container {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-  }
-  
-  /* Cards and containers */
-  .game-container, 
-  .financial-trivia-container,
-  .loan-shark-game,
-  .savings-challenge,
-  .auth-container,
-  .dashboard-container,
-  .battle-budgets-container {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    box-shadow: 0 10px 25px var(--shadow-color);
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-  }
-  
-  /* Inputs and form elements */
-  input, select, textarea {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-  }
-  
-  /* Buttons */
-  button:not(.theme-toggle-btn) {
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-  }
-  
-  /* Navigation items */
-  .nav-link {
-    color: var(--text-primary);
-  }
-  
-  /* Typography */
-  h1, h2, h3, h4, h5, h6 {
-    color: var(--text-primary);
-  }
-  
-  p {
-    color: var(--text-secondary);
-  }
-  
-  /* Links */
-  a {
-    color: var(--accent-primary);
-  }
-  
-  /* Tables */
-  table {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-  }
-  
-  /* Modals and overlays */
-  .modal, 
-  .overlay, 
-  .popup {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-  }
-  
-  /* Code blocks */
-  code, pre {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
+  /* Card and container backgrounds */
+  --card-bg: #1e293b;
+  --container-bg: #0f172a;
+  --navbar-bg: linear-gradient(90deg, #1e40af, #0369a1);
+  --footer-bg: #020617;
+}
+
+/* Apply theme variables to body */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Theme toggle button styling */
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-speed);
+  position: relative;
+  margin-left: 10px;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.toggle-icon {
+  color: white;
+}
+
+/* Dark mode styles for common components */
+
+/* Content container */
+.content-container {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Cards and containers */
+.game-container, 
+.financial-trivia-container,
+.loan-shark-game,
+.savings-challenge,
+.auth-container,
+.dashboard-container,
+.battle-budgets-container {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 10px 25px var(--shadow-color);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Inputs and form elements */
+input, select, textarea {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* Buttons */
+button:not(.theme-toggle-btn) {
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Navigation items */
+.nav-link {
+  color: white;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+/* Links */
+a {
+  color: var(--accent-primary);
+}
+
+/* Tables */
+table {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* Modals and overlays */
+.modal, 
+.overlay, 
+.popup {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Code blocks */
+code, pre {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* App-specific components */
+
+/* Navbar */
+.navbar {
+  background: var(--navbar-bg);
+  transition: background var(--transition-speed);
+}
+
+/* Progress bars */
+.progress-bar {
+  background-color: var(--bg-tertiary);
+}
+
+.progress-fill,
+.course-progress-fill {
+  background-color: var(--accent-primary);
+}
+
+/* Course and game cards */
+.course-card,
+.game-card,
+.feature-card {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* Menu dropdown */
+.nav-links.show {
+  background: var(--navbar-bg);
+}
+
+/* Footer */
+.landing-footer {
+  background-color: var(--footer-bg);
+}

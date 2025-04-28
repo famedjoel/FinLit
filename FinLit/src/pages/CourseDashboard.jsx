@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-
+import { ThemeContext } from "../context/ThemeContext";
 
 // Get the current hostname for API calls (works on all devices)
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
@@ -12,6 +12,7 @@ function CourseDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { theme } = useContext(ThemeContext);
 
   // Check if user is logged in and fetch courses
   useEffect(() => {
@@ -29,69 +30,69 @@ function CourseDashboard() {
       setLoading(true);
       setError(null);
       
-        // Fetch basic course data
-    const response = await fetch(`${API_BASE_URL}/api/courses`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch courses");
-    }
-    
-    const coursesData = await response.json();
-    
-    // If user is logged in, fetch progress for each course
-    if (user) {
-      console.log("Fetching course progress for user:", user.id);
+      // Fetch basic course data
+      const response = await fetch(`${API_BASE_URL}/api/courses`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch courses");
+      }
       
-      const coursesWithProgress = await Promise.all(
-        coursesData.map(async (course) => {
-          try {
-            const progressResponse = await fetch(
-              `${API_BASE_URL}/api/users/${user.id}/courses/${course.id}/progress`,
-              {
-                headers: {
-                  'Content-Type': 'application/json'
+      const coursesData = await response.json();
+      
+      // If user is logged in, fetch progress for each course
+      if (user) {
+        console.log("Fetching course progress for user:", user.id);
+        
+        const coursesWithProgress = await Promise.all(
+          coursesData.map(async (course) => {
+            try {
+              const progressResponse = await fetch(
+                `${API_BASE_URL}/api/users/${user.id}/courses/${course.id}/progress`,
+                {
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
                 }
-              }
-            );
-            
-            console.log(`Progress response for course ${course.id}:`, progressResponse.status);
-            
-            if (progressResponse.ok) {
-              const progressData = await progressResponse.json();
-              console.log(`Progress data for course ${course.id}:`, progressData);
+              );
               
-              return {
-                ...course,
-                progress: progressData.progress || 0,
-                status: progressData.status || 'not-started',
-                enrolled: progressData.enrolled || false
-              };
+              console.log(`Progress response for course ${course.id}:`, progressResponse.status);
+              
+              if (progressResponse.ok) {
+                const progressData = await progressResponse.json();
+                console.log(`Progress data for course ${course.id}:`, progressData);
+                
+                return {
+                  ...course,
+                  progress: progressData.progress || 0,
+                  status: progressData.status || 'not-started',
+                  enrolled: progressData.enrolled || false
+                };
+              }
+              
+              return course;
+            } catch (err) {
+              console.error(`Error fetching progress for course ${course.id}:`, err);
+              return course;
             }
-            
-            return course;
-          } catch (err) {
-            console.error(`Error fetching progress for course ${course.id}:`, err);
-            return course;
-          }
-        })
-      );
+          })
+        );
+        
+        setCourses(coursesWithProgress);
+      } else {
+        setCourses(coursesData);
+      }
       
-      setCourses(coursesWithProgress);
-    } else {
-      setCourses(coursesData);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      setError(err.message);
+      setLoading(false);
     }
-    
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching courses:", err);
-    setError(err.message);
-    setLoading(false);
-  }
-};
+  };
 
   // Loading state
   if (loading) {
     return (
-      <div className="courses-dashboard">
+      <div className={`courses-dashboard ${theme === "dark" ? "dark-theme" : ""}`}>
         <div className="loading-spinner">
           <div className="spinner"></div>
           <p>Loading courses...</p>
@@ -103,7 +104,7 @@ function CourseDashboard() {
   // Error state
   if (error) {
     return (
-      <div className="courses-dashboard">
+      <div className={`courses-dashboard ${theme === "dark" ? "dark-theme" : ""}`}>
         <div className="error-message">
           <h3>Error Loading Courses</h3>
           <p>{error}</p>
@@ -113,9 +114,13 @@ function CourseDashboard() {
     );
   }
 
+  // Filter courses by level
+  const filteredCourses = selectedLevel === "All" 
+    ? courses 
+    : courses.filter(course => course.level === selectedLevel);
   
   return (
-    <div className="courses-dashboard">
+    <div className={`courses-dashboard ${theme === "dark" ? "dark-theme" : ""}`}>
       <div className="courses-header">
         <h2>📚 Financial Education Courses</h2>
         <p className="courses-intro">
@@ -135,9 +140,9 @@ function CourseDashboard() {
         ))}
       </div>
 
-      {courses.length > 0 ? (
+      {filteredCourses.length > 0 ? (
         <div className="course-list">
-          {courses.map((course) => (
+          {filteredCourses.map((course) => (
             <div key={course.id} className="course-card">
               <div className="course-image-container">
                 <div className="course-image" style={{ backgroundImage: `url(${course.imageUrl || '/images/courses/default.jpg'})` }}></div>

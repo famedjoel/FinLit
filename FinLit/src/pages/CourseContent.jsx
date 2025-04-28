@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ThemeContext } from "../context/ThemeContext";
 import "../styles/CourseContent.css";
 
 // API endpoint base URL
@@ -20,6 +21,7 @@ const CourseContent = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { theme } = useContext(ThemeContext);
 
   // Load user data
   useEffect(() => {
@@ -575,7 +577,7 @@ const CourseContent = () => {
   }
 
   return (
-    <div className="course-content-page">
+    <div className={`course-content-page ${theme === "dark" ? "dark-theme" : ""}`}>
       <div className="course-header">
         <h1>{currentCourse.title}</h1>
         <div className="course-progress-container">
