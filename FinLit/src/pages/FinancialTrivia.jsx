@@ -727,25 +727,48 @@ const [categoryPerformance, setCategoryPerformance] = useState({});
 
  // Check if answer is correct based on question type
 const checkAnswer = () => {
-  if (selectedAnswer === null) return false;
+ // If no answer is selected, return false
+ if (selectedAnswer === null || selectedAnswer === undefined) return false;
   
-  const currentQ = questions[currentQuestion];
-  const questionType = currentQ.type || "multiple-choice";
-  
-  switch (questionType) {
-    case 'multiple-choice':
-    case 'true-false':
-      return selectedAnswer === currentQ.correctAnswer;
+ // Get the current question
+ const currentQ = questions[currentQuestion];
+ if (!currentQ) return false;
+ 
+ // Get the question type, defaulting to multiple-choice if not specified
+ const questionType = currentQ.type || "multiple-choice";
+ 
+ // Check answer based on question type
+ switch (questionType) {
+   case 'multiple-choice':
+   case 'true-false':
+     return selectedAnswer === currentQ.correctAnswer;
       
-    case 'fill-blank':
-      // Case insensitive comparison for free text
-      if (Array.isArray(currentQ.options) && currentQ.options.length > 0) {
-        // Options-based fill-in-blank
-        return selectedAnswer === currentQ.options[currentQ.correctAnswer] || 
-               selectedAnswer === currentQ.correctAnswer;
-      } else {
-        // Free text fill-in-blank
-        return selectedAnswer.toLowerCase().trim() === currentQ.correctAnswer.toLowerCase().trim();
+     case 'fill-blank':
+      try {
+        // First, safely handle the case when selectedAnswer might not be a string
+        const userAnswer = String(selectedAnswer || "").trim();
+        
+        // Handle options-based fill-in-the-blank
+        if (Array.isArray(currentQ.options) && currentQ.options.length > 0) {
+          const correctOptionIndex = currentQ.correctAnswer;
+          
+          // If correctAnswer is a direct index to the options array
+          if (Number.isInteger(Number(correctOptionIndex)) && 
+              correctOptionIndex >= 0 && 
+              correctOptionIndex < currentQ.options.length) {
+            const correctOption = currentQ.options[correctOptionIndex];
+            return userAnswer.toLowerCase() === correctOption.toLowerCase();
+          }
+          
+          // If correctAnswer is the actual answer
+          return userAnswer.toLowerCase() === String(currentQ.correctAnswer || "").toLowerCase().trim();
+        } else {
+          // Direct text comparison for free-text questions
+          return userAnswer.toLowerCase() === String(currentQ.correctAnswer || "").toLowerCase().trim();
+        }
+      } catch (error) {
+        console.error("Error checking fill-blank answer:", error);
+        return false;
       }
       
     case 'matching':
@@ -1306,8 +1329,41 @@ const goToNextQuestion = () => {
 
   // Handle answer selection
   const handleAnswerSelect = (answer) => {
-    if (!answerSubmitted) {
-      setSelectedAnswer(answer);
+    try {
+      if (!answerSubmitted) {
+        // For fill-blank, make sure we're working with a string
+        if (questions[currentQuestion].type === 'fill-blank') {
+          setSelectedAnswer(String(answer || ""));
+        } 
+        // For matching questions, ensure we're working with an array
+        else if (questions[currentQuestion].type === 'matching') {
+          // If answer is not already an array, initialize it
+          if (!Array.isArray(answer)) {
+            const termsLength = questions[currentQuestion].terms?.length || 
+                               (questions[currentQuestion].items?.length || 0);
+            setSelectedAnswer(Array(termsLength).fill(null));
+          } else {
+            setSelectedAnswer(answer);
+          }
+        }
+        // For calculation questions, ensure we're working with a number
+        else if (questions[currentQuestion].type === 'calculation') {
+          try {
+            const numericValue = parseFloat(answer);
+            setSelectedAnswer(isNaN(numericValue) ? 0 : numericValue);
+          } catch (error) {
+            console.error("Error parsing calculation input:", error);
+            setSelectedAnswer(0);
+          }
+        }
+        // For other types
+        else {
+          setSelectedAnswer(answer);
+        }
+      }
+    } catch (error) {
+      console.error("Error handling answer selection:", error);
+      // Fail gracefully without crashing the app
     }
   };
 
@@ -1787,58 +1843,46 @@ const renderMatchingQuestion = (currentQ) => {
           // Check if this question has options
           const hasOptions = Array.isArray(currentQ.options) && currentQ.options.length > 0;
           
+          // Fix: Safely handle the input and prevent crashes
+          const handleFillBlankChange = (e) => {
+            // Safe handling - prevents the component from crashing
+            try {
+              if (!answerSubmitted) {
+                handleAnswerSelect(e.target.value);
+              }
+            } catch (error) {
+              console.error("Error handling fill-blank input:", error);
+            }
+          };
+          
           return (
             <div className="question-container">
               <div className="question fill-blank-question">
-                {parts[0]}
+                {/* First part of the question */}
+                {parts[0] || ""}
                 
-                {hasOptions ? (
-                  // Display options as buttons below the question
-                  <input 
-                    type="text" 
-                    value={selectedAnswer || ""}
-                    onChange={(e) => handleAnswerSelect(e.target.value)}
-                    className="blank-input"
-                    placeholder="Enter or select an answer"
-                    disabled={answerSubmitted}
-                  />
-                ) : (
-                  // For free text questions
-                  <input 
-                    type="text" 
-                    value={selectedAnswer || ""}
-                    onChange={(e) => handleAnswerSelect(e.target.value)}
-                    className="blank-input"
-                    placeholder="Enter your answer"
-                    disabled={answerSubmitted}
-                  />
-                )}
+                {/* Input field */}
+                <input 
+                  type="text" 
+                  value={selectedAnswer || ""}
+                  onChange={handleFillBlankChange}
+                  className="blank-input"
+                  placeholder={hasOptions ? "Enter or select an answer" : "Enter your answer"}
+                  disabled={answerSubmitted}
+                />
                 
+                {/* Second part of the question */}
                 {parts[1] || ""}
               </div>
               
               {/* Display options as buttons if they exist and answer not submitted yet */}
               {hasOptions && !answerSubmitted && (
-                <div className="options-container" style={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
-                  gap: '10px',
-                  justifyContent: 'center',
-                  marginTop: '15px' 
-                }}>
+                <div className="fill-blank-options">
                   {currentQ.options.map((option, index) => (
                     <button
                       key={index}
                       onClick={() => handleAnswerSelect(option)}
-                      className={`option ${selectedAnswer === option ? "selected" : ""}`}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: selectedAnswer === option ? '#dbeafe' : '#f3f4f6',
-                        border: `1px solid ${selectedAnswer === option ? '#3b82f6' : '#d1d5db'}`,
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
+                      className={`fill-blank-option ${selectedAnswer === option ? "selected" : ""}`}
                     >
                       {option}
                     </button>
@@ -1846,13 +1890,14 @@ const renderMatchingQuestion = (currentQ) => {
                 </div>
               )}
               
+              {/* Show correct answer after submission if answer was wrong */}
               {answerSubmitted && !checkAnswer() && (
-                <div className="explanation-box">
-                  <p><strong>Correct Answer:</strong> {
-                    typeof currentQ.correctAnswer === 'number' && hasOptions 
+                <div className="correct-answer-display">
+                  <p>Correct answer: <strong>
+                    {typeof currentQ.correctAnswer === 'number' && hasOptions 
                       ? currentQ.options[currentQ.correctAnswer] 
-                      : currentQ.correctAnswer
-                  }</p>
+                      : currentQ.correctAnswer}
+                  </strong></p>
                 </div>
               )}
             </div>

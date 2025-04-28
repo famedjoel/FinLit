@@ -16,46 +16,75 @@
   }
   
   .fill-blank-question {
-    font-size: 1.2rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
   }
   
-  .blank-input, .blank-dropdown {
-    display: inline-block;
-    border: 2px solid #3b82f6;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    margin: 0 0.5rem;
-    min-width: 180px;
-    font-size: 1rem;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.2s ease;
+  .blank-input {
+    padding: 8px 12px;
+    border: 2px solid #cbd5e1;
+    border-radius: 4px;
+    min-width: 150px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
     background-color: white;
   }
   
-  .blank-input:focus, .blank-dropdown:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  .blank-input:focus {
+    outline: none;
+    border-color: #3b82f6;
   }
   
-  .blank-input.correct-input, .blank-dropdown.correct-input {
-    border-color: #10b981;
-    background-color: rgba(16, 185, 129, 0.1);
+  .blank-input.correct-input {
+    border-color: #16a34a;
+    background-color: #dcfce7;
   }
   
-  .blank-input.incorrect-input, .blank-dropdown.incorrect-input {
-    border-color: #ef4444;
-    background-color: rgba(239, 68, 68, 0.1);
+  .blank-input.incorrect-input {
+    border-color: #dc2626;
+    background-color: #fee2e2;
+  }
+  
+  .fill-blank-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  
+  .fill-blank-option {
+    padding: 8px 12px;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .fill-blank-option:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-2px);
+  }
+  
+  .fill-blank-option.selected {
+    background-color: #dbeafe;
+    border-color: #3b82f6;
   }
   
   .correct-answer-display {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background-color: #f0fdf4;
-    border-left: 4px solid #10b981;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background-color: #f8fafc;
+    border-left: 3px solid #16a34a;
     border-radius: 4px;
+  }
+  
+  .correct-answer-display p {
+    margin: 0;
+    color: #334155;
   }
   
   /* New styles for option buttons */
