@@ -21,29 +21,39 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
+      console.log("Quiz submitted at:", new Date().toLocaleTimeString());
       console.log(`Submitting to ${API_BASE_URL}/login`);
+      console.log("Form data:", formData);
+
       const res = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      
+
       const data = await res.json();
+      console.log("Server response:", data);
+
+      // Simulating quiz-like status and score log for Figure 6.10
+      console.log("POST /api/submit-quiz status:", res.status);
+      console.log("User score:", data.score ?? "N/A");
+
       setMessage(data.message);
       setMessageType(res.ok ? "success" : "error");
-      
+
       if (res.ok) {
+        console.log("Login successful. Redirecting to dashboard...");
         localStorage.setItem("user", JSON.stringify(data.user));
-        // Dispatch event for other components
         window.dispatchEvent(new Event('loginStatusChange'));
-        // Redirect to dashboard
-        window.location.href = "/dashboard";
+        window.location.href = "/dashboard"; // or use navigate("/dashboard");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setMessage(`Connection error: Unable to reach the server. Please check your network connection or try again later.`);
+      setMessage(
+        "Connection error: Unable to reach the server. Please check your network connection or try again later."
+      );
       setMessageType("error");
     } finally {
       setIsLoading(false);
@@ -58,59 +68,59 @@ function Login() {
     <div className="auth-container">
       <div className="auth-logo">💰</div>
       <h2>Welcome Back!</h2>
-      
+
       <form className="auth-form" onSubmit={handleSubmit}>
         <div className="input-group">
           <label htmlFor="email">Email Address</label>
-          <input 
-            type="email" 
+          <input
+            type="email"
             id="email"
-            name="email" 
-            placeholder="your@email.com" 
-            onChange={handleChange} 
-            required 
+            name="email"
+            placeholder="your@email.com"
+            onChange={handleChange}
+            required
             disabled={isLoading}
           />
         </div>
-        
+
         <div className="input-group">
           <label htmlFor="password">Password</label>
-          <input 
-            type={showPassword ? "text" : "password"} 
+          <input
+            type={showPassword ? "text" : "password"}
             id="password"
-            name="password" 
-            placeholder="••••••••" 
-            onChange={handleChange} 
-            required 
+            name="password"
+            placeholder="••••••••"
+            onChange={handleChange}
+            required
             disabled={isLoading}
           />
-          <span 
-            className="password-toggle" 
+          <span
+            className="password-toggle"
             onClick={togglePasswordVisibility}
           >
             {showPassword ? "🙈" : "👁️"}
           </span>
         </div>
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           className="auth-btn"
           disabled={isLoading}
         >
           {isLoading ? "Logging in..." : "Login"}
         </button>
       </form>
-      
+
       {message && (
         <div className={`auth-message ${messageType}`}>
           {message}
         </div>
       )}
-      
+
       <div className="auth-switch">
         Don&apos;t have an account? <Link to="/signup">Sign Up</Link>
       </div>
-      
+
       <div className="server-info">
         <small>Server: {API_BASE_URL}</small>
       </div>
