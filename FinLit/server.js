@@ -19,6 +19,8 @@ import Achievement from './models/Achievement.js';
 import Reward from './models/Reward.js';
 import UserStats from './models/UserStats.js';
 import { initAchievementsSystem } from './config/dbInitAchievements.js';
+const API_BASE_URL = `http://localhost:${process.env.PORT || 7900}`;
+import Challenge from './models/Challenge.js';
 
 
 dotenv.config();
@@ -645,7 +647,7 @@ app.get("/stats/progress/:userId", async (req, res) => {
 // Enhanced route for tracking quiz completion with achievements
 app.post("/progress/quiz-with-achievements", async (req, res) => {
   try {
-    const { userId, score, questionsAnswered } = req.body;
+    const { userId, score, questionsAnswered, gameId, title } = req.body;
     
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
@@ -658,17 +660,60 @@ app.post("/progress/quiz-with-achievements", async (req, res) => {
       questionsAnswered || 1
     );
     
-    // Track game activity using the existing method
-    await fetch(`${API_BASE_URL}/progress/game`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        gameId: "financial-trivia",
-        title: "Financial Trivia",
-        score
-      })
-    });
+    // Track game activity directly
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        // Get current game progress
+        const gameProgress = user.gameProgress || [];
+        
+        // Find if game already exists in user progress
+        const gameIndex = gameProgress.findIndex(g => g.gameId === (gameId || "financial-trivia"));
+        
+        // Update or add game progress
+        if (gameIndex >= 0) {
+          // Update high score if new score is higher
+          if (score > gameProgress[gameIndex].highScore) {
+            gameProgress[gameIndex].highScore = score;
+          }
+          gameProgress[gameIndex].timesPlayed += 1;
+          gameProgress[gameIndex].lastPlayed = new Date();
+        } else {
+          // Add new game to progress
+          gameProgress.push({
+            gameId: gameId || "financial-trivia",
+            title: title || "Financial Trivia",
+            highScore: score,
+            timesPlayed: 1,
+            lastPlayed: new Date()
+          });
+        }
+        
+        // Update user's game progress
+        user.gameProgress = gameProgress;
+        
+        // Add game activity
+        const activities = user.recentActivity || [];
+        activities.unshift({
+          type: 'game',
+          title: title || "Financial Trivia",
+          action: 'played',
+          timestamp: new Date()
+        });
+        
+        // Keep only the 10 most recent activities
+        if (activities.length > 10) {
+          activities.length = 10;
+        }
+        
+        user.recentActivity = activities;
+        
+        await user.save();
+      }
+    } catch (gameError) {
+      console.error("Error updating game progress:", gameError);
+      // Continue execution even if game progress update fails
+    }
     
     res.json({ 
       message: "Quiz progress updated with achievements", 
@@ -792,26 +837,20 @@ app.post("/progress/course-with-achievements", async (req, res) => {
 });
 
 // Update challenge route to track achievements when a challenge is completed
+// Update challenge route to track achievements when a challenge is completed
 app.post("/challenges/:challengeId/score", async (req, res) => {
   try {
     const { challengeId } = req.params;
     const { userId, score } = req.body;
     
-    // Existing challenge score logic...
-    const challenge = await fetch(`${API_BASE_URL}/challenges/${challengeId}`).then(res => res.json());
+    // Get the challenge directly using the Challenge model
+    const challenge = await Challenge.findById(challengeId);
     if (!challenge) {
       return res.status(404).json({ message: "Challenge not found" });
     }
     
-    const isChallenger = userId === challenge.challengerId;
-    const scoreField = isChallenger ? 'challengerScore' : 'challengedScore';
-    
-    // Update challenge with score
-    const updatedChallenge = await fetch(`${API_BASE_URL}/challenges/${challengeId}/update-score`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, score })
-    }).then(res => res.json());
+    // Update challenge with score directly
+    const updatedChallenge = await Challenge.updateScore(challengeId, userId, score);
     
     // Track achievement if challenge was just completed and this user won
     if (updatedChallenge.status === 'completed' && updatedChallenge.winnerId === userId) {
@@ -832,29 +871,48 @@ app.post("/challenges/:challengeId/score", async (req, res) => {
 });
 
 // Update the create challenge route to track challenge sent achievement
+// Update the create challenge route to track challenge sent achievement
 app.post("/challenges", async (req, res) => {
   try {
     const { challengerId, challengedId, gameType, gameMode, quizSettings } = req.body;
     
-    // Create challenge using existing logic...
-    const challenge = await fetch(`${API_BASE_URL}/challenges/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ challengerId, challengedId, gameType, gameMode, quizSettings })
-    }).then(res => res.json());
+    // Validate users exist
+    const challenger = await User.findById(challengerId);
+    const challenged = await User.findById(challengedId);
     
-    // Track achievement for sending a challenge
-    const { newAchievements } = await UserStats.trackChallengeSent(challengerId);
+    if (!challenger || !challenged) {
+      return res.status(404).json({ message: "One or both users not found" });
+    }
+    
+    // First create the challenge
+    const challenge = await Challenge.create({
+      challengerId,
+      challengedId,
+      gameType,
+      gameMode,
+      quizSettings
+    });
+    
+    // Then separately track the achievement
+    let achievementUpdate = { newAchievements: [] };
+    try {
+      // Track achievement for sending a challenge in a separate transaction
+      achievementUpdate = await UserStats.trackChallengeSent(challengerId);
+    } catch (achievementError) {
+      console.error("Error tracking challenge achievement (non-fatal):", achievementError);
+      // Continue execution even if achievement tracking fails
+    }
     
     res.status(201).json({
       ...challenge,
-      achievements: newAchievements
+      achievements: achievementUpdate.newAchievements
     });
   } catch (error) {
     console.error("Error creating challenge:", error);
     res.status(500).json({ message: "Error creating challenge", error: error.message });
   }
 });
+
 
 // Add this inside the connectDB().then() block before app.listen()
 // Initialize achievements and rewards system

@@ -65,14 +65,19 @@ const UserStats = {
   },
   
   // Update a specific stat for a user and check for achievements
-  updateStat: async (userId, statName, value, increment = true) => {
+  updateStat: async (userId, statName, value, increment = true, transaction = null) => {
     try {
       const connection = await connect();
       
-      // Begin transaction
-      await connection.run('BEGIN TRANSACTION');
+      // Check if we need to manage the transaction ourselves
+      const shouldManageTransaction = !transaction;
       
       try {
+        // Begin transaction only if we need to manage it ourselves
+        if (shouldManageTransaction) {
+          await connection.run('BEGIN TRANSACTION');
+        }
+        
         // Check if stats exist for this user
         const existingStats = await connection.get(
           'SELECT * FROM user_stats WHERE user_id = ?',
@@ -130,11 +135,12 @@ const UserStats = {
             // Calculate progress as a number (should be the current value of the stat)
             const progress = currentValue;
             
-            // Update achievement progress
+            // Update achievement progress and pass the current transaction
             const updatedAchievement = await Achievement.updateUserProgress(
               userId,
               achievement.id,
-              progress
+              progress,
+              connection // Pass the current connection
             );
             
             if (updatedAchievement) {
@@ -143,16 +149,20 @@ const UserStats = {
           }
         }
         
-        // Commit the transaction
-        await connection.run('COMMIT');
+        // Commit the transaction only if we started it
+        if (shouldManageTransaction) {
+          await connection.run('COMMIT');
+        }
         
         return {
           stats: processUserStatsData(updatedStats),
           updatedAchievements
         };
       } catch (error) {
-        // Rollback the transaction on error
-        await connection.run('ROLLBACK');
+        // Rollback the transaction on error only if we started it
+        if (shouldManageTransaction) {
+          await connection.run('ROLLBACK');
+        }
         throw error;
       }
     } catch (error) {
@@ -160,6 +170,7 @@ const UserStats = {
       throw error;
     }
   },
+  
   
   // Update multiple stats at once
   updateMultipleStats: async (userId, statsObject) => {

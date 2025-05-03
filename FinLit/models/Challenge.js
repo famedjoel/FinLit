@@ -7,36 +7,48 @@ const Challenge = {
     try {
       const connection = await connect();
       
-      // Convert quiz settings to JSON string
-      const quizSettingsJSON = challengeData.quizSettings ? JSON.stringify(challengeData.quizSettings) : null;
+      // Begin a transaction
+      await connection.run('BEGIN TRANSACTION');
       
-      const result = await connection.run(
-        `INSERT INTO challenges (
-          challenger_id, challenged_id, game_type, game_mode, 
-          status, prize_points, challenger_score, challenged_score, 
-          quiz_settings, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          challengeData.challengerId,
-          challengeData.challengedId,
-          challengeData.gameType,
-          challengeData.gameMode || null,
-          'pending',
-          challengeData.prizePoints || 50,
-          null,  // challenger_score
-          null,  // challenged_score
-          quizSettingsJSON,
-          new Date().toISOString()
-        ]
-      );
-      
-      // Get the created challenge
-      const challenge = await connection.get(
-        'SELECT * FROM challenges WHERE id = ?',
-        result.lastID
-      );
-      
-      return processChallengeData(challenge);
+      try {
+        // Convert quiz settings to JSON string
+        const quizSettingsJSON = challengeData.quizSettings ? JSON.stringify(challengeData.quizSettings) : null;
+        
+        const result = await connection.run(
+          `INSERT INTO challenges (
+            challenger_id, challenged_id, game_type, game_mode, 
+            status, prize_points, challenger_score, challenged_score, 
+            quiz_settings, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            challengeData.challengerId,
+            challengeData.challengedId,
+            challengeData.gameType,
+            challengeData.gameMode || null,
+            'pending',
+            challengeData.prizePoints || 50,
+            null,  // challenger_score
+            null,  // challenged_score
+            quizSettingsJSON,
+            new Date().toISOString()
+          ]
+        );
+        
+        // Get the created challenge
+        const challenge = await connection.get(
+          'SELECT * FROM challenges WHERE id = ?',
+          result.lastID
+        );
+        
+        // Commit the transaction
+        await connection.run('COMMIT');
+  
+        return processChallengeData(challenge);
+      } catch (error) {
+        // Rollback the transaction on error
+        await connection.run('ROLLBACK');
+        throw error;
+      }
     } catch (error) {
       console.error('Error creating challenge:', error);
       throw error;

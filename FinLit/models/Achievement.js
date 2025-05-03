@@ -177,14 +177,19 @@ const Achievement = {
   },
   
   // Update user achievement progress
-  updateUserProgress: async (userId, achievementId, progressValue) => {
+  updateUserProgress: async (userId, achievementId, progressValue, transaction = null) => {
     try {
       const connection = await connect();
       
-      // Begin transaction
-      await connection.run('BEGIN TRANSACTION');
+      // Only start a transaction if one wasn't passed in
+      const shouldManageTransaction = !transaction;
       
       try {
+        // Begin transaction only if we need to manage it ourselves
+        if (shouldManageTransaction) {
+          await connection.run('BEGIN TRANSACTION');
+        }
+        
         // Get the achievement details
         const achievement = await Achievement.findById(achievementId);
         if (!achievement) {
@@ -274,8 +279,10 @@ const Achievement = {
           );
         }
         
-        // Commit the transaction
-        await connection.run('COMMIT');
+        // Commit the transaction only if we started it
+        if (shouldManageTransaction) {
+          await connection.run('COMMIT');
+        }
         
         // Get updated user achievement
         const updatedUserAchievement = await connection.get(
@@ -288,8 +295,10 @@ const Achievement = {
         
         return processAchievementData(updatedUserAchievement);
       } catch (error) {
-        // Rollback the transaction on error
-        await connection.run('ROLLBACK');
+        // Rollback the transaction on error only if we started it
+        if (shouldManageTransaction) {
+          await connection.run('ROLLBACK');
+        }
         throw error;
       }
     } catch (error) {
