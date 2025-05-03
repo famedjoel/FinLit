@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from 'react-router-dom';
@@ -105,10 +106,33 @@ function Dashboard() {
   const getActivityIcon = (type, action) => {
     if (type === 'course' && action === 'completed') return '🏆';
     if (type === 'course' && action === 'started') return '📖';
-    if (type === 'game' && action === 'played') return '🎮';
+    if (type === 'game' && action === 'played') {
+      // Check if it's MoneyMatch specifically
+      if (action.includes('Money Budgeting Challenge')) return '💰';
+      return '🎮';
+    }
     if (type === 'account' && action === 'created') return '👤';
     if (type === 'account' && action === 'logged in') return '🔑';
     return '📝';
+  };
+
+  // Get game title from activity
+  const getGameTitle = (activity) => {
+    // Check if activity has metadata
+    if (activity.metadata) {
+      try {
+        const metadata = typeof activity.metadata === 'string' 
+          ? JSON.parse(activity.metadata) 
+          : activity.metadata;
+        
+        // Return the title from metadata if it exists
+        if (metadata.title) return metadata.title;
+      } catch (e) {
+        // If parsing fails, fall back to activity.title
+      }
+    }
+    
+    return activity.title;
   };
 
   if (loading) {
@@ -209,7 +233,7 @@ function Dashboard() {
               {dashboardData.recentActivity.map((activity, index) => (
                 <li key={index} className="activity-item">
                   <div className="activity-icon">
-                    {getActivityIcon(activity.type, activity.action)}
+                    {getActivityIcon(activity.type, activity.title)}
                   </div>
                   <div className="activity-details">
                     <span className="activity-text">
@@ -218,7 +242,15 @@ function Dashboard() {
                        activity.action === 'started' ? 'Started' : 
                        activity.action}
                       {" "}
-                      <strong>{activity.title}</strong>
+                      <strong>{getGameTitle(activity)}</strong>
+                      
+                      {/* Show session type for MoneyMatch */}
+                      {activity.type === 'game' && activity.title?.includes('Money Budgeting Challenge') && (
+                        <span className="game-details">
+                          {activity.title.includes('Session Start') ? '' : 
+                           activity.score ? ` (Score: ${activity.score})` : ''}
+                        </span>
+                      )}
                     </span>
                     <span className="activity-time">{formatDate(activity.timestamp)}</span>
                   </div>
@@ -231,19 +263,115 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Game Progress Section - Detailed Stats */}
+      {/* MoneyMatch Highlight Section */}
+      {dashboardData?.gameProgress?.some(game => game.gameId === 'money-match') && (
+        <div className="moneymatch-highlight">
+          <h3>MoneyMatch Budgeting Challenge</h3>
+          {dashboardData.gameProgress
+            .filter(game => game.gameId === 'money-match')
+            .map((game, index) => {
+              let metadata = {};
+              try {
+                metadata = typeof game.metadata === 'string' 
+                  ? JSON.parse(game.metadata) 
+                  : game.metadata || {};
+              } catch (e) {
+                metadata = {};
+              }
+              
+              return (
+                <div key={index} className="moneymatch-summary">
+                  <div className="moneymatch-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">High Score</span>
+                      <span className="stat-value">{game.highScore}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Sessions Played</span>
+                      <span className="stat-value">{game.timesPlayed}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Last Difficulty</span>
+                      <span className="stat-value">{metadata.difficulty || 'N/A'}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Budget breakdown from last game */}
+                  {metadata.essentialsPercentage && (
+                    <div className="budget-breakdown">
+                      <h4>Last Budget Breakdown</h4>
+                      <div className="breakdown-bars">
+                        <div className="breakdown-bar">
+                          <div className="bar-label">Essentials</div>
+                          <div className="bar-container">
+                            <div className="bar-fill" style={{ width: `${metadata.essentialsPercentage}%`, backgroundColor: '#38b2ac' }}></div>
+                          </div>
+                          <div className="bar-value">{metadata.essentialsPercentage}%</div>
+                        </div>
+                        <div className="breakdown-bar">
+                          <div className="bar-label">Luxuries</div>
+                          <div className="bar-container">
+                            <div className="bar-fill" style={{ width: `${metadata.luxuriesPercentage}%`, backgroundColor: '#ed8936' }}></div>
+                          </div>
+                          <div className="bar-value">{metadata.luxuriesPercentage}%</div>
+                        </div>
+                        <div className="breakdown-bar">
+                          <div className="bar-label">Savings</div>
+                          <div className="bar-container">
+                            <div className="bar-fill" style={{ width: `${metadata.savingsPercentage}%`, backgroundColor: '#4299e1' }}></div>
+                          </div>
+                          <div className="bar-value">{metadata.savingsPercentage}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          }
+        </div>
+      )}
+
+      {/* Enhanced Game Progress Section - Detailed Stats */}
       {dashboardData?.gameProgress && dashboardData.gameProgress.length > 0 && (
         <div className="games-section">
           <h3>Game Details</h3>
           <div className="games-grid">
-            {dashboardData.gameProgress.map((game, index) => (
-              <div key={index} className="game-stat-card">
-                <h4>{game.title}</h4>
-                <p>High Score: <strong>{game.highScore}</strong></p>
-                <p>Played: <strong>{game.timesPlayed} times</strong></p>
-                <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
-              </div>
-            ))}
+            {dashboardData.gameProgress.map((game, index) => {
+              let metadata = {};
+              try {
+                metadata = typeof game.metadata === 'string' 
+                  ? JSON.parse(game.metadata) 
+                  : game.metadata || {};
+              } catch (e) {
+                metadata = {};
+              }
+              
+              return (
+                <div key={index} className="game-stat-card">
+                  <h4>{game.title}</h4>
+                  <p>High Score: <strong>{game.highScore}</strong></p>
+                  <p>Played: <strong>{game.timesPlayed} times</strong></p>
+                  <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
+                  
+                  {/* Add MoneyMatch specific details */}
+                  {game.gameId === 'money-match' && metadata.difficulty && (
+                    <>
+                      <p>Last difficulty: <strong>{metadata.difficulty}</strong></p>
+                      {metadata.essentialsPercentage && (
+                        <p>Essentials: <strong>{metadata.essentialsPercentage}%</strong></p>
+                      )}
+                      {metadata.luxuriesPercentage && (
+                        <p>Luxuries: <strong>{metadata.luxuriesPercentage}%</strong></p>
+                      )}
+                      {metadata.savingsPercentage && (
+                        <p>Savings: <strong>{metadata.savingsPercentage}%</strong></p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

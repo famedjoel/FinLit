@@ -10,6 +10,8 @@ const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7
 
 const EASY_BUDGET = 1500;
 const HARD_BUDGET = 800;
+// const GAME_ID = "money-match";
+
 
 const items = [
   { id: 1, name: "Rent", category: "Essentials", cost: 500 },
@@ -140,7 +142,7 @@ function MoneyMatch() {
           userId: user.id,
           gameId: "money-match",
           title: "Money Budgeting Challenge - Session Start",
-          score: 0, // No score yet, just tracking that they started playing
+          score: 0,
           metadata: JSON.stringify({
             sessionStart: true,
             timestamp: new Date().toISOString(),
@@ -151,7 +153,7 @@ function MoneyMatch() {
       
       if (response.ok) {
         setSessionTracked(true);
-        showAlert("Game progress will be saved to your dashboard!", "info");
+        showAlert("Game session started! Progress will be tracked.", "info");
       }
     } catch (error) {
       console.error("Failed to track game session:", error);
@@ -328,7 +330,13 @@ function MoneyMatch() {
             achievements: updatedStats.achievements,
             level: updatedStats.level,
             gameCompleted: true,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            // Add specific game stats
+            gameStats: {
+              usedItems: usedItems.size,
+              remainingBudget: budgetLimit - totalSpent,
+              completionPercentage: Math.round((totalSpent / budgetLimit) * 100)
+            }
           })
         }),
       });
@@ -336,8 +344,6 @@ function MoneyMatch() {
       if (response.ok) {
         setDashboardSynced(true);
         showAlert("Progress saved to your dashboard!", "success");
-      } else {
-        console.error("Error tracking game progress");
       }
     } catch (error) {
       console.error("Failed to track game progress:", error);
