@@ -130,13 +130,18 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// Update only the profile route in server.js
 app.put("/profile", async (req, res) => {
   try {
-    const { userId, username, avatar } = req.body;
+    const { userId, username, avatar, financialGoals } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { username, avatar },
+      { 
+        username, 
+        avatar,
+        financialGoals 
+      },
       { new: true }
     );
 

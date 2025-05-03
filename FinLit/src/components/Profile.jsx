@@ -13,8 +13,6 @@ const avatarOptions = [
   "/avatars/avatar4.png",
   "/avatars/avatar5.png",
   "/avatars/avatar6.png",
-  "/avatars/avatar7.png",
-  "/avatars/avatar8.png",
 ];
 
 function Profile() {
@@ -24,7 +22,6 @@ function Profile() {
     username: "", 
     email: "",
     avatar: "", 
-    bio: "",
     financialGoals: [],
     newGoal: ""
   });
@@ -82,12 +79,11 @@ function Profile() {
         dashboardData = await dashboardResponse.json();
       }
       
-      // Initialize form data with profile info
+      // Initialize form data with profile info (removed bio)
       setFormData({ 
         username: profileData.username || "", 
         email: profileData.email || "",
         avatar: profileData.avatar || avatarOptions[0],
-        bio: profileData.bio || "I'm excited to learn about finance!",
         financialGoals: profileData.financialGoals || [],
         newGoal: ""
       });
@@ -145,7 +141,6 @@ function Profile() {
           userId: user.id, 
           username: formData.username, 
           avatar: formData.avatar,
-          bio: formData.bio,
           financialGoals: formData.financialGoals
         }),
       });
@@ -248,18 +243,6 @@ function Profile() {
                 required
               />
             </div>
-
-            <div className="form-group">
-              <label htmlFor="bio">Bio</label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Tell us a bit about yourself..."
-              />
-            </div>
           </div>
 
           <div className="form-section" id="avatar-selection">
@@ -335,11 +318,6 @@ function Profile() {
         </form>
       ) : (
         <div className="profile-details">
-          <div className="profile-section">
-            <h2>About Me</h2>
-            <p className="profile-bio">{formData.bio}</p>
-          </div>
-
           <div className="profile-section">
             <h2>My Financial Goals</h2>
             {formData.financialGoals.length > 0 ? (

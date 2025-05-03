@@ -87,11 +87,11 @@ export const login = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { userId, username, avatar, bio, financialGoals } = req.body;
+    const { userId, username, avatar, financialGoals } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { username, avatar, bio, financialGoals },
+      { username, avatar, financialGoals },
       { new: true }
     );
 
