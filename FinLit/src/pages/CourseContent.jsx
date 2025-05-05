@@ -7,6 +7,7 @@ import "../styles/CourseContent.css";
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 const CourseContent = () => {
+  const [markingComplete, setMarkingComplete] = useState(false);
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [currentCourse, setCurrentCourse] = useState(null);
@@ -193,7 +194,7 @@ const CourseContent = () => {
               ...prev[chapterId],
               [lessonId]: {
                 visited: true,
-                completed: prev[chapterId]?.[lessonId]?.completed || false
+                completed: true
               }
             }
           }));
@@ -218,6 +219,8 @@ const CourseContent = () => {
 
   // Mark lesson as completed
   const markLessonCompleted = async () => {
+    if (markingComplete) return; // Prevent double clicks
+    
     if (!currentCourse || !currentCourse.chapters[currentChapterIndex]) {
       return;
     }
@@ -230,6 +233,20 @@ const CourseContent = () => {
     const lesson = chapter.lessons[currentLessonIndex];
     
     try {
+      setMarkingComplete(true);
+      
+      // Update local state immediately for better UX
+      setProgress(prev => ({
+        ...prev,
+        [chapter.id]: {
+          ...prev[chapter.id],
+          [lesson.id]: {
+            visited: true,
+            completed: true
+          }
+        }
+      }));
+      
       if (user) {
         // Update server with completed status
         console.log(`Marking lesson ${lesson.id} as completed for user ${user.id}`);
@@ -247,9 +264,7 @@ const CourseContent = () => {
         });
         
         if (!lessonResponse.ok) {
-          console.error("Error updating lesson progress:", await lessonResponse.text());
-        } else {
-          console.log("Lesson progress updated successfully");
+          throw new Error("Failed to update lesson progress");
         }
         
         // Explicitly update course progress
@@ -272,23 +287,28 @@ const CourseContent = () => {
         });
         
         if (!courseResponse.ok) {
-          console.error("Error updating course progress:", await courseResponse.text());
-        } else {
-          console.log("Course progress updated successfully");
+          throw new Error("Failed to update course progress");
+        }
+        
+        // Fetch updated progress from server to ensure sync
+        const progressResponse = await fetch(`${API_BASE_URL}/api/users/${user.id}/courses/${currentCourse.id}/progress`);
+        if (progressResponse.ok) {
+          const progressData = await progressResponse.json();
+          
+          // Update progress state with server data
+          const serverProgress = {};
+          progressData.chapters.forEach(chapter => {
+            serverProgress[chapter.id] = {};
+            chapter.lessons.forEach(lesson => {
+              serverProgress[chapter.id][lesson.id] = {
+                visited: lesson.progress.status !== 'not-started',
+                completed: lesson.progress.status === 'completed'
+              };
+            });
+          });
+          setProgress(serverProgress);
         }
       }
-      
-      // Update local progress state
-      setProgress(prev => ({
-        ...prev,
-        [chapter.id]: {
-          ...prev[chapter.id],
-          [lesson.id]: {
-            visited: true,
-            completed: true
-          }
-        }
-      }));
       
       // Show quiz if available
       if (lesson.quiz) {
@@ -300,9 +320,27 @@ const CourseContent = () => {
       }
     } catch (err) {
       console.error("Error marking lesson as completed:", err);
+      
+      // Revert local state on error
+      setProgress(prev => ({
+        ...prev,
+        [chapter.id]: {
+          ...prev[chapter.id],
+          [lesson.id]: {
+            visited: lesson.id in (prev[chapter.id] || {}),
+            completed: false
+          }
+        }
+      }));
+      
+      // Show error to user
+      alert("Failed to mark lesson as completed. Please try again.");
+    } finally {
+      setMarkingComplete(false);
     }
   };
 
+  
   // Navigate to next lesson
   const navigateToNext = () => {
     if (!currentCourse || !currentCourse.chapters[currentChapterIndex]) {
@@ -543,8 +581,14 @@ const CourseContent = () => {
                 Previous
               </button>
               
-              <button className="primary-button" onClick={markLessonCompleted}>
-                {isLessonCompleted(chapter.id, lesson.id) ? "Continue to Next" : "Mark as Completed"}
+              <button className="primary-button" onClick={markLessonCompleted} disabled={markingComplete}>
+              {markingComplete 
+    ? "Saving..." 
+    : (isLessonCompleted(chapter.id, lesson.id) 
+      ? "Continue to Next" 
+      : "Mark as Completed")
+  }
+
               </button>
             </div>
           </>

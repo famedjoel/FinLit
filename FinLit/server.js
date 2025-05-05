@@ -169,16 +169,20 @@ app.get("/dashboard/:userId", async (req, res) => {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Calculate overall progress
-    const courseProgress = user.courseProgress || [];
-    let totalProgress = 0;
-    if (courseProgress.length > 0) {
-      totalProgress = courseProgress.reduce((sum, course) => sum + course.progress, 0) / courseProgress.length;
-    }
+// Calculate overall progress and completed courses
+const courseProgress = user.courseProgress || [];
+let totalProgress = 0;
+let completedCount = 0;
 
-    // Update the overallProgress field
-    user.overallProgress = Math.round(totalProgress);
-    await user.save();
+if (courseProgress.length > 0) {
+  totalProgress = courseProgress.reduce((sum, course) => sum + course.progress, 0) / courseProgress.length;
+  completedCount = courseProgress.filter(course => course.completed === true).length;
+}
+
+// Update the user data
+user.overallProgress = Math.round(totalProgress);
+user.totalCoursesCompleted = completedCount;
+await user.save();
 
     // Prepare dashboard data
     const dashboardData = {
