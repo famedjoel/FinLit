@@ -20,8 +20,8 @@ const Reward = {
           rewardData.requirementType || null,
           rewardData.requirementValue || null,
           rewardData.imageUrl || null,
-          rewardData.isPremium ? 1 : 0
-        ]
+          rewardData.isPremium ? 1 : 0,
+        ],
       );
       const reward = await connection.get('SELECT * FROM rewards WHERE id = ?', result.lastID);
       return processRewardData(reward);
@@ -49,7 +49,7 @@ const Reward = {
       const connection = await connect();
       const rewards = await connection.all(
         'SELECT * FROM rewards WHERE type = ? ORDER BY points_cost',
-        type
+        type,
       );
       return rewards.map(processRewardData);
     } catch (error) {
@@ -71,67 +71,67 @@ const Reward = {
   },
 
   // Initialize default rewards if none exist
-initDefaultRewards: async () => {
-  try {
-    const connection = await connect();
+  initDefaultRewards: async () => {
+    try {
+      const connection = await connect();
 
-    // Check if any rewards already exist
-    const existing = await connection.get('SELECT COUNT(*) as count FROM rewards');
-    if (existing.count > 0) {
-      console.log(`Rewards already initialized (${existing.count} rewards found).`);
-      return;
-    }
-
-    const defaultRewards = [
-      // Example rewards
-      {
-        name: "Gold Frame",
-        description: "A premium gold frame for your profile picture",
-        type: "avatar_frame",
-        icon: "🖼️",
-        pointsCost: 1000,
-        imageUrl: "/images/rewards/gold-frame.png",
-        isPremium: false
-      },
-      {
-        name: "Diamond Frame",
-        description: "A sparkling diamond frame for your profile picture",
-        type: "avatar_frame",
-        icon: "💎",
-        pointsCost: 3000,
-        imageUrl: "/images/rewards/diamond-frame.png",
-        isPremium: false
-      },
-      {
-        name: "Financial Wizard",
-        description: "Badge showcasing your financial knowledge",
-        type: "badge",
-        icon: "🧙",
-        pointsCost: 500,
-        imageUrl: "/images/rewards/financial-wizard-badge.png",
-        isPremium: false
-      },
-      {
-        name: "Double Points Booster",
-        description: "Double your points in your next 3 quizzes",
-        type: "booster",
-        icon: "⚡",
-        pointsCost: 1500,
-        imageUrl: "/images/rewards/double-points-booster.png",
-        isPremium: false
+      // Check if any rewards already exist
+      const existing = await connection.get('SELECT COUNT(*) as count FROM rewards');
+      if (existing.count > 0) {
+        console.log(`Rewards already initialized (${existing.count} rewards found).`);
+        return;
       }
-    ];
 
-    for (const rewardData of defaultRewards) {
-      await Reward.create(rewardData);
+      const defaultRewards = [
+      // Example rewards
+        {
+          name: 'Gold Frame',
+          description: 'A premium gold frame for your profile picture',
+          type: 'avatar_frame',
+          icon: '🖼️',
+          pointsCost: 1000,
+          imageUrl: '/images/rewards/gold-frame.png',
+          isPremium: false,
+        },
+        {
+          name: 'Diamond Frame',
+          description: 'A sparkling diamond frame for your profile picture',
+          type: 'avatar_frame',
+          icon: '💎',
+          pointsCost: 3000,
+          imageUrl: '/images/rewards/diamond-frame.png',
+          isPremium: false,
+        },
+        {
+          name: 'Financial Wizard',
+          description: 'Badge showcasing your financial knowledge',
+          type: 'badge',
+          icon: '🧙',
+          pointsCost: 500,
+          imageUrl: '/images/rewards/financial-wizard-badge.png',
+          isPremium: false,
+        },
+        {
+          name: 'Double Points Booster',
+          description: 'Double your points in your next 3 quizzes',
+          type: 'booster',
+          icon: '⚡',
+          pointsCost: 1500,
+          imageUrl: '/images/rewards/double-points-booster.png',
+          isPremium: false,
+        },
+      ];
+
+      for (const rewardData of defaultRewards) {
+        await Reward.create(rewardData);
+      }
+
+      console.log(`Initialized ${defaultRewards.length} default rewards.`);
+    } catch (error) {
+      console.error('Error initializing default rewards:', error);
+      throw error;
     }
-
-    console.log(`Initialized ${defaultRewards.length} default rewards.`);
-  } catch (error) {
-    console.error('Error initializing default rewards:', error);
-    throw error;
-  }
-},
+  },
   // Update a reward
   update: async (id, updates) => {
     try {
@@ -183,13 +183,13 @@ initDefaultRewards: async () => {
          FROM rewards r
          LEFT JOIN user_rewards ur ON r.id = ur.reward_id AND ur.user_id = ?
          ORDER BY r.type, r.points_cost`,
-        userId
+        userId,
       );
       return userRewards.map(reward => ({
         ...processRewardData(reward),
         acquired: reward.acquired_at !== null,
         acquiredAt: reward.acquired_at,
-        isEquipped: reward.is_equipped === 1
+        isEquipped: reward.is_equipped === 1,
       }));
     } catch (error) {
       console.error('Error getting user rewards:', error);
@@ -205,8 +205,8 @@ initDefaultRewards: async () => {
 
       try {
         const existingReward = await connection.get(
-          `SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = ?`,
-          [userId, rewardId]
+          'SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = ?',
+          [userId, rewardId],
         );
         if (existingReward) {
           await connection.run('COMMIT');
@@ -218,8 +218,8 @@ initDefaultRewards: async () => {
 
         const now = new Date().toISOString();
         await connection.run(
-          `INSERT INTO user_rewards (user_id, reward_id, acquired_at) VALUES (?, ?, ?)`,
-          [userId, rewardId, now]
+          'INSERT INTO user_rewards (user_id, reward_id, acquired_at) VALUES (?, ?, ?)',
+          [userId, rewardId, now],
         );
 
         await connection.run('COMMIT');
@@ -239,8 +239,8 @@ initDefaultRewards: async () => {
     try {
       const connection = await connect();
       const userReward = await connection.get(
-        `SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = ?`,
-        [userId, rewardId]
+        'SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = ?',
+        [userId, rewardId],
       );
 
       if (!userReward) {
@@ -255,13 +255,13 @@ initDefaultRewards: async () => {
           `UPDATE user_rewards 
            SET is_equipped = 0
            WHERE user_id = ? AND reward_id IN (SELECT id FROM rewards WHERE type = ?)`,
-          [userId, reward.type]
+          [userId, reward.type],
         );
       }
 
       await connection.run(
-        `UPDATE user_rewards SET is_equipped = ? WHERE user_id = ? AND reward_id = ?`,
-        [equip ? 1 : 0, userId, rewardId]
+        'UPDATE user_rewards SET is_equipped = ? WHERE user_id = ? AND reward_id = ?',
+        [equip ? 1 : 0, userId, rewardId],
       );
 
       return { success: true };
@@ -280,7 +280,7 @@ initDefaultRewards: async () => {
          FROM rewards r
          JOIN user_rewards ur ON r.id = ur.reward_id
          WHERE ur.user_id = ? AND ur.is_equipped = 1`,
-        userId
+        userId,
       );
       return equippedRewards.map(processRewardData);
     } catch (error) {
@@ -297,8 +297,8 @@ initDefaultRewards: async () => {
 
       try {
         const existingReward = await connection.get(
-          `SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = ?`,
-          [userId, rewardId]
+          'SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = ?',
+          [userId, rewardId],
         );
         if (existingReward) {
           await connection.run('ROLLBACK');
@@ -309,8 +309,8 @@ initDefaultRewards: async () => {
         if (!reward) throw new Error('Reward not found');
 
         const userPoints = await connection.get(
-          `SELECT * FROM user_points WHERE user_id = ?`,
-          userId
+          'SELECT * FROM user_points WHERE user_id = ?',
+          userId,
         );
         if (!userPoints || userPoints.total_points < reward.pointsCost) {
           await connection.run('ROLLBACK');
@@ -323,26 +323,26 @@ initDefaultRewards: async () => {
           `UPDATE user_points 
            SET total_points = total_points - ?, last_updated = ?
            WHERE user_id = ?`,
-          [reward.pointsCost, now, userId]
+          [reward.pointsCost, now, userId],
         );
 
         await connection.run(
           `INSERT INTO points_history (user_id, points_change, reason, reference_id)
            VALUES (?, ?, ?, ?)`,
-          [userId, -reward.pointsCost, 'reward_purchase', `reward_${rewardId}`]
+          [userId, -reward.pointsCost, 'reward_purchase', `reward_${rewardId}`],
         );
 
         await connection.run(
           `INSERT INTO user_rewards (user_id, reward_id, acquired_at)
            VALUES (?, ?, ?)`,
-          [userId, rewardId, now]
+          [userId, rewardId, now],
         );
 
         await connection.run(
           `UPDATE user_stats
            SET points_spent = points_spent + ?
            WHERE user_id = ?`,
-          [reward.pointsCost, userId]
+          [reward.pointsCost, userId],
         );
 
         await connection.run('COMMIT');
@@ -355,7 +355,7 @@ initDefaultRewards: async () => {
       console.error('Error purchasing reward:', error);
       throw error;
     }
-  }
+  },
 };
 
 // Utility: process DB row into a JS object
@@ -376,7 +376,7 @@ function processRewardData(reward) {
     acquired: reward.acquired_at !== null,
     acquiredAt: reward.acquired_at,
     isEquipped: reward.is_equipped === 1,
-    createdAt: reward.created_at
+    createdAt: reward.created_at,
   };
 }
 

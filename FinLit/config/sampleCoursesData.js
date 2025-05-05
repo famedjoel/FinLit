@@ -9,70 +9,70 @@ import Quiz from '../models/Quiz.js';
 export async function initSampleCourseData() {
   try {
     const connection = await connect();
-    
+
     // Check if we already have courses in the database
     const existingCourses = await connection.all('SELECT * FROM courses');
-    
+
     if (existingCourses && existingCourses.length > 0) {
       console.log(`Database already contains ${existingCourses.length} courses.`);
       return;
     }
-    
+
     console.log('Initializing sample course data...');
-    
+
     // Create sample courses
     const course1 = await Course.create({
-      title: "Personal Finance Fundamentals",
-      description: "Learn the basics of personal finance, budgeting, and saving.",
-      level: "Beginner",
-      imageUrl: "/images/courses/personal-finance.jpg",
+      title: 'Personal Finance Fundamentals',
+      description: 'Learn the basics of personal finance, budgeting, and saving.',
+      level: 'Beginner',
+      imageUrl: '/images/courses/personal-finance.jpg',
       chaptersCount: 2,
       lessonsCount: 4,
       estimatedHours: 4.5,
-      status: "published"
+      status: 'published',
     });
-    
+
     const course2 = await Course.create({
-      title: "Investment Basics",
-      description: "Understand investment vehicles, risk management, and portfolio building.",
-      level: "Intermediate",
-      imageUrl: "/images/courses/investments.jpg",
+      title: 'Investment Basics',
+      description: 'Understand investment vehicles, risk management, and portfolio building.',
+      level: 'Intermediate',
+      imageUrl: '/images/courses/investments.jpg',
       chaptersCount: 2,
       lessonsCount: 4,
       estimatedHours: 6,
-      status: "published"
+      status: 'published',
     });
-    
+
     const course3 = await Course.create({
-      title: "Advanced Trading Strategies",
-      description: "Master complex trading strategies, technical analysis, and market psychology.",
-      level: "Advanced",
-      imageUrl: "/images/courses/trading.jpg",
+      title: 'Advanced Trading Strategies',
+      description: 'Master complex trading strategies, technical analysis, and market psychology.',
+      level: 'Advanced',
+      imageUrl: '/images/courses/trading.jpg',
       chaptersCount: 1,
       lessonsCount: 2,
       estimatedHours: 8,
-      status: "published"
+      status: 'published',
     });
-    
+
     // Create chapters for Course 1
     const c1ch1 = await Chapter.create({
       courseId: course1.id,
-      title: "Understanding Personal Finance",
-      description: "An introduction to personal finance concepts",
-      order: 0
+      title: 'Understanding Personal Finance',
+      description: 'An introduction to personal finance concepts',
+      order: 0,
     });
-    
+
     const c1ch2 = await Chapter.create({
       courseId: course1.id,
-      title: "Building a Budget",
-      description: "Learn how to create and manage a budget",
-      order: 1
+      title: 'Building a Budget',
+      description: 'Learn how to create and manage a budget',
+      order: 1,
     });
-    
+
     // Create lessons for Chapter 1 of Course 1
     const c1ch1l1 = await Lesson.create({
       chapterId: c1ch1.id,
-      title: "What is Personal Finance?",
+      title: 'What is Personal Finance?',
       content: `
         <h2>What is Personal Finance?</h2>
         <p>Personal finance refers to managing your money and planning for your financial future. It encompasses a wide range of activities including:</p>
@@ -182,53 +182,53 @@ export async function initSampleCourseData() {
       `,
       resources: [
         {
-          title: "Personal Finance Checklist",
-          type: "pdf",
-          url: "/resources/personal-finance-checklist.pdf"
-        }
+          title: 'Personal Finance Checklist',
+          type: 'pdf',
+          url: '/resources/personal-finance-checklist.pdf',
+        },
       ],
       order: 0,
-      estimatedMinutes: 20
+      estimatedMinutes: 20,
     });
-    
+
     // Create quiz for the first lesson
     await Quiz.create({
       lessonId: c1ch1l1.id,
-      title: "Personal Finance Basics Quiz",
-      instructions: "Test your understanding of personal finance basics.",
+      title: 'Personal Finance Basics Quiz',
+      instructions: 'Test your understanding of personal finance basics.',
       passingScore: 70,
       questions: [
         {
-          type: "multiple-choice",
-          question: "What does personal finance encompass?",
+          type: 'multiple-choice',
+          question: 'What does personal finance encompass?',
           options: [
-            "Only budgeting and saving money",
-            "Only investing in the stock market",
-            "Managing money, planning for the future, and making financial decisions",
-            "Just learning about taxes and retirement"
+            'Only budgeting and saving money',
+            'Only investing in the stock market',
+            'Managing money, planning for the future, and making financial decisions',
+            'Just learning about taxes and retirement',
           ],
-          correctAnswer: "2",
-          explanation: "Personal finance covers a wide range of activities including budgeting, saving, investing, debt management, and retirement planning."
+          correctAnswer: '2',
+          explanation: 'Personal finance covers a wide range of activities including budgeting, saving, investing, debt management, and retirement planning.',
         },
         {
-          type: "multiple-choice",
-          question: "Why is financial literacy important?",
+          type: 'multiple-choice',
+          question: 'Why is financial literacy important?',
           options: [
             "It's only important for wealthy individuals",
-            "It helps you make informed financial decisions",
+            'It helps you make informed financial decisions',
             "It's only relevant when applying for loans",
-            "It only matters for business owners"
+            'It only matters for business owners',
           ],
-          correctAnswer: "1",
-          explanation: "Financial literacy is important because it provides the knowledge and skills needed to make informed financial decisions throughout your life."
-        }
-      ]
+          correctAnswer: '1',
+          explanation: 'Financial literacy is important because it provides the knowledge and skills needed to make informed financial decisions throughout your life.',
+        },
+      ],
     });
-    
+
     // Create second lesson for Chapter 1 of Course 1
     const c1ch1l2 = await Lesson.create({
       chapterId: c1ch1.id,
-      title: "Setting Financial Goals",
+      title: 'Setting Financial Goals',
       content: `
         <h2>Setting Financial Goals</h2>
         <p>Clear financial goals are the foundation of successful personal finance management. Well-defined goals give you direction and motivation to make smart financial decisions.</p>
@@ -370,141 +370,140 @@ export async function initSampleCourseData() {
       `,
       resources: [
         {
-          title: "Financial Goal Setting Worksheet",
-          type: "pdf",
-          url: "/resources/financial-goal-worksheet.pdf"
-        }
+          title: 'Financial Goal Setting Worksheet',
+          type: 'pdf',
+          url: '/resources/financial-goal-worksheet.pdf',
+        },
       ],
       order: 1,
-      estimatedMinutes: 25
+      estimatedMinutes: 25,
     });
-    
+
     // Create quiz for the second lesson
     await Quiz.create({
       lessonId: c1ch1l2.id,
-      title: "Financial Goals Quiz",
-      instructions: "Test your understanding of financial goal setting.",
+      title: 'Financial Goals Quiz',
+      instructions: 'Test your understanding of financial goal setting.',
       passingScore: 70,
       questions: [
         {
-          type: "multiple-choice",
+          type: 'multiple-choice',
           question: "What does the 'M' in SMART goals stand for?",
           options: [
-            "Manageable",
-            "Measurable",
-            "Meaningful",
-            "Momentous"
+            'Manageable',
+            'Measurable',
+            'Meaningful',
+            'Momentous',
           ],
-          correctAnswer: "1",
-          explanation: "The 'M' stands for Measurable, meaning your goal should have concrete criteria to track progress."
+          correctAnswer: '1',
+          explanation: "The 'M' stands for Measurable, meaning your goal should have concrete criteria to track progress.",
         },
         {
-          type: "multiple-choice",
-          question: "Which of these would be considered a long-term financial goal?",
+          type: 'multiple-choice',
+          question: 'Which of these would be considered a long-term financial goal?',
           options: [
             "Saving for next month's rent",
-            "Building an emergency fund",
-            "Planning for retirement",
-            "Paying off a credit card"
+            'Building an emergency fund',
+            'Planning for retirement',
+            'Paying off a credit card',
           ],
-          correctAnswer: "2",
-          explanation: "Planning for retirement is typically a long-term goal that spans many years or decades."
-        }
-      ]
+          correctAnswer: '2',
+          explanation: 'Planning for retirement is typically a long-term goal that spans many years or decades.',
+        },
+      ],
     });
-    
+
     // Create lessons for Chapter 2 of Course 1
     await Lesson.create({
       chapterId: c1ch2.id,
-      title: "Budgeting Basics",
-      content: "Coming soon...",
+      title: 'Budgeting Basics',
+      content: 'Coming soon...',
       order: 0,
-      estimatedMinutes: 30
+      estimatedMinutes: 30,
     });
-    
+
     await Lesson.create({
       chapterId: c1ch2.id,
-      title: "Tracking Expenses",
-      content: "Coming soon...",
+      title: 'Tracking Expenses',
+      content: 'Coming soon...',
       order: 1,
-      estimatedMinutes: 20
+      estimatedMinutes: 20,
     });
-    
+
     // Create chapters and lessons for Course 2
     const c2ch1 = await Chapter.create({
       courseId: course2.id,
-      title: "Introduction to Investing",
-      description: "Understanding what investing is and why it matters",
-      order: 0
+      title: 'Introduction to Investing',
+      description: 'Understanding what investing is and why it matters',
+      order: 0,
     });
-    
+
     const c2ch2 = await Chapter.create({
       courseId: course2.id,
-      title: "Investment Vehicles",
-      description: "Exploring different ways to invest your money",
-      order: 1
+      title: 'Investment Vehicles',
+      description: 'Exploring different ways to invest your money',
+      order: 1,
     });
-    
+
     // Create lessons for Course 2
     await Lesson.create({
       chapterId: c2ch1.id,
-      title: "Why Invest?",
-      content: "Coming soon...",
+      title: 'Why Invest?',
+      content: 'Coming soon...',
       order: 0,
-      estimatedMinutes: 15
+      estimatedMinutes: 15,
     });
-    
+
     await Lesson.create({
       chapterId: c2ch1.id,
-      title: "Risk and Return",
-      content: "Coming soon...",
+      title: 'Risk and Return',
+      content: 'Coming soon...',
       order: 1,
-      estimatedMinutes: 20
+      estimatedMinutes: 20,
     });
-    
+
     await Lesson.create({
       chapterId: c2ch2.id,
-      title: "Stocks and Bonds",
-      content: "Coming soon...",
+      title: 'Stocks and Bonds',
+      content: 'Coming soon...',
       order: 0,
-      estimatedMinutes: 25
+      estimatedMinutes: 25,
     });
-    
+
     await Lesson.create({
       chapterId: c2ch2.id,
-      title: "Mutual Funds and ETFs",
-      content: "Coming soon...",
+      title: 'Mutual Funds and ETFs',
+      content: 'Coming soon...',
       order: 1,
-      estimatedMinutes: 30
+      estimatedMinutes: 30,
     });
-    
+
     // Create chapters and lessons for Course 3
     const c3ch1 = await Chapter.create({
       courseId: course3.id,
-      title: "Technical Analysis",
-      description: "Understanding chart patterns and technical indicators",
-      order: 0
+      title: 'Technical Analysis',
+      description: 'Understanding chart patterns and technical indicators',
+      order: 0,
     });
-    
+
     // Create lessons for Course 3
     await Lesson.create({
       chapterId: c3ch1.id,
-      title: "Chart Patterns",
-      content: "Coming soon...",
+      title: 'Chart Patterns',
+      content: 'Coming soon...',
       order: 0,
-      estimatedMinutes: 45
+      estimatedMinutes: 45,
     });
-    
+
     await Lesson.create({
       chapterId: c3ch1.id,
-      title: "Technical Indicators",
-      content: "Coming soon...",
+      title: 'Technical Indicators',
+      content: 'Coming soon...',
       order: 1,
-      estimatedMinutes: 40
+      estimatedMinutes: 40,
     });
-    
+
     console.log('Sample course data initialized successfully');
-    
   } catch (error) {
     console.error('Error initializing sample course data:', error);
     throw error;

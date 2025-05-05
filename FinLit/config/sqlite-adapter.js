@@ -17,15 +17,15 @@ let db = null;
 // Initialize the database connection
 async function initDatabase() {
   if (db) return db;
-  
+
   try {
     db = await open({
       filename: dbPath,
-      driver: sqlite3.Database
+      driver: sqlite3.Database,
     });
-    
+
     console.log('SQLite connection has been established successfully.');
-    
+
     // Create tables if they don't exist
     await db.exec(`
       CREATE TABLE IF NOT EXISTS users (
@@ -44,7 +44,7 @@ async function initDatabase() {
         updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     // Create trivia questions table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS trivia_questions (
@@ -67,7 +67,7 @@ async function initDatabase() {
         value TEXT
       )
     `);
-    
+
     return db;
   } catch (error) {
     console.error('Unable to connect to the database:', error);
@@ -81,11 +81,11 @@ const User = {
   create: async (userData) => {
     try {
       const connection = await initDatabase();
-      
+
       // Hash password
       const salt = await bcrypt.genSalt(10);
       userData.password = await bcrypt.hash(userData.password, salt);
-      
+
       // Convert object fields to JSON strings
       if (typeof userData.preferences === 'object') {
         userData.preferences = JSON.stringify(userData.preferences);
@@ -99,10 +99,10 @@ const User = {
       if (typeof userData.recentActivity === 'object') {
         userData.recentActivity = JSON.stringify(userData.recentActivity);
       }
-      
+
       // Current timestamp
       const now = new Date().toISOString();
-      
+
       // Insert into database
       const result = await connection.run(
         `INSERT INTO users (
@@ -122,95 +122,95 @@ const User = {
           userData.totalCoursesCompleted || 0,
           userData.overallProgress || 0,
           now,
-          now
-        ]
+          now,
+        ],
       );
-      
+
       // Get the inserted user
       const user = await connection.get(
         'SELECT * FROM users WHERE id = ?',
-        result.lastID
+        result.lastID,
       );
-      
+
       return processUserData(user);
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
     }
   },
-  
+
   // Find a user by criteria
   findOne: async (criteria) => {
     try {
       const connection = await initDatabase();
-      
+
       // Build WHERE clause
       const whereClauses = [];
       const params = [];
-      
+
       for (const [key, value] of Object.entries(criteria)) {
         whereClauses.push(`${key} = ?`);
         params.push(value);
       }
-      
-      const whereClause = whereClauses.length > 0 
-        ? `WHERE ${whereClauses.join(' AND ')}` 
+
+      const whereClause = whereClauses.length > 0
+        ? `WHERE ${whereClauses.join(' AND ')}`
         : '';
-      
+
       const user = await connection.get(
         `SELECT * FROM users ${whereClause}`,
-        params
+        params,
       );
-      
+
       return user ? processUserData(user) : null;
     } catch (error) {
       console.error('Error finding user:', error);
       throw error;
     }
   },
-  
+
   // Find a user by ID
   findById: async (id) => {
     try {
       const connection = await initDatabase();
-      
+
       const user = await connection.get(
         'SELECT * FROM users WHERE id = ?',
-        id
+        id,
       );
-      
+
       return user ? processUserData(user) : null;
     } catch (error) {
       console.error('Error finding user by ID:', error);
       throw error;
     }
   },
-  
+
   // Update a user by ID
   findByIdAndUpdate: async (id, updates, options = {}) => {
     try {
       const connection = await initDatabase();
-      
+
       // Get the current user
       const currentUser = await connection.get(
         'SELECT * FROM users WHERE id = ?',
-        id
+        id,
       );
-      
+
       if (!currentUser) {
         return null;
       }
-      
+
       // Prepare updates
       const setClauses = [];
       const params = [];
-      
+
       for (const [key, value] of Object.entries(updates)) {
         // Skip id field
         if (key === 'id') continue;
-        
+
         setClauses.push(`${key} = ?`);
-        
+
         // Convert objects to JSON strings
         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
           params.push(JSON.stringify(value));
@@ -220,41 +220,41 @@ const User = {
           params.push(value);
         }
       }
-      
+
       // Add updatedAt
       setClauses.push('updatedAt = ?');
       params.push(new Date().toISOString());
-      
+
       // Add the ID to params
       params.push(id);
-      
+
       // Execute update
       await connection.run(
         `UPDATE users SET ${setClauses.join(', ')} WHERE id = ?`,
-        params
+        params,
       );
-      
+
       // Return updated user if requested
       if (options.new !== false) {
         const updatedUser = await connection.get(
           'SELECT * FROM users WHERE id = ?',
-          id
+          id,
         );
         return processUserData(updatedUser);
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
     }
-  }
+  },
 };
 
 // Process user data from database to include methods and parse JSON fields
 function processUserData(user) {
   if (!user) return null;
-  
+
   // Parse JSON strings to objects
   try {
     user.preferences = JSON.parse(user.preferences || '{"theme":"light","notifications":true}');
@@ -264,22 +264,22 @@ function processUserData(user) {
   } catch (error) {
     console.error('Error parsing user JSON data:', error);
   }
-  
+
   // Add comparePassword method
-  user.comparePassword = async function(candidatePassword) {
+  user.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
   };
-  
+
   // Add save method
-  user.save = async function() {
+  user.save = async function () {
     const userCopy = { ...this };
     delete userCopy.save;
     delete userCopy.comparePassword;
-    
+
     await User.findByIdAndUpdate(this.id, userCopy, { new: true });
     return this;
   };
-  
+
   return user;
 }
 

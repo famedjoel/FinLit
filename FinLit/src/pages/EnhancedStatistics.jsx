@@ -1,25 +1,24 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 // src/pages/EnhancedStatistics.jsx
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar } from 'recharts';
-import "../styles/EnhancedStatistics.css";
+import '../styles/EnhancedStatistics.css';
 
 // Get the current hostname for API calls
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 // Category icon mapping
 const categoryIcons = {
-  investing: "📈",
-  budgeting: "💰",
-  savings: "🏦",
-  credit: "💳",
-  taxes: "📝",
-  retirement: "🏖️",
-  insurance: "🛡️",
-  debt: "⚖️",
-  general: "📚"
+  investing: '📈',
+  budgeting: '💰',
+  savings: '🏦',
+  credit: '💳',
+  taxes: '📝',
+  retirement: '🏖️',
+  insurance: '🛡️',
+  debt: '⚖️',
+  general: '📚',
 };
 
 function EnhancedStatistics() {
@@ -27,49 +26,48 @@ function EnhancedStatistics() {
   const [user, setUser] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("mastery");
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('mastery');
 
   useEffect(() => {
     const checkAuth = () => {
-      const storedUser = localStorage.getItem("user");
+      const storedUser = localStorage.getItem('user');
       if (!storedUser) {
-        navigate("/login");
+        navigate('/login');
       } else {
         setUser(JSON.parse(storedUser));
         fetchStatistics(JSON.parse(storedUser).id);
       }
     };
-    
+
     checkAuth();
-    
   }, [navigate]);
 
   const fetchStatistics = async (userId) => {
     try {
       setLoading(true);
-      setError("");
-      
+      setError('');
+
       const response = await fetch(`${API_BASE_URL}/stats/${userId}`);
-      
+
       if (!response.ok) {
-        throw new Error("Failed to fetch statistics");
+        throw new Error('Failed to fetch statistics');
       }
-      
+
       const data = await response.json();
-      
+
       // Add sample data if certain properties are missing or empty
       const enhancedData = ensureDataCompleteness(data);
-      
+
       setStatistics(enhancedData);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching statistics:", error);
+      console.error('Error fetching statistics:', error);
       setError(error.message);
       setLoading(false);
     }
   };
-  
+
   // Ensure all necessary data exists even if API doesn't return it
   const ensureDataCompleteness = (data) => {
     // If masteryLevels is empty or missing, provide sample data
@@ -83,10 +81,10 @@ function EnhancedStatistics() {
         retirement: 40,
         insurance: 55,
         debt: 70,
-        general: 65
+        general: 65,
       };
     }
-    
+
     // If no strengths provided, generate from masteryLevels
     if (!data.strengths || data.strengths.length === 0) {
       data.strengths = Object.entries(data.masteryLevels)
@@ -95,7 +93,7 @@ function EnhancedStatistics() {
         .slice(0, 3)
         .map(([category, mastery]) => ({ category, mastery }));
     }
-    
+
     // If no weaknesses provided, generate from masteryLevels
     if (!data.weaknesses || data.weaknesses.length === 0) {
       data.weaknesses = Object.entries(data.masteryLevels)
@@ -104,70 +102,70 @@ function EnhancedStatistics() {
         .slice(0, 3)
         .map(([category, mastery]) => ({ category, mastery }));
     }
-    
+
     // If no recommended topics, generate based on weaknesses
     if (!data.recommendedTopics || data.recommendedTopics.length === 0) {
       data.recommendedTopics = data.weaknesses.map(weakness => ({
         category: weakness.category,
         reason: `Your mastery level is only ${weakness.mastery}% in this category.`,
-        priority: weakness.mastery < 40 ? "high" : "medium"
+        priority: weakness.mastery < 40 ? 'high' : 'medium',
       }));
-      
+
       // Add a low priority recommendation for exploration
       const allCategories = Object.keys(categoryIcons);
       const coveredCategories = new Set([
         ...data.strengths.map(s => s.category),
-        ...data.weaknesses.map(w => w.category)
+        ...data.weaknesses.map(w => w.category),
       ]);
-      
+
       const uncoveredCategories = allCategories.filter(cat => !coveredCategories.has(cat));
-      
+
       if (uncoveredCategories.length > 0) {
         data.recommendedTopics.push({
           category: uncoveredCategories[0],
           reason: "You haven't explored this category much yet.",
-          priority: "low"
+          priority: 'low',
         });
       }
     }
-    
+
     // If no performance data, generate sample data
     if (!data.performanceOverTime || data.performanceOverTime.length === 0) {
       const today = new Date();
       data.performanceOverTime = Array.from({ length: 6 }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() - (5 - i) * 3);
-        
+
         return {
           date: date.toISOString(),
           correctPercentage: 40 + Math.floor(Math.random() * 40),
-          score: 50 + Math.floor(Math.random() * 150)
+          score: 50 + Math.floor(Math.random() * 150),
         };
       });
     }
-    
+
     // If no recent games, add sample data
     if (!data.recentGames || data.recentGames.length === 0) {
       const today = new Date();
       data.recentGames = Array.from({ length: 4 }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() - i * 2);
-        
+
         return {
           title: `Financial Trivia - ${i % 2 === 0 ? 'Standard' : 'Progressive'}`,
           score: 75 + Math.floor(Math.random() * 125),
-          timestamp: date.toISOString()
+          timestamp: date.toISOString(),
         };
       });
     }
-    
+
     return data;
   };
 
   // Format date for display
   const formatDate = (dateString) => {
-    const options = { 
-      month: 'short', 
+    const options = {
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
     };
@@ -176,9 +174,9 @@ function EnhancedStatistics() {
 
   // Generate mastery level color
   const getMasteryColor = (level) => {
-    if (level >= 80) return "#22c55e"; // Green
-    if (level >= 60) return "#f59e0b"; // Orange
-    return "#ef4444"; // Red
+    if (level >= 80) return '#22c55e'; // Green
+    if (level >= 60) return '#f59e0b'; // Orange
+    return '#ef4444'; // Red
   };
 
   // Create data for radar chart
@@ -188,34 +186,34 @@ function EnhancedStatistics() {
     return Object.entries(masteryLevels).map(([category, value]) => ({
       category: category.charAt(0).toUpperCase() + category.slice(1),
       mastery: value,
-      fullMark: 100
+      fullMark: 100,
     }));
   };
 
   // Prepare line chart data
   const prepareLineChartData = (performanceData) => {
     if (!performanceData) return [];
-    
+
     return performanceData.map(item => ({
       date: formatDate(item.date),
       correctPercentage: item.correctPercentage,
-      score: item.score
+      score: item.score,
     }));
   };
 
   // Get mastery level text
   const getMasteryLevelText = (level) => {
-    if (level >= 90) return "Expert";
-    if (level >= 80) return "Advanced";
-    if (level >= 60) return "Intermediate";
-    if (level >= 40) return "Basic";
-    return "Novice";
+    if (level >= 90) return 'Expert';
+    if (level >= 80) return 'Advanced';
+    if (level >= 60) return 'Intermediate';
+    if (level >= 40) return 'Basic';
+    return 'Novice';
   };
 
   // Prepare bar chart data for strengths and weaknesses
   const prepareBarChartData = (categories) => {
     if (!categories || categories.length === 0) return [];
-    
+
     return categories.map(item => ({
       name: item.category.charAt(0).toUpperCase() + item.category.slice(1),
       value: item.mastery,
@@ -256,27 +254,27 @@ function EnhancedStatistics() {
 
       {/* Stats Navigation */}
       <div className="stats-tabs">
-        <button 
-          className={`tab-btn ${activeTab === "mastery" ? "active" : ""}`}
-          onClick={() => setActiveTab("mastery")}
+        <button
+          className={`tab-btn ${activeTab === 'mastery' ? 'active' : ''}`}
+          onClick={() => setActiveTab('mastery')}
         >
           🏆 Mastery Levels
         </button>
-        <button 
-          className={`tab-btn ${activeTab === "performance" ? "active" : ""}`}
-          onClick={() => setActiveTab("performance")}
+        <button
+          className={`tab-btn ${activeTab === 'performance' ? 'active' : ''}`}
+          onClick={() => setActiveTab('performance')}
         >
           📈 Performance Trends
         </button>
-        <button 
-          className={`tab-btn ${activeTab === "analysis" ? "active" : ""}`}
-          onClick={() => setActiveTab("analysis")}
+        <button
+          className={`tab-btn ${activeTab === 'analysis' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analysis')}
         >
           🔍 Strengths & Weaknesses
         </button>
-        <button 
-          className={`tab-btn ${activeTab === "recommendations" ? "active" : ""}`}
-          onClick={() => setActiveTab("recommendations")}
+        <button
+          className={`tab-btn ${activeTab === 'recommendations' ? 'active' : ''}`}
+          onClick={() => setActiveTab('recommendations')}
         >
           ✅ Recommendations
         </button>
@@ -285,7 +283,7 @@ function EnhancedStatistics() {
       {/* Tab Content */}
       <div className="tab-content">
         {/* Mastery Levels Tab */}
-        {activeTab === "mastery" && statistics?.masteryLevels && (
+        {activeTab === 'mastery' && statistics?.masteryLevels && (
           <div className="mastery-content">
             <div className="mastery-chart">
               <h3>Category Mastery Overview</h3>
@@ -315,16 +313,16 @@ function EnhancedStatistics() {
                 {Object.entries(statistics.masteryLevels).map(([category, level]) => (
                   <div key={category} className="category-card">
                     <div className="category-header">
-                      <span className="category-icon">{categoryIcons[category] || "📚"}</span>
+                      <span className="category-icon">{categoryIcons[category] || '📚'}</span>
                       <span className="category-name">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
                     </div>
                     <div className="mastery-progress">
                       <div className="progress-bar">
-                        <div 
-                          className="progress-fill" 
-                          style={{ 
-                            width: `${level}%`, 
-                            backgroundColor: getMasteryColor(level)
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${level}%`,
+                            backgroundColor: getMasteryColor(level),
                           }}
                         ></div>
                       </div>
@@ -341,7 +339,7 @@ function EnhancedStatistics() {
         )}
 
         {/* Performance Trends Tab */}
-        {activeTab === "performance" && statistics?.performanceOverTime && (
+        {activeTab === 'performance' && statistics?.performanceOverTime && (
           <div className="performance-content">
             <div className="performance-chart">
               <h3>Performance Over Time</h3>
@@ -376,7 +374,8 @@ function EnhancedStatistics() {
 
             <div className="recent-games">
               <h3>Recent Games</h3>
-              {statistics.recentGames && statistics.recentGames.length > 0 ? (
+              {statistics.recentGames && statistics.recentGames.length > 0
+                ? (
                 <div className="games-list">
                   {statistics.recentGames.map((game, index) => (
                     <div key={index} className="game-item">
@@ -391,19 +390,21 @@ function EnhancedStatistics() {
                     </div>
                   ))}
                 </div>
-              ) : (
+                  )
+                : (
                 <p className="no-data">No recent games found. Play some games to see your progress!</p>
-              )}
+                  )}
             </div>
           </div>
         )}
 
         {/* Strengths & Weaknesses Tab */}
-        {activeTab === "analysis" && statistics && (
+        {activeTab === 'analysis' && statistics && (
           <div className="analysis-content">
             <div className="strengths-section">
               <h3>Your Strengths</h3>
-              {statistics.strengths && statistics.strengths.length > 0 ? (
+              {statistics.strengths && statistics.strengths.length > 0
+                ? (
                 <>
                   <div className="chart-container">
                     <ResponsiveContainer width="100%" height={300}>
@@ -420,11 +421,11 @@ function EnhancedStatistics() {
                   <div className="strength-grid">
                     {statistics.strengths.map((strength, index) => (
                       <div key={index} className="analysis-card strength-card">
-                        <div className="card-icon">{categoryIcons[strength.category] || "📚"}</div>
+                        <div className="card-icon">{categoryIcons[strength.category] || '📚'}</div>
                         <div className="card-content">
                           <h4>{strength.category.charAt(0).toUpperCase() + strength.category.slice(1)}</h4>
                           <div className="mastery-bar">
-                            <div 
+                            <div
                               className="mastery-fill"
                               style={{ width: `${strength.mastery}%` }}
                             ></div>
@@ -436,16 +437,18 @@ function EnhancedStatistics() {
                     ))}
                   </div>
                 </>
-              ) : (
+                  )
+                : (
                 <p className="no-data">
                   No strengths identified yet. Complete more quizzes to identify your strong areas!
                 </p>
-              )}
+                  )}
             </div>
 
             <div className="weaknesses-section">
               <h3>Areas for Improvement</h3>
-              {statistics.weaknesses && statistics.weaknesses.length > 0 ? (
+              {statistics.weaknesses && statistics.weaknesses.length > 0
+                ? (
                 <>
                   <div className="chart-container">
                     <ResponsiveContainer width="100%" height={300}>
@@ -462,11 +465,11 @@ function EnhancedStatistics() {
                   <div className="weakness-grid">
                     {statistics.weaknesses.map((weakness, index) => (
                       <div key={index} className="analysis-card weakness-card">
-                        <div className="card-icon">{categoryIcons[weakness.category] || "📚"}</div>
+                        <div className="card-icon">{categoryIcons[weakness.category] || '📚'}</div>
                         <div className="card-content">
                           <h4>{weakness.category.charAt(0).toUpperCase() + weakness.category.slice(1)}</h4>
                           <div className="mastery-bar weak-bar">
-                            <div 
+                            <div
                               className="mastery-fill weak-fill"
                               style={{ width: `${weakness.mastery}%` }}
                             ></div>
@@ -478,37 +481,40 @@ function EnhancedStatistics() {
                     ))}
                   </div>
                 </>
-              ) : (
+                  )
+                : (
                 <p className="no-data">
                   No weak areas identified yet. Complete more quizzes for a comprehensive analysis!
                 </p>
-              )}
+                  )}
             </div>
           </div>
         )}
 
         {/* Recommendations Tab */}
-        {activeTab === "recommendations" && statistics?.recommendedTopics && (
+        {activeTab === 'recommendations' && statistics?.recommendedTopics && (
           <div className="recommendations-content">
             <h3>Recommended Topics to Study</h3>
-            {statistics.recommendedTopics.length > 0 ? (
+            {statistics.recommendedTopics.length > 0
+              ? (
               <div className="recommendations-list">
                 {statistics.recommendedTopics.map((topic, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className={`recommendation-card priority-${topic.priority}`}
                   >
                     <div className="recommendation-header">
-                      <span className="rec-icon">{categoryIcons[topic.category] || "📚"}</span>
+                      <span className="rec-icon">{categoryIcons[topic.category] || '📚'}</span>
                       <h4>{topic.category.charAt(0).toUpperCase() + topic.category.slice(1)}</h4>
                       <span className={`priority-tag priority-${topic.priority}`}>
-                        {topic.priority === "high" ? "High Priority" : 
-                         topic.priority === "medium" ? "Medium Priority" : "Explore"}
+                        {topic.priority === 'high'
+                          ? 'High Priority'
+                          : topic.priority === 'medium' ? 'Medium Priority' : 'Explore'}
                       </span>
                     </div>
                     <p className="recommendation-reason">{topic.reason}</p>
                     <div className="recommendation-actions">
-                      <button 
+                      <button
                         className="study-btn"
                         onClick={() => navigate(`/games/quiz?category=${topic.category}`)}
                       >
@@ -518,18 +524,19 @@ function EnhancedStatistics() {
                   </div>
                 ))}
               </div>
-            ) : (
+                )
+              : (
               <div className="no-recommendations">
                 <p>Great job! You&apos;re doing well in all categories.</p>
                 <p>Continue practicing to maintain your mastery levels.</p>
-                <button 
+                <button
                   className="practice-btn"
-                  onClick={() => navigate("/games/quiz")}
+                  onClick={() => navigate('/games/quiz')}
                 >
                   Practice Random Topics
                 </button>
               </div>
-            )}
+                )}
 
             <div className="study-plan">
               <h3>Study Plan</h3>

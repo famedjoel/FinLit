@@ -1,30 +1,30 @@
+/* eslint-disable multiline-ternary */
 /* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
 // src/components/QuestionTypes.jsx
 import React, { useState } from 'react';
 
 // Question Type: Multiple Choice
-export const MultipleChoiceQuestion = ({ 
-  question, 
-  options, 
+export const MultipleChoiceQuestion = ({
+  question,
+  options,
   correctAnswer,
   onSelect,
   selectedAnswer,
-  answerSubmitted
+  answerSubmitted,
 }) => {
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
-      
+
       <div className="options-container">
         {options.map((option, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className={`
               option 
-              ${selectedAnswer === index ? "selected" : ""} 
-              ${answerSubmitted && index === correctAnswer ? "correct" : ""}
-              ${answerSubmitted && selectedAnswer === index && index !== correctAnswer ? "incorrect" : ""}
+              ${selectedAnswer === index ? 'selected' : ''} 
+              ${answerSubmitted && index === correctAnswer ? 'correct' : ''}
+              ${answerSubmitted && selectedAnswer === index && index !== correctAnswer ? 'incorrect' : ''}
             `}
             onClick={() => onSelect(index)}
           >
@@ -37,27 +37,27 @@ export const MultipleChoiceQuestion = ({
 };
 
 // Question Type: True/False
-export const TrueFalseQuestion = ({ 
-  question, 
-  correctAnswer, 
+export const TrueFalseQuestion = ({
+  question,
+  correctAnswer,
   onSelect,
   selectedAnswer,
-  answerSubmitted
+  answerSubmitted,
 }) => {
-  const options = ["True", "False"];
-  
+  const options = ['True', 'False'];
+
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
       <div className="options-container true-false-options">
         {options.map((option, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className={`
               option true-false-option 
-              ${selectedAnswer === index ? "selected" : ""} 
-              ${answerSubmitted && index === correctAnswer ? "correct" : ""}
-              ${answerSubmitted && selectedAnswer === index && index !== correctAnswer ? "incorrect" : ""}
+              ${selectedAnswer === index ? 'selected' : ''} 
+              ${answerSubmitted && index === correctAnswer ? 'correct' : ''}
+              ${answerSubmitted && selectedAnswer === index && index !== correctAnswer ? 'incorrect' : ''}
             `}
             onClick={() => onSelect(index)}
           >
@@ -70,54 +70,54 @@ export const TrueFalseQuestion = ({
 };
 
 // Question Type: Fill in the Blank
-export const FillInBlankQuestion = ({ 
-  question, 
+export const FillInBlankQuestion = ({
+  question,
   options,
   correctAnswer,
   onSelect,
   userInput,
   answerSubmitted,
-  isCorrect
+  isCorrect,
 }) => {
   // Split the question at the blank marker ____ or [blank] or just ___
   const parts = question.split(/____|\[blank\]|___/i);
-  
+
   // Determine if this question has options to choose from
   const hasOptions = Array.isArray(options) && options.length > 0;
-  
+
   // Function to handle selecting an option
   const handleOptionSelect = (optionIndex) => {
     if (!answerSubmitted) {
       onSelect(options[optionIndex]);
     }
   };
-  
+
   // Function to handle direct text input
   const handleTextInput = (e) => {
     if (!answerSubmitted) {
       onSelect(e.target.value);
     }
   };
-  
+
   // Determine correct answer text (could be index or direct string)
-  const correctAnswerText = typeof correctAnswer === 'number' && hasOptions 
+  const correctAnswerText = typeof correctAnswer === 'number' && hasOptions
     ? options[correctAnswer]
     : correctAnswer;
-  
+
   return (
     <div className="question-container">
       <div className="question fill-blank-question">
         {parts[0]}
-        
+
         {hasOptions ? (
           // Display as dropdown if options exist
-          <select 
-            value={userInput || ""}
+          <select
+            value={userInput || ''}
             onChange={(e) => handleOptionSelect(parseInt(e.target.value))}
             className={`
               blank-dropdown
-              ${answerSubmitted && isCorrect ? "correct-input" : ""}
-              ${answerSubmitted && !isCorrect ? "incorrect-input" : ""}
+              ${answerSubmitted && isCorrect ? 'correct-input' : ''}
+              ${answerSubmitted && !isCorrect ? 'incorrect-input' : ''}
             `}
             disabled={answerSubmitted}
           >
@@ -130,30 +130,30 @@ export const FillInBlankQuestion = ({
           </select>
         ) : (
           // Display as text input if no options
-          <input 
-            type="text" 
-            value={userInput || ""}
+          <input
+            type="text"
+            value={userInput || ''}
             onChange={handleTextInput}
             className={`
               blank-input 
-              ${answerSubmitted && isCorrect ? "correct-input" : ""}
-              ${answerSubmitted && !isCorrect ? "incorrect-input" : ""}
+              ${answerSubmitted && isCorrect ? 'correct-input' : ''}
+              ${answerSubmitted && !isCorrect ? 'incorrect-input' : ''}
             `}
             disabled={answerSubmitted}
             placeholder="Enter your answer"
           />
         )}
-        
-        {parts[1] || ""}
+
+        {parts[1] || ''}
       </div>
-      
+
       {/* Display options as buttons if available and not displaying as dropdown */}
       {hasOptions && !answerSubmitted && (
         <div className="options-buttons">
           {options.map((option, index) => (
             <button
               key={index}
-              className={`option-btn ${userInput === option ? "selected" : ""}`}
+              className={`option-btn ${userInput === option ? 'selected' : ''}`}
               onClick={() => handleOptionSelect(index)}
             >
               {option}
@@ -161,7 +161,7 @@ export const FillInBlankQuestion = ({
           ))}
         </div>
       )}
-      
+
       {answerSubmitted && !isCorrect && (
         <div className="correct-answer-display">
           <p>Correct answer: <strong>{correctAnswerText}</strong></p>
@@ -172,22 +172,22 @@ export const FillInBlankQuestion = ({
 };
 
 // Question Type: Matching
-export const MatchingQuestion = ({ 
-  question, 
-  terms = [], 
+export const MatchingQuestion = ({
+  question,
+  terms = [],
   definitions = [],
   items = [],
   correctMatches = [],
   onSelect,
   userMatches,
-  answerSubmitted
+  answerSubmitted,
 }) => {
   const [selectedTerm, setSelectedTerm] = useState(null);
-  
+
   // Process the data to handle both formats
   let processedTerms = [];
   let processedDefinitions = [];
-  
+
   // If items array is provided (new format)
   if (items && items.length > 0) {
     processedTerms = items.map(item => item.term);
@@ -197,10 +197,10 @@ export const MatchingQuestion = ({
     processedTerms = terms;
     processedDefinitions = definitions;
   }
-  
+
   // Initialize matches array if not provided
   const matches = userMatches || Array(processedTerms.length).fill(null);
-  
+
   const handleTermClick = (index) => {
     if (answerSubmitted) return;
     // If this term already has a match, unselect it first
@@ -211,56 +211,56 @@ export const MatchingQuestion = ({
     }
     setSelectedTerm(index);
   };
-  
+
   const handleDefinitionClick = (index) => {
     if (answerSubmitted || selectedTerm === null) return;
-    
+
     // Update the matches array
     const updatedMatches = [...matches];
     updatedMatches[selectedTerm] = index;
     onSelect(updatedMatches);
     setSelectedTerm(null);
   };
-  
+
   // Check if a definition is already matched
   const isDefinitionMatched = (defIndex) => {
     return matches.includes(defIndex);
   };
-  
+
   // Get the term that matches with a definition
   const getMatchedTermIndex = (defIndex) => {
     return matches.findIndex(match => match === defIndex);
   };
-  
+
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
-      
+
       <div className="matching-container">
         <div className="matching-instructions">
           <p>Click on a term, then click on its matching definition</p>
         </div>
-        
+
         <div className="matching-interface">
           <div className="terms-column">
             <h4>Terms</h4>
             {processedTerms.map((term, index) => {
               // Determine the appropriate class for this term
-              let termClass = "matching-item term-item";
-              if (selectedTerm === index) termClass += " selected";
+              let termClass = 'matching-item term-item';
+              if (selectedTerm === index) termClass += ' selected';
               if (answerSubmitted) {
                 if (correctMatches[index] === matches[index]) {
-                  termClass += " correct-match";
+                  termClass += ' correct-match';
                 } else {
-                  termClass += " incorrect-match";
+                  termClass += ' incorrect-match';
                 }
               } else if (matches[index] !== null) {
-                termClass += " matched";
+                termClass += ' matched';
               }
-              
+
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={termClass}
                   onClick={() => handleTermClick(index)}
                 >
@@ -275,27 +275,27 @@ export const MatchingQuestion = ({
               );
             })}
           </div>
-          
+
           <div className="definitions-column">
             <h4>Definitions</h4>
             {processedDefinitions.map((definition, index) => {
               // Determine the appropriate class for this definition
-              let defClass = "matching-item definition-item";
-              
+              let defClass = 'matching-item definition-item';
+
               if (answerSubmitted) {
                 const termIndex = getMatchedTermIndex(index);
                 if (termIndex !== -1 && correctMatches[termIndex] === index) {
-                  defClass += " correct-match";
+                  defClass += ' correct-match';
                 } else if (termIndex !== -1) {
-                  defClass += " incorrect-match";
+                  defClass += ' incorrect-match';
                 }
               } else if (isDefinitionMatched(index)) {
-                defClass += " matched";
+                defClass += ' matched';
               }
-              
+
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={defClass}
                   onClick={() => handleDefinitionClick(index)}
                 >
@@ -312,17 +312,17 @@ export const MatchingQuestion = ({
           </div>
         </div>
       </div>
-      
+
       {answerSubmitted && (
         <div className="correct-matches-display">
           <h4>Correct Matches:</h4>
           <ul>
             {processedTerms.map((term, index) => (
-              <li key={index} className={correctMatches[index] === matches[index] ? "correct" : "incorrect"}>
+              <li key={index} className={correctMatches[index] === matches[index] ? 'correct' : 'incorrect'}>
                 <strong>{term}</strong>: {processedDefinitions[correctMatches[index]]}
                 {correctMatches[index] !== matches[index] && (
                   <span className="your-match">
-                    Your match: {matches[index] !== null ? processedDefinitions[matches[index]] : "None"}
+                    Your match: {matches[index] !== null ? processedDefinitions[matches[index]] : 'None'}
                   </span>
                 )}
               </li>
@@ -335,9 +335,9 @@ export const MatchingQuestion = ({
 };
 
 // Question Type: Financial Calculation
-export const CalculationQuestion = ({ 
-  question, 
-  correctAnswer, 
+export const CalculationQuestion = ({
+  question,
+  correctAnswer,
   options,
   hint,
   formula,
@@ -346,31 +346,31 @@ export const CalculationQuestion = ({
   answerSubmitted,
   isCorrect,
   showHint,
-  onToggleHint
+  onToggleHint,
 }) => {
   // Check if options are provided
   const hasOptions = Array.isArray(options) && options.length > 0;
-  
+
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
-      
+
       <div className="calculation-input-container">
-        <input 
-          type="number" 
+        <input
+          type="number"
           step="0.01"
-          value={userInput !== null ? userInput : ""}
+          value={userInput !== null ? userInput : ''}
           onChange={(e) => onSelect(parseFloat(e.target.value))}
           className={`
             calculation-input 
-            ${answerSubmitted && isCorrect ? "correct-input" : ""}
-            ${answerSubmitted && !isCorrect ? "incorrect-input" : ""}
+            ${answerSubmitted && isCorrect ? 'correct-input' : ''}
+            ${answerSubmitted && !isCorrect ? 'incorrect-input' : ''}
           `}
           disabled={answerSubmitted}
           placeholder="Enter your answer"
         />
       </div>
-      
+
       {/* Display options as buttons if they exist and answer not submitted yet */}
       {hasOptions && !answerSubmitted && (
         <div className="calculation-options">
@@ -380,7 +380,7 @@ export const CalculationQuestion = ({
               onClick={() => onSelect(parseFloat(option.replace(/[^0-9.-]+/g, '')))}
               className={`
                 calculation-option 
-                ${userInput === parseFloat(option.replace(/[^0-9.-]+/g, '')) ? "selected" : ""}
+                ${userInput === parseFloat(option.replace(/[^0-9.-]+/g, '')) ? 'selected' : ''}
               `}
             >
               {option}
@@ -388,15 +388,15 @@ export const CalculationQuestion = ({
           ))}
         </div>
       )}
-      
-      <button 
-        onClick={onToggleHint} 
+
+      <button
+        onClick={onToggleHint}
         className="hint-button"
         disabled={answerSubmitted}
       >
-        {showHint ? "Hide Hint" : "Show Hint"}
+        {showHint ? 'Hide Hint' : 'Show Hint'}
       </button>
-      
+
       {showHint && (
         <div className="hint-container">
           <p><strong>Hint:</strong> {hint}</p>
@@ -407,12 +407,12 @@ export const CalculationQuestion = ({
           )}
         </div>
       )}
-      
+
       {answerSubmitted && (
-        <div className={`answer-feedback ${isCorrect ? "correct-feedback" : "incorrect-feedback"}`}>
+        <div className={`answer-feedback ${isCorrect ? 'correct-feedback' : 'incorrect-feedback'}`}>
           <p>
-            {isCorrect 
-              ? "Correct!" 
+            {isCorrect
+              ? 'Correct!'
               : `Incorrect. The correct answer is ${
                   hasOptions && Number.isInteger(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length
                     ? options[correctAnswer]

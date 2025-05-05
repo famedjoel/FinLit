@@ -2,9 +2,9 @@ import { connect } from './sqlite-adapter.js';
 
 const connectDB = async () => {
   try {
-    console.log("Connecting to SQLite database...");
+    console.log('Connecting to SQLite database...');
     const db = await connect();
-    console.log(`SQLite Database Connected`);
+    console.log('SQLite Database Connected');
     return db;
   } catch (error) {
     console.error(`Error: ${error.message}`);

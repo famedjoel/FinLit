@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -13,11 +12,11 @@ const CourseProgressSection = ({ courseProgress }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="progress-section">
       <h3>Your Learning Progress</h3>
-      
+
       <div className="courses-list">
         {courseProgress.map((course, index) => (
           <div key={index} className="course-item">
@@ -26,8 +25,8 @@ const CourseProgressSection = ({ courseProgress }) => {
               <span className="course-progress">{course.progress}%</span>
             </div>
             <div className="course-progress-bar">
-              <div 
-                className="course-progress-fill" 
+              <div
+                className="course-progress-fill"
                 style={{ width: `${course.progress}%` }}
               ></div>
             </div>

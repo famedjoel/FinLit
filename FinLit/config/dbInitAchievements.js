@@ -5,7 +5,7 @@ import { connect } from './sqlite-adapter.js';
 export async function initAchievementsSystem() {
   try {
     const connection = await connect();
-    
+
     // Create achievements table for storing achievement definitions
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS achievements (
@@ -23,7 +23,7 @@ export async function initAchievementsSystem() {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     // Create user_achievements table to track user progress and unlocked achievements
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_achievements (
@@ -41,7 +41,7 @@ export async function initAchievementsSystem() {
         UNIQUE(user_id, achievement_id)
       )
     `);
-    
+
     // Create rewards table for items/badges users can unlock or purchase
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS rewards (
@@ -58,7 +58,7 @@ export async function initAchievementsSystem() {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     // Create user_rewards table to track which rewards users have earned/purchased
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_rewards (
@@ -72,7 +72,7 @@ export async function initAchievementsSystem() {
         UNIQUE(user_id, reward_id)
       )
     `);
-    
+
     // Add milestone trackers to help with achievement tracking
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_stats (
@@ -91,9 +91,8 @@ export async function initAchievementsSystem() {
         UNIQUE(user_id)
       )
     `);
-    
+
     console.log('Achievement and Rewards tables created successfully');
-    
   } catch (error) {
     console.error('Error creating achievement tables:', error);
     throw error;

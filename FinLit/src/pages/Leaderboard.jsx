@@ -1,9 +1,8 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
 // src/pages/Leaderboard.jsx
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import "../styles/Leaderboard.css";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../styles/Leaderboard.css';
 
 // Set API base URL dynamically
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
@@ -11,16 +10,16 @@ const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7
 function Leaderboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState("trivia");
+  const [activeTab, setActiveTab] = useState('trivia');
   const [triviaLeaderboard, setTriviaLeaderboard] = useState([]);
   const [pointsLeaderboard, setPointsLeaderboard] = useState([]);
   const [userRank, setUserRank] = useState(null);
   const [userPoints, setUserPoints] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -36,20 +35,20 @@ function Leaderboard() {
   const fetchLeaderboardData = async () => {
     try {
       setLoading(true);
-      if (activeTab === "trivia") {
+      if (activeTab === 'trivia') {
         const response = await fetch(`${API_BASE_URL}/leaderboard/financial-trivia`);
-        if (!response.ok) throw new Error("Failed to fetch trivia leaderboard");
+        if (!response.ok) throw new Error('Failed to fetch trivia leaderboard');
         const data = await response.json();
         setTriviaLeaderboard(data);
       } else {
         const response = await fetch(`${API_BASE_URL}/leaderboard/points/top`);
-        if (!response.ok) throw new Error("Failed to fetch points leaderboard");
+        if (!response.ok) throw new Error('Failed to fetch points leaderboard');
         const data = await response.json();
         setPointsLeaderboard(data);
       }
     } catch (err) {
-      console.error("Error fetching leaderboard:", err);
-      setError("Failed to load leaderboard data");
+      console.error('Error fetching leaderboard:', err);
+      setError('Failed to load leaderboard data');
     } finally {
       setLoading(false);
     }
@@ -57,7 +56,7 @@ function Leaderboard() {
 
   const fetchUserRankAndPoints = async () => {
     try {
-      if (activeTab === "trivia") {
+      if (activeTab === 'trivia') {
         const response = await fetch(`${API_BASE_URL}/leaderboard/financial-trivia/user/${user.id}`);
         if (response.ok) {
           const data = await response.json();
@@ -70,7 +69,7 @@ function Leaderboard() {
         setUserPoints(data);
       }
     } catch (err) {
-      console.error("Error fetching user rank/points:", err);
+      console.error('Error fetching user rank/points:', err);
     }
   };
 
@@ -94,15 +93,15 @@ function Leaderboard() {
 
       {/* Tabs for switching between Trivia and Points */}
       <div className="leaderboard-tabs">
-        <button 
-          className={`tab-btn ${activeTab === "trivia" ? "active" : ""}`}
-          onClick={() => setActiveTab("trivia")}
+        <button
+          className={`tab-btn ${activeTab === 'trivia' ? 'active' : ''}`}
+          onClick={() => setActiveTab('trivia')}
         >
           🧠 Trivia Champions
         </button>
-        <button 
-          className={`tab-btn ${activeTab === "points" ? "active" : ""}`}
-          onClick={() => setActiveTab("points")}
+        <button
+          className={`tab-btn ${activeTab === 'points' ? 'active' : ''}`}
+          onClick={() => setActiveTab('points')}
         >
           💎 Total Points
         </button>
@@ -119,7 +118,7 @@ function Leaderboard() {
             <span className="stat-label">Challenges Won</span>
             <span className="stat-value">{userPoints.challenges_won || 0}</span>
           </div>
-          {activeTab === "trivia" && userRank && (
+          {activeTab === 'trivia' && userRank && (
             <div className="user-stat">
               <span className="stat-label">Your Rank</span>
               <span className="stat-value">#{userRank.rank}</span>
@@ -130,22 +129,25 @@ function Leaderboard() {
 
       {/* Main Leaderboard Content */}
       <div className="leaderboard-content">
-        {activeTab === "trivia" ? (
+        {activeTab === 'trivia'
+          ? (
           <div className="leaderboard-list">
             {triviaLeaderboard.map((player, index) => (
-              <div key={player.userId} 
+              <div key={player.userId}
                    className={`leaderboard-item ${user && player.userId === user.id ? 'current-user' : ''}`}>
                 <div className="rank">
-                  {index < 3 ? (
+                  {index < 3
+                    ? (
                     <span className={`medal medal-${index + 1}`}>
-                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                     </span>
-                  ) : (
+                      )
+                    : (
                     <span className="rank-number">#{index + 1}</span>
-                  )}
+                      )}
                 </div>
                 <div className="player-info">
-                  <img src={player.avatar || "/avatars/default.png"} alt="avatar" className="player-avatar" />
+                  <img src={player.avatar || '/avatars/default.png'} alt="avatar" className="player-avatar" />
                   <span className="player-name">{player.username}</span>
                 </div>
                 <div className="player-score">
@@ -159,22 +161,25 @@ function Leaderboard() {
               </div>
             ))}
           </div>
-        ) : (
+            )
+          : (
           <div className="leaderboard-list">
             {pointsLeaderboard.map((player, index) => (
-              <div key={player.userId} 
+              <div key={player.userId}
                    className={`leaderboard-item ${user && player.userId === user.id ? 'current-user' : ''}`}>
                 <div className="rank">
-                  {index < 3 ? (
+                  {index < 3
+                    ? (
                     <span className={`medal medal-${index + 1}`}>
-                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                     </span>
-                  ) : (
+                      )
+                    : (
                     <span className="rank-number">#{index + 1}</span>
-                  )}
+                      )}
                 </div>
                 <div className="player-info">
-                  <img src={player.avatar || "/avatars/default.png"} alt="avatar" className="player-avatar" />
+                  <img src={player.avatar || '/avatars/default.png'} alt="avatar" className="player-avatar" />
                   <span className="player-name">{player.username}</span>
                 </div>
                 <div className="player-score">
@@ -184,14 +189,14 @@ function Leaderboard() {
               </div>
             ))}
           </div>
-        )}
+            )}
       </div>
 
       {/* CTA if not logged in */}
       {!user && (
         <div className="cta-login">
           <p>Login to see your rank and compete with others!</p>
-          <button className="btn-login" onClick={() => navigate("/login")}>
+          <button className="btn-login" onClick={() => navigate('/login')}>
             Login Now
           </button>
         </div>

@@ -5,12 +5,12 @@ import { connect } from './sqlite-adapter.js';
 export async function initMultiplayerTables() {
   try {
     const connection = await connect();
-    
+
     // Check if challenges table exists
     const tablesCheck = await connection.all(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='challenges'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='challenges'",
     );
-    
+
     if (tablesCheck.length === 0) {
       // Create challenges table for user-to-user challenges
       await connection.exec(`
@@ -38,16 +38,16 @@ export async function initMultiplayerTables() {
       // Check if the quiz_settings column exists
       const tableInfo = await connection.all('PRAGMA table_info(challenges)');
       const hasQuizSettings = tableInfo.some(column => column.name === 'quiz_settings');
-      
+
       if (!hasQuizSettings) {
         // Add the quiz_settings column if it doesn't exist
         await connection.exec(`
           ALTER TABLE challenges ADD COLUMN quiz_settings TEXT
         `);
-        console.log("Added quiz_settings column to existing challenges table");
+        console.log('Added quiz_settings column to existing challenges table');
       }
     }
-    
+
     // Create global leaderboard table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS leaderboard (
@@ -60,7 +60,7 @@ export async function initMultiplayerTables() {
         UNIQUE(user_id, game_type)
       )
     `);
-    
+
     // Create user points table for reward system
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_points (
@@ -74,7 +74,7 @@ export async function initMultiplayerTables() {
         UNIQUE(user_id)
       )
     `);
-    
+
     // Create points history table for tracking point transactions
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS points_history (
@@ -87,9 +87,8 @@ export async function initMultiplayerTables() {
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     `);
-    
+
     console.log('Multiplayer tables created successfully');
-    
   } catch (error) {
     console.error('Error creating multiplayer tables:', error);
     throw error;

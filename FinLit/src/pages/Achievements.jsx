@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 // src/pages/Achievements.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +26,7 @@ function Achievements() {
     { id: 'questions', name: 'Question Achievements', icon: '❓' },
     { id: 'challenge', name: 'Challenge Achievements', icon: '⚔️' },
     { id: 'course', name: 'Course Achievements', icon: '📚' },
-    { id: 'streak', name: 'Streak Achievements', icon: '🔥' }
+    { id: 'streak', name: 'Streak Achievements', icon: '🔥' },
   ];
 
   useEffect(() => {
@@ -106,15 +105,15 @@ function Achievements() {
   const filteredAchievements = achievements.filter(achievement => {
     // Filter by category
     const categoryMatch = activeCategory === 'all' || achievement.category === activeCategory;
-    
+
     // Filter by search query
-    const searchMatch = searchQuery === '' || 
+    const searchMatch = searchQuery === '' ||
       achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Filter by completion status
     const completionMatch = !showCompleted || achievement.completed;
-    
+
     return categoryMatch && searchMatch && completionMatch;
   });
 
@@ -141,7 +140,7 @@ function Achievements() {
   return (
     <div className="achievements-container">
       <h2>🏆 Achievements</h2>
-      
+
       {userStats && (
         <div className="achievement-stats">
           <div className="achievement-progress">
@@ -150,8 +149,8 @@ function Achievements() {
               <span className="progress-value">{userStats.achievements.percentage}%</span>
             </div>
             <div className="progress-bar">
-              <div 
-                className="progress-fill" 
+              <div
+                className="progress-fill"
                 style={{ width: `${userStats.achievements.percentage}%` }}
               ></div>
             </div>
@@ -159,7 +158,7 @@ function Achievements() {
               <span>{userStats.achievements.completed}/{userStats.achievements.total} Achievements Unlocked</span>
             </div>
           </div>
-          
+
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">🎓</div>
@@ -184,11 +183,11 @@ function Achievements() {
           </div>
         </div>
       )}
-      
+
       <div className="achievements-filters">
         <div className="category-tabs">
           {categories.map(category => (
-            <button 
+            <button
               key={category.id}
               className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
               onClick={() => handleCategoryChange(category.id)}
@@ -198,21 +197,21 @@ function Achievements() {
             </button>
           ))}
         </div>
-        
+
         <div className="filter-options">
           <div className="search-box">
-            <input 
-              type="text" 
-              placeholder="Search achievements..." 
+            <input
+              type="text"
+              placeholder="Search achievements..."
               value={searchQuery}
               onChange={handleSearchChange}
             />
           </div>
-          
+
           <div className="filter-toggle">
             <label className="toggle">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={showCompleted}
                 onChange={() => setShowCompleted(!showCompleted)}
               />
@@ -222,22 +221,22 @@ function Achievements() {
           </div>
         </div>
       </div>
-      
+
       <div className="achievements-list">
         {Object.entries(groupedAchievements).map(([category, categoryAchievements]) => {
           const categoryInfo = categories.find(c => c.id === category) || { name: 'Uncategorized', icon: '🏆' };
-          
+
           return (
             <div key={category} className="achievement-category-section">
               <h3 className="category-header">
                 <span className="category-header-icon">{categoryInfo.icon}</span>
                 <span>{categoryInfo.name}</span>
               </h3>
-              
+
               <div className="achievement-cards">
                 {categoryAchievements.map(achievement => (
-                  <div 
-                    key={achievement.id} 
+                  <div
+                    key={achievement.id}
                     className={`achievement-card ${achievement.completed ? 'completed' : 'locked'}`}
                     onClick={() => handleShowAchievementDetails(achievement)}
                   >
@@ -245,11 +244,11 @@ function Achievements() {
                     <div className="achievement-info">
                       <h4 className="achievement-name">{achievement.name}</h4>
                       <p className="achievement-description">{achievement.description}</p>
-                      
+
                       {!achievement.completed && (
                         <div className="achievement-progress-bar">
-                          <div 
-                            className="achievement-progress-fill" 
+                          <div
+                            className="achievement-progress-fill"
                             style={{ width: `${achievement.progressPercentage}%` }}
                           ></div>
                           <span className="achievement-progress-text">
@@ -257,7 +256,7 @@ function Achievements() {
                           </span>
                         </div>
                       )}
-                      
+
                       {achievement.completed && (
                         <div className="achievement-completed-label">
                           <span className="completed-icon">✓</span>
@@ -280,7 +279,7 @@ function Achievements() {
             </div>
           );
         })}
-        
+
         {filteredAchievements.length === 0 && (
           <div className="no-achievements">
             <p>No achievements found matching your criteria.</p>
@@ -292,13 +291,13 @@ function Achievements() {
           </div>
         )}
       </div>
-      
+
       {/* Achievement Details Modal */}
       {selectedAchievement && (
         <div className="achievement-modal-overlay">
           <div className="achievement-modal">
             <button className="modal-close" onClick={handleCloseDetails}>×</button>
-            
+
             <div className={`achievement-detail-card ${selectedAchievement.completed ? 'completed' : 'locked'}`}>
               <div className="achievement-detail-header">
                 <div className="detail-icon">{selectedAchievement.icon}</div>
@@ -309,23 +308,23 @@ function Achievements() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="achievement-detail-body">
                 <p className="detail-description">{selectedAchievement.description}</p>
-                
+
                 <div className="detail-stats">
                   <div className="detail-stat">
                     <span className="stat-label">Reward:</span>
                     <span className="stat-value">{selectedAchievement.pointsReward} points</span>
                   </div>
-                  
+
                   <div className="detail-stat">
                     <span className="stat-label">Progress:</span>
                     <span className="stat-value">
                       {selectedAchievement.progress}/{selectedAchievement.requirementValue}
                     </span>
                   </div>
-                  
+
                   {selectedAchievement.completed && (
                     <div className="detail-stat">
                       <span className="stat-label">Completed On:</span>
@@ -335,11 +334,11 @@ function Achievements() {
                     </div>
                   )}
                 </div>
-                
+
                 {!selectedAchievement.completed && (
                   <div className="detail-progress-bar">
-                    <div 
-                      className="detail-progress-fill" 
+                    <div
+                      className="detail-progress-fill"
                       style={{ width: `${selectedAchievement.progressPercentage}%` }}
                     ></div>
                     <span className="detail-progress-text">
@@ -347,7 +346,7 @@ function Achievements() {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="detail-tip">
                   <h4>How to earn:</h4>
                   <p>
@@ -359,19 +358,21 @@ function Achievements() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="achievement-detail-footer">
-                {selectedAchievement.completed ? (
+                {selectedAchievement.completed
+                  ? (
                   <div className="completed-badge">Achievement Unlocked!</div>
-                ) : (
+                    )
+                  : (
                   <div className="locked-badge">Keep Going!</div>
-                )}
+                    )}
               </div>
             </div>
           </div>
         </div>
       )}
-      
+
       {/* New Achievement Notification Modal */}
       {showNewAchievementModal && newAchievements.length > 0 && (
         <div className="achievement-modal-overlay">
@@ -380,7 +381,7 @@ function Achievements() {
               <h3>🎉 Achievement Unlocked!</h3>
               <button className="modal-close" onClick={() => setShowNewAchievementModal(false)}>×</button>
             </div>
-            
+
             <div className="new-achievement-content">
               {newAchievements.map((achievement, index) => (
                 <div key={index} className="new-achievement-card">
@@ -395,7 +396,7 @@ function Achievements() {
                 </div>
               ))}
             </div>
-            
+
             <div className="new-achievement-footer">
               <button onClick={() => setShowNewAchievementModal(false)}>
                 Continue

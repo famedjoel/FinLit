@@ -1,16 +1,17 @@
-import { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
-import "../styles/landing-page.css";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import '../styles/landing-page.css';
+import { ThemeContext } from '../context/ThemeContext.jsx'; // Import ThemeContext
 
 function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const { theme } = useContext(ThemeContext); // Get current theme
-  
+
   // Check login status
   useEffect(() => {
-    const user = localStorage.getItem("user");
+    const user = localStorage.getItem('user');
     setIsLoggedIn(!!user);
   }, []);
 
@@ -18,87 +19,87 @@ function LandingPage() {
   const testimonials = [
     {
       id: 1,
-      name: "Sarah J.",
-      role: "College Student",
-      text: "FinLearn helped me understand how to manage my student loans and start saving for the future. The interactive games made learning about finance actually fun!",
-      avatar: "/avatars/avatar1.png"
+      name: 'Sarah J.',
+      role: 'College Student',
+      text: 'FinLearn helped me understand how to manage my student loans and start saving for the future. The interactive games made learning about finance actually fun!',
+      avatar: '/avatars/avatar1.png',
     },
     {
       id: 2,
-      name: "Michael T.",
-      role: "Young Professional",
+      name: 'Michael T.',
+      role: 'Young Professional',
       text: "I never thought I'd enjoy learning about investing, but the courses here made it simple and engaging. I've already started my first investment portfolio!",
-      avatar: "/avatars/avatar2.png"
+      avatar: '/avatars/avatar2.png',
     },
     {
       id: 3,
-      name: "Anita K.",
-      role: "Parent",
+      name: 'Anita K.',
+      role: 'Parent',
       text: "Teaching my children about money was challenging until we found FinLearn. Now we play the financial games together as a family and everyone's learning!",
-      avatar: "/avatars/avatar3.png"
-    }
+      avatar: '/avatars/avatar3.png',
+    },
   ];
 
   // Features data
   const features = [
     {
       id: 1,
-      title: "Interactive Courses",
-      description: "Step-by-step lessons that make learning financial concepts clear and simple.",
-      icon: "📚"
+      title: 'Interactive Courses',
+      description: 'Step-by-step lessons that make learning financial concepts clear and simple.',
+      icon: '📚',
     },
     {
       id: 2,
-      title: "Learning Games",
-      description: "Fun games that simulate real-world financial decisions and their consequences.",
-      icon: "🎮"
+      title: 'Learning Games',
+      description: 'Fun games that simulate real-world financial decisions and their consequences.',
+      icon: '🎮',
     },
     {
       id: 3,
-      title: "Progress Tracking",
-      description: "Track your learning journey and see how your financial knowledge grows.",
-      icon: "📊"
+      title: 'Progress Tracking',
+      description: 'Track your learning journey and see how your financial knowledge grows.',
+      icon: '📊',
     },
     {
-      id: 4, 
-      title: "Practical Simulations",
-      description: "Try out financial strategies without risking real money.",
-      icon: "🧪"
-    }
+      id: 4,
+      title: 'Practical Simulations',
+      description: 'Try out financial strategies without risking real money.',
+      icon: '🧪',
+    },
   ];
 
   // FAQ data
   const faqs = [
     {
       id: 1,
-      question: "Is FinLearn suitable for beginners?",
-      answer: "Absolutely! Our courses start from basic concepts and gradually progress to more advanced topics. Anyone can start learning regardless of previous financial knowledge."
+      question: 'Is FinLearn suitable for beginners?',
+      answer: 'Absolutely! Our courses start from basic concepts and gradually progress to more advanced topics. Anyone can start learning regardless of previous financial knowledge.',
     },
     {
       id: 2,
-      question: "How much time do I need to commit?",
-      answer: "Learn at your own pace! Each course is broken down into short modules that can be completed in 15-20 minutes. Games can be played in short sessions whenever you have free time."
+      question: 'How much time do I need to commit?',
+      answer: 'Learn at your own pace! Each course is broken down into short modules that can be completed in 15-20 minutes. Games can be played in short sessions whenever you have free time.',
     },
     {
       id: 3,
-      question: "Can FinLearn really help me save money?",
-      answer: "Yes! Users report saving more money after learning concepts like budgeting, debt management, and investment strategies through our platform."
-    }
+      question: 'Can FinLearn really help me save money?',
+      answer: 'Yes! Users report saving more money after learning concepts like budgeting, debt management, and investment strategies through our platform.',
+    },
   ];
 
   // Change testimonial every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setTestimonialIndex((prevIndex) => 
-        prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
+      setTestimonialIndex((prevIndex) =>
+        prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1,
       );
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
   return (
-    <div className={`landing-page ${theme === "dark" ? "dark-theme" : ""}`}>
+    <div className={`landing-page ${theme === 'dark' ? 'dark-theme' : ''}`}>
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
@@ -107,14 +108,16 @@ function LandingPage() {
             Master investing, budgeting, and smart money decisions with interactive courses and games.
           </p>
           <div className="hero-buttons">
-            {isLoggedIn ? (
+            {isLoggedIn
+              ? (
               <Link to="/dashboard" className="btn-primary">Go to Dashboard</Link>
-            ) : (
+                )
+              : (
               <>
                 <Link to="/signup" className="btn-primary">Get Started</Link>
                 <Link to="/login" className="btn-secondary">Login</Link>
               </>
-            )}
+                )}
           </div>
         </div>
         <div className="hero-image">
@@ -193,17 +196,17 @@ function LandingPage() {
         <h2>What Our Users Say</h2>
         <div className="testimonial-carousel">
           {testimonials.map((testimonial, index) => (
-            <div 
-              key={testimonial.id} 
+            <div
+              key={testimonial.id}
               className={`testimonial-card ${index === testimonialIndex ? 'active' : ''}`}
             >
               <div className="testimonial-content">
                 <p className="testimonial-text">&quot;{testimonial.text}&quot;</p>
                 <div className="testimonial-user">
-                  <img 
-                    src={testimonial.avatar} 
-                    alt={testimonial.name} 
-                    className="testimonial-avatar" 
+                  <img
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                    className="testimonial-avatar"
                   />
                   <div className="testimonial-info">
                     <h4>{testimonial.name}</h4>
@@ -215,8 +218,8 @@ function LandingPage() {
           ))}
           <div className="testimonial-dots">
             {testimonials.map((_, index) => (
-              <span 
-                key={index} 
+              <span
+                key={index}
                 className={`dot ${index === testimonialIndex ? 'active' : ''}`}
                 onClick={() => setTestimonialIndex(index)}
               ></span>
@@ -243,11 +246,13 @@ function LandingPage() {
         <h2>Ready to Build Your Financial Future?</h2>
         <p>Join thousands of others who are mastering finance the fun way.</p>
         <div className="cta-buttons">
-          {isLoggedIn ? (
+          {isLoggedIn
+            ? (
             <Link to="/courses" className="btn-primary">Explore Courses</Link>
-          ) : (
+              )
+            : (
             <Link to="/signup" className="btn-primary">Start For Free</Link>
-          )}
+              )}
         </div>
       </section>
 

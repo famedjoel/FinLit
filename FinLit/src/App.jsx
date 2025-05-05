@@ -1,28 +1,30 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
-import CourseDashboard from "./pages/CourseDashboard";
-import CourseContent from "./pages/CourseContent";
-import Games from "./pages/Games";
-import MoneyMatch from "./pages/MoneyMatch";
-import SavingsChallenge from "./pages/SavingsChallenge";
-import LemonadeStand from "./pages/LemonadeStand";
-import BattleBudgets from "./pages/BattleBudgets";
-import LoanShark from "./pages/LoanShark";
-import FinancialTrivia from "./pages/FinancialTrivia";
-import EnhancedStatistics from "./pages/EnhancedStatistics";
-import SignUp from "./components/SignUp";
-import Login from "./components/Login";
-import Dashboard from "./components/Dashboard";
-import Profile from "./components/Profile";
-import ThemeToggle from "./components/ThemeToggle";
-import { ThemeProvider } from "./context/ThemeContext";
-import Leaderboard from "./pages/Leaderboard";
-import Challenges from "./pages/Challenges";
-import Achievements from "./pages/Achievements";
-import Rewards from "./pages/Rewards";
-import "./styles/styles.css";
-import "./styles/theme.css";
+/* eslint-disable multiline-ternary */
+/* eslint-disable no-unused-vars */
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import LandingPage from './pages/LandingPage.jsx';
+import CourseDashboard from './pages/CourseDashboard.jsx';
+import CourseContent from './pages/CourseContent.jsx';
+import Games from './pages/Games.jsx';
+import MoneyMatch from './pages/MoneyMatch.jsx';
+import SavingsChallenge from './pages/SavingsChallenge.jsx';
+import LemonadeStand from './pages/LemonadeStand.jsx';
+import BattleBudgets from './pages/BattleBudgets.jsx';
+import LoanShark from './pages/LoanShark.jsx';
+import FinancialTrivia from './pages/FinancialTrivia.jsx';
+import EnhancedStatistics from './pages/EnhancedStatistics.jsx';
+import SignUp from './components/SignUp.jsx';
+import Login from './components/Login.jsx';
+import Dashboard from './components/Dashboard.jsx';
+import Profile from './components/Profile.jsx';
+import ThemeToggle from './components/ThemeToggle.jsx';
+import { ThemeProvider } from './context/ThemeContext.jsx';
+import Leaderboard from './pages/Leaderboard.jsx';
+import Challenges from './pages/Challenges.jsx';
+import Achievements from './pages/Achievements.jsx';
+import Rewards from './pages/Rewards.jsx';
+import './styles/styles.css';
+import './styles/theme.css';
 
 // Create a custom event for login status changes
 const loginStatusChange = new Event('loginStatusChange');
@@ -33,14 +35,14 @@ function App() {
 
   // Check if user is logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
     // Listen for login/logout changes
     const handleLoginChange = () => {
-      const updatedUser = localStorage.getItem("user");
+      const updatedUser = localStorage.getItem('user');
       if (updatedUser) {
         setUser(JSON.parse(updatedUser));
       } else {
@@ -63,10 +65,10 @@ function App() {
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem('user');
     setUser(null);
     window.dispatchEvent(loginStatusChange);
-    window.location.href = "/";
+    window.location.href = '/';
   };
 
   return (
@@ -80,7 +82,7 @@ function App() {
               ☰
             </div>
 
-            <div className={`nav-links ${menuOpen ? "show" : ""}`}>
+            <div className={`nav-links ${menuOpen ? 'show' : ''}`}>
               {/* Always visible important links */}
               <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>Home</Link>
               <Link to="/courses" className="nav-link" onClick={() => setMenuOpen(false)}>Courses</Link>

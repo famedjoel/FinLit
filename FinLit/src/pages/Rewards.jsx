@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 // src/pages/Rewards.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -20,14 +19,14 @@ function Rewards() {
   const [purchaseStatus, setPurchaseStatus] = useState({ show: false, success: false, message: '' });
   const [confirmPurchase, setConfirmPurchase] = useState(null);
   const [equippedRewards, setEquippedRewards] = useState({});
-  
+
   // Reward categories with icons
   const categories = [
     { id: 'all', name: 'All Rewards', icon: '🎁' },
     { id: 'avatar_frame', name: 'Avatar Frames', icon: '🖼️' },
     { id: 'badge', name: 'Profile Badges', icon: '📛' },
     { id: 'theme', name: 'Profile Themes', icon: '🎨' },
-    { id: 'booster', name: 'Game Boosters', icon: '⚡' }
+    { id: 'booster', name: 'Game Boosters', icon: '⚡' },
   ];
 
   useEffect(() => {
@@ -77,13 +76,13 @@ function Rewards() {
       const response = await fetch(`${API_BASE_URL}/rewards/equipped/${user.id}`);
       if (!response.ok) throw new Error('Failed to fetch equipped rewards');
       const data = await response.json();
-      
+
       // Convert to object by type for easy lookup
       const equipped = {};
       data.forEach(reward => {
         equipped[reward.type] = reward.id;
       });
-      
+
       setEquippedRewards(equipped);
     } catch (error) {
       console.error('Error fetching equipped rewards:', error);
@@ -114,27 +113,27 @@ function Rewards() {
   const handleConfirmPurchase = async () => {
     try {
       if (!confirmPurchase) return;
-      
+
       const response = await fetch(`${API_BASE_URL}/rewards/purchase`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
-          rewardId: confirmPurchase.id
-        })
+          rewardId: confirmPurchase.id,
+        }),
       });
-      
+
       const result = await response.json();
-      
+
       if (response.ok) {
         setPurchaseStatus({
           show: true,
           success: true,
-          message: result.message || 'Reward purchased successfully!'
+          message: result.message || 'Reward purchased successfully!',
         });
-        
+
         // Update user points and rewards
         fetchUserPoints();
         fetchRewards();
@@ -142,24 +141,23 @@ function Rewards() {
         setPurchaseStatus({
           show: true,
           success: false,
-          message: result.message || 'Failed to purchase reward.'
+          message: result.message || 'Failed to purchase reward.',
         });
       }
-      
+
       // Close confirmation dialog
       setConfirmPurchase(null);
-      
+
       // Auto-hide the purchase status after 3 seconds
       setTimeout(() => {
         setPurchaseStatus({ show: false, success: false, message: '' });
       }, 3000);
-      
     } catch (error) {
       console.error('Error purchasing reward:', error);
       setPurchaseStatus({
         show: true,
         success: false,
-        message: 'An error occurred during purchase.'
+        message: 'An error occurred during purchase.',
       });
       setConfirmPurchase(null);
     }
@@ -174,38 +172,38 @@ function Rewards() {
       // Determine if we're equipping or unequipping
       const isCurrentlyEquipped = equippedRewards[reward.type] === reward.id;
       const shouldEquip = !isCurrentlyEquipped;
-      
+
       const response = await fetch(`${API_BASE_URL}/rewards/equip`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
           rewardId: reward.id,
-          equipped: shouldEquip
-        })
+          equipped: shouldEquip,
+        }),
       });
-      
+
       if (response.ok) {
         // Update the equipped rewards
         const newEquipped = { ...equippedRewards };
-        
+
         if (shouldEquip) {
           newEquipped[reward.type] = reward.id;
         } else {
           delete newEquipped[reward.type];
         }
-        
+
         setEquippedRewards(newEquipped);
-        
+
         // Show feedback message
         setPurchaseStatus({
           show: true,
           success: true,
-          message: shouldEquip ? `${reward.name} equipped!` : `${reward.name} unequipped!`
+          message: shouldEquip ? `${reward.name} equipped!` : `${reward.name} unequipped!`,
         });
-        
+
         // Auto-hide the status after 2 seconds
         setTimeout(() => {
           setPurchaseStatus({ show: false, success: false, message: '' });
@@ -220,15 +218,15 @@ function Rewards() {
   const filteredRewards = rewards.filter(reward => {
     // Filter by category
     const categoryMatch = activeCategory === 'all' || reward.type === activeCategory;
-    
+
     // Filter by search query
-    const searchMatch = searchQuery === '' || 
+    const searchMatch = searchQuery === '' ||
       reward.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reward.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Filter by owned status
     const ownedMatch = !showOwnedOnly || reward.acquired;
-    
+
     return categoryMatch && searchMatch && ownedMatch;
   });
 
@@ -255,7 +253,7 @@ function Rewards() {
   return (
     <div className="rewards-container">
       <h2>🎁 Rewards Shop</h2>
-      
+
       <div className="points-banner">
         <div className="user-points">
           <span className="points-icon">💰</span>
@@ -263,11 +261,11 @@ function Rewards() {
           <span className="points-value">{userPoints}</span>
         </div>
       </div>
-      
+
       <div className="rewards-filters">
         <div className="category-tabs">
           {categories.map(category => (
-            <button 
+            <button
               key={category.id}
               className={`category-tab ${activeCategory === category.id ? 'active' : ''}`}
               onClick={() => handleCategoryChange(category.id)}
@@ -277,21 +275,21 @@ function Rewards() {
             </button>
           ))}
         </div>
-        
+
         <div className="filter-options">
           <div className="search-box">
-            <input 
-              type="text" 
-              placeholder="Search rewards..." 
+            <input
+              type="text"
+              placeholder="Search rewards..."
               value={searchQuery}
               onChange={handleSearchChange}
             />
           </div>
-          
+
           <div className="filter-toggle">
             <label className="toggle">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={showOwnedOnly}
                 onChange={() => setShowOwnedOnly(!showOwnedOnly)}
               />
@@ -301,25 +299,25 @@ function Rewards() {
           </div>
         </div>
       </div>
-      
+
       <div className="rewards-list">
         {Object.entries(groupedRewards).map(([type, typeRewards]) => {
           const categoryInfo = categories.find(c => c.id === type) || { name: 'Uncategorized', icon: '🎁' };
-          
+
           return (
             <div key={type} className="reward-category-section">
               <h3 className="category-header">
                 <span className="category-header-icon">{categoryInfo.icon}</span>
                 <span>{categoryInfo.name}</span>
               </h3>
-              
+
               <div className="reward-cards">
                 {typeRewards.map(reward => {
                   const isEquipped = equippedRewards[reward.type] === reward.id;
-                  
+
                   return (
-                    <div 
-                      key={reward.id} 
+                    <div
+                      key={reward.id}
                       className={`reward-card ${reward.acquired ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`}
                       onClick={() => handleShowRewardDetails(reward)}
                     >
@@ -332,14 +330,16 @@ function Rewards() {
                         <p className="reward-description">{reward.description}</p>
                       </div>
                       <div className="reward-price">
-                        {!reward.acquired ? (
+                        {!reward.acquired
+                          ? (
                           <>
                             <span className="price-icon">💰</span>
                             <span className="price-amount">{reward.pointsCost}</span>
                           </>
-                        ) : (
+                            )
+                          : (
                           <span className="owned-label">Owned</span>
-                        )}
+                            )}
                       </div>
                     </div>
                   );
@@ -348,7 +348,7 @@ function Rewards() {
             </div>
           );
         })}
-        
+
         {filteredRewards.length === 0 && (
           <div className="no-rewards">
             <p>No rewards found matching your criteria.</p>
@@ -360,13 +360,13 @@ function Rewards() {
           </div>
         )}
       </div>
-      
+
       {/* Reward Details Modal */}
       {selectedReward && (
         <div className="reward-modal-overlay">
           <div className="reward-modal">
             <button className="modal-close" onClick={handleCloseDetails}>×</button>
-            
+
             <div className={`reward-detail-card ${selectedReward.acquired ? 'owned' : ''}`}>
               <div className="reward-detail-header">
                 <div className="detail-icon">{selectedReward.icon}</div>
@@ -377,16 +377,16 @@ function Rewards() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="reward-detail-body">
                 <p className="detail-description">{selectedReward.description}</p>
-                
+
                 {selectedReward.imageUrl && (
                   <div className="reward-image">
                     <img src={selectedReward.imageUrl} alt={selectedReward.name} />
                   </div>
                 )}
-                
+
                 <div className="detail-stats">
                   {!selectedReward.acquired && (
                     <div className="detail-stat">
@@ -394,18 +394,18 @@ function Rewards() {
                       <span className="stat-value">{selectedReward.pointsCost} points</span>
                     </div>
                   )}
-                  
+
                   {selectedReward.acquired && (
                     <div className="detail-stat">
                       <span className="stat-label">Acquired:</span>
                       <span className="stat-value">
-                        {selectedReward.acquiredAt 
-                          ? new Date(selectedReward.acquiredAt).toLocaleDateString() 
+                        {selectedReward.acquiredAt
+                          ? new Date(selectedReward.acquiredAt).toLocaleDateString()
                           : 'Yes'}
                       </span>
                     </div>
                   )}
-                  
+
                   <div className="detail-stat">
                     <span className="stat-label">Type:</span>
                     <span className="stat-value">
@@ -413,7 +413,7 @@ function Rewards() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="detail-tip">
                   <h4>How to use:</h4>
                   <p>
@@ -424,24 +424,26 @@ function Rewards() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="reward-detail-footer">
-                {selectedReward.acquired ? (
-                  <button 
-                    className={`${equippedRewards[selectedReward.type] === selectedReward.id 
-                      ? 'unequip-button' 
+                {selectedReward.acquired
+                  ? (
+                  <button
+                    className={`${equippedRewards[selectedReward.type] === selectedReward.id
+                      ? 'unequip-button'
                       : 'equip-button'}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleToggleEquip(selectedReward);
                     }}
                   >
-                    {equippedRewards[selectedReward.type] === selectedReward.id 
-                      ? 'Unequip' 
+                    {equippedRewards[selectedReward.type] === selectedReward.id
+                      ? 'Unequip'
                       : 'Equip'}
                   </button>
-                ) : (
-                  <button 
+                    )
+                  : (
+                  <button
                     className="purchase-button"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -449,37 +451,37 @@ function Rewards() {
                     }}
                     disabled={userPoints < selectedReward.pointsCost}
                   >
-                    {userPoints >= selectedReward.pointsCost 
-                      ? `Purchase (${selectedReward.pointsCost} points)` 
+                    {userPoints >= selectedReward.pointsCost
+                      ? `Purchase (${selectedReward.pointsCost} points)`
                       : `Not enough points (${userPoints}/${selectedReward.pointsCost})`}
                   </button>
-                )}
+                    )}
               </div>
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Purchase Confirmation Dialog */}
       {confirmPurchase && (
         <div className="confirmation-overlay">
           <div className="confirmation-dialog">
             <h3>Confirm Purchase</h3>
             <p>Are you sure you want to purchase <strong>{confirmPurchase.name}</strong> for <strong>{confirmPurchase.pointsCost} points</strong>?</p>
-            
+
             <div className="points-after-purchase">
               <p>Your current balance: <strong>{userPoints} points</strong></p>
               <p>Balance after purchase: <strong>{userPoints - confirmPurchase.pointsCost} points</strong></p>
             </div>
-            
+
             <div className="confirmation-buttons">
-              <button 
+              <button
                 className="cancel-button"
                 onClick={handleCancelPurchase}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="confirm-button"
                 onClick={handleConfirmPurchase}
               >
@@ -489,7 +491,7 @@ function Rewards() {
           </div>
         </div>
       )}
-      
+
       {/* Purchase Status Toast */}
       {purchaseStatus.show && (
         <div className={`status-toast ${purchaseStatus.success ? 'success' : 'error'}`}>

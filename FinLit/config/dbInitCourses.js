@@ -5,7 +5,7 @@ import { connect } from './sqlite-adapter.js';
 export async function initCourseTables() {
   try {
     const connection = await connect();
-    
+
     // Create courses table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS courses (
@@ -22,7 +22,7 @@ export async function initCourseTables() {
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     // Create chapters table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS chapters (
@@ -36,7 +36,7 @@ export async function initCourseTables() {
         FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
       )
     `);
-    
+
     // Create lessons table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS lessons (
@@ -52,7 +52,7 @@ export async function initCourseTables() {
         FOREIGN KEY (chapter_id) REFERENCES chapters (id) ON DELETE CASCADE
       )
     `);
-    
+
     // Create quizzes table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS quizzes (
@@ -66,7 +66,7 @@ export async function initCourseTables() {
         FOREIGN KEY (lesson_id) REFERENCES lessons (id) ON DELETE CASCADE
       )
     `);
-    
+
     // Create quiz questions table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS quiz_questions (
@@ -83,7 +83,7 @@ export async function initCourseTables() {
         FOREIGN KEY (quiz_id) REFERENCES quizzes (id) ON DELETE CASCADE
       )
     `);
-    
+
     // Create user course progress table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_course_progress (
@@ -99,7 +99,7 @@ export async function initCourseTables() {
         FOREIGN KEY (course_id) REFERENCES courses (id)
       )
     `);
-    
+
     // Create user lesson progress table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_lesson_progress (
@@ -114,7 +114,7 @@ export async function initCourseTables() {
         FOREIGN KEY (lesson_id) REFERENCES lessons (id)
       )
     `);
-    
+
     // Create user quiz attempts table
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_quiz_attempts (
@@ -131,9 +131,8 @@ export async function initCourseTables() {
         FOREIGN KEY (quiz_id) REFERENCES quizzes (id)
       )
     `);
-    
+
     console.log('Course tables created successfully');
-    
   } catch (error) {
     console.error('Error creating course tables:', error);
     throw error;

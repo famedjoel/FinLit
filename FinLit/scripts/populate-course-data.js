@@ -3,52 +3,52 @@ import { connect } from '../config/sqlite-adapter.js';
 
 async function populateCourseData() {
   try {
-    console.log("Starting database population for course content...");
+    console.log('Starting database population for course content...');
     const connection = await connect();
-    
+
     // First, let's check if we already have data
     const existingChapters = await connection.all('SELECT * FROM chapters');
     if (existingChapters && existingChapters.length > 0) {
       console.log(`Database already contains ${existingChapters.length} chapters. Skipping population.`);
       return;
     }
-    
+
     // Get existing courses to reference their IDs
     const courses = await connection.all('SELECT * FROM courses');
     if (!courses || courses.length === 0) {
-      console.log("No courses found in database. Please run initSampleCourseData() first.");
+      console.log('No courses found in database. Please run initSampleCourseData() first.');
       return;
     }
-    
+
     console.log(`Found ${courses.length} courses. Populating chapters and lessons...`);
-    
+
     // Start a transaction for better performance and data integrity
     await connection.run('BEGIN TRANSACTION');
-    
+
     try {
       // Course 1: Personal Finance Fundamentals (ID: 1)
-      const course1 = courses.find(c => c.title === "Personal Finance Fundamentals") || courses[0];
-      
+      const course1 = courses.find(c => c.title === 'Personal Finance Fundamentals') || courses[0];
+
       // Create chapters for Course 1
       const c1ch1 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
-        [course1.id, "Understanding Personal Finance", "An introduction to personal finance concepts", 0]
+        [course1.id, 'Understanding Personal Finance', 'An introduction to personal finance concepts', 0],
       );
-      
+
       const c1ch2 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
-        [course1.id, "Building a Budget", "Learn how to create and manage a budget", 1]
+        [course1.id, 'Building a Budget', 'Learn how to create and manage a budget', 1],
       );
-      
+
       // Create lessons for Chapter 1 of Course 1
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c1ch1.lastID, 
-          "What is Personal Finance?", 
+          c1ch1.lastID,
+          'What is Personal Finance?',
           `<h2>What is Personal Finance?</h2>
           <p>Personal finance refers to managing your money and planning for your financial future. It encompasses a wide range of activities including:</p>
           <ul>
@@ -85,16 +85,16 @@ async function populateCourseData() {
             </div>
           </div>`,
           0,
-          20
-        ]
+          20,
+        ],
       );
-      
+
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c1ch1.lastID, 
-          "Setting Financial Goals", 
+          c1ch1.lastID,
+          'Setting Financial Goals',
           `<h2>Setting Financial Goals</h2>
           <p>Clear financial goals are the foundation of successful personal finance management. Well-defined goals give you direction and motivation to make smart financial decisions.</p>
           
@@ -133,17 +133,17 @@ async function populateCourseData() {
             </div>
           </div>`,
           1,
-          25
-        ]
+          25,
+        ],
       );
-      
+
       // Create lessons for Chapter 2 of Course 1
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c1ch2.lastID, 
-          "Budgeting Basics", 
+          c1ch2.lastID,
+          'Budgeting Basics',
           `<h2>Budgeting Basics</h2>
           <p>A budget is a financial plan that helps you track your income and expenses. It's the cornerstone of personal finance management.</p>
           
@@ -173,16 +173,16 @@ async function populateCourseData() {
             </div>
           </div>`,
           0,
-          30
-        ]
+          30,
+        ],
       );
-      
+
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c1ch2.lastID, 
-          "Tracking Expenses", 
+          c1ch2.lastID,
+          'Tracking Expenses',
           `<h2>Tracking Expenses</h2>
           <p>Knowing where your money goes is essential for maintaining a budget. Expense tracking helps you identify spending patterns and areas for improvement.</p>
           
@@ -210,33 +210,33 @@ async function populateCourseData() {
             </div>
           </div>`,
           1,
-          20
-        ]
+          20,
+        ],
       );
-      
+
       // Course 2: Investment Basics (ID: 2)
-      const course2 = courses.find(c => c.title === "Investment Basics") || courses[1];
-      
+      const course2 = courses.find(c => c.title === 'Investment Basics') || courses[1];
+
       // Create chapters for Course 2
       const c2ch1 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
-        [course2.id, "Introduction to Investing", "Understanding what investing is and why it matters", 0]
+        [course2.id, 'Introduction to Investing', 'Understanding what investing is and why it matters', 0],
       );
-      
+
       const c2ch2 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
-        [course2.id, "Investment Vehicles", "Exploring different ways to invest your money", 1]
+        [course2.id, 'Investment Vehicles', 'Exploring different ways to invest your money', 1],
       );
-      
+
       // Create lessons for Course 2
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c2ch1.lastID, 
-          "Why Invest?", 
+          c2ch1.lastID,
+          'Why Invest?',
           `<h2>Why Invest?</h2>
           <p>Investing is the process of putting money into assets with the expectation of generating income or profit over time. It's a critical component of building wealth and achieving financial goals.</p>
           
@@ -267,16 +267,16 @@ async function populateCourseData() {
             </div>
           </div>`,
           0,
-          15
-        ]
+          15,
+        ],
       );
-      
+
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c2ch1.lastID, 
-          "Risk and Return", 
+          c2ch1.lastID,
+          'Risk and Return',
           `<h2>Risk and Return</h2>
           <p>Understanding the relationship between risk and return is fundamental to making sound investment decisions.</p>
           
@@ -316,16 +316,16 @@ async function populateCourseData() {
             </div>
           </div>`,
           1,
-          20
-        ]
+          20,
+        ],
       );
-      
+
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c2ch2.lastID, 
-          "Stocks and Bonds", 
+          c2ch2.lastID,
+          'Stocks and Bonds',
           `<h2>Stocks and Bonds</h2>
           <p>Stocks and bonds are the two most common investment vehicles and form the foundation of most investment portfolios.</p>
           
@@ -395,16 +395,16 @@ async function populateCourseData() {
             </div>
           </div>`,
           0,
-          25
-        ]
+          25,
+        ],
       );
-      
+
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c2ch2.lastID, 
-          "Mutual Funds and ETFs", 
+          c2ch2.lastID,
+          'Mutual Funds and ETFs',
           `<h2>Mutual Funds and ETFs</h2>
           <p>Mutual funds and Exchange-Traded Funds (ETFs) are investment vehicles that pool money from multiple investors to purchase a diversified portfolio of stocks, bonds, or other securities.</p>
           
@@ -456,27 +456,27 @@ async function populateCourseData() {
             </div>
           </div>`,
           1,
-          30
-        ]
+          30,
+        ],
       );
-      
+
       // Course 3: Advanced Trading Strategies (ID: 3)
-      const course3 = courses.find(c => c.title === "Advanced Trading Strategies") || courses[2];
-      
+      const course3 = courses.find(c => c.title === 'Advanced Trading Strategies') || courses[2];
+
       // Create chapters for Course 3
       const c3ch1 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
-        [course3.id, "Technical Analysis", "Understanding chart patterns and technical indicators", 0]
+        [course3.id, 'Technical Analysis', 'Understanding chart patterns and technical indicators', 0],
       );
-      
+
       // Create lessons for Course 3
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c3ch1.lastID, 
-          "Chart Patterns", 
+          c3ch1.lastID,
+          'Chart Patterns',
           `<h2>Chart Patterns</h2>
           <p>Chart patterns are specific formations that appear on price charts and can help traders predict future price movements based on historical patterns.</p>
           
@@ -521,16 +521,16 @@ async function populateCourseData() {
             </div>
           </div>`,
           0,
-          45
-        ]
+          45,
+        ],
       );
-      
+
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
         [
-          c3ch1.lastID, 
-          "Technical Indicators", 
+          c3ch1.lastID,
+          'Technical Indicators',
           `<h2>Technical Indicators</h2>
           <p>Technical indicators are mathematical calculations based on price, volume, or open interest of a security or contract. They help traders analyze past patterns to predict future price movements.</p>
           
@@ -595,48 +595,46 @@ async function populateCourseData() {
             </div>
           </div>`,
           1,
-          40
-        ]
+          40,
+        ],
       );
-      
+
       // Update course counts
       // For each course, count the chapters and lessons in DB and update the course record
       for (const course of courses) {
         // Count chapters
         const chapterCount = await connection.get(
           'SELECT COUNT(*) as count FROM chapters WHERE course_id = ?',
-          course.id
+          course.id,
         );
-        
+
         // Count lessons
         const lessonCount = await connection.get(
           `SELECT COUNT(*) as count FROM lessons 
            WHERE chapter_id IN (SELECT id FROM chapters WHERE course_id = ?)`,
-          course.id
+          course.id,
         );
-        
+
         // Update course record
         await connection.run(
           'UPDATE courses SET chapters_count = ?, lessons_count = ? WHERE id = ?',
-          [chapterCount.count, lessonCount.count, course.id]
+          [chapterCount.count, lessonCount.count, course.id],
         );
-        
+
         console.log(`Updated course ${course.title} with ${chapterCount.count} chapters and ${lessonCount.count} lessons`);
       }
-      
+
       // Commit the transaction
       await connection.run('COMMIT');
-      console.log("Course data populated successfully!");
-      
+      console.log('Course data populated successfully!');
     } catch (error) {
       // Rollback the transaction on error
       await connection.run('ROLLBACK');
-      console.error("Error populating course data:", error);
+      console.error('Error populating course data:', error);
       throw error;
     }
-    
   } catch (error) {
-    console.error("Database population failed:", error);
+    console.error('Database population failed:', error);
     throw error;
   }
 }

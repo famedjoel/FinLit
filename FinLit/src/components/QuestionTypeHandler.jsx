@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
 // src/components/QuestionTypeHandler.jsx
 import React, { useState } from 'react';
 import {
@@ -7,19 +6,19 @@ import {
   TrueFalseQuestion,
   FillInBlankQuestion,
   MatchingQuestion,
-  CalculationQuestion
-} from './QuestionTypes';
+  CalculationQuestion,
+} from './QuestionTypes.jsx';
 import '../styles/QuestionTypes.css';
 
-const QuestionTypeHandler = ({ 
-  currentQuestion, 
-  onAnswerSelect, 
-  selectedAnswer, 
-  answerSubmitted, 
-  answerIsCorrect 
+const QuestionTypeHandler = ({
+  currentQuestion,
+  onAnswerSelect,
+  selectedAnswer,
+  answerSubmitted,
+  answerIsCorrect,
 }) => {
   const [showHint, setShowHint] = useState(false);
-  
+
   // Determine if the fill-in-blank or calculation answer is correct
   const isTextAnswerCorrect = () => {
     if (currentQuestion.type === 'fill-blank') {
@@ -32,7 +31,7 @@ const QuestionTypeHandler = ({
     }
     return false;
   };
-  
+
   // Render different question types
   switch (currentQuestion.type) {
     case 'multiple-choice':
@@ -46,7 +45,7 @@ const QuestionTypeHandler = ({
           answerSubmitted={answerSubmitted}
         />
       );
-      
+
     case 'true-false':
       return (
         <TrueFalseQuestion
@@ -57,7 +56,7 @@ const QuestionTypeHandler = ({
           answerSubmitted={answerSubmitted}
         />
       );
-      
+
     case 'fill-blank':
       return (
         <FillInBlankQuestion
@@ -69,7 +68,7 @@ const QuestionTypeHandler = ({
           isCorrect={answerSubmitted && isTextAnswerCorrect()}
         />
       );
-      
+
     case 'matching':
       return (
         <MatchingQuestion
@@ -82,7 +81,7 @@ const QuestionTypeHandler = ({
           answerSubmitted={answerSubmitted}
         />
       );
-      
+
     case 'calculation':
       return (
         <CalculationQuestion
@@ -98,7 +97,7 @@ const QuestionTypeHandler = ({
           onToggleHint={() => setShowHint(!showHint)}
         />
       );
-      
+
     default:
       // Fallback to multiple choice
       return (

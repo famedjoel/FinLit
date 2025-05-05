@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 // tests/setupTests.js
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals';
 
 // Set up global variables that might be needed for tests
