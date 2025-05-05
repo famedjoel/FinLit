@@ -1,7 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
-// tests/auth.test.js
 import { jest } from '@jest/globals';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
