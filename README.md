@@ -191,7 +191,7 @@ The dashboard displays progress bars for overall learning, individual courses, a
 
 ### Design
 
-Progress is visualized through clean, modern charts and graphs. Color coding helps quickly identify areas of strength (green) and areas needing improvement (red). The interface allows users to drill down into specific courses or topics for detailed analysis.
+Progress is visualised through clean, modern charts and graphs. Color coding helps quickly identify areas of strength (green) and areas needing improvement (red). The interface allows users to drill down into specific courses or topics for detailed analysis.
 
 ## Dark/Light Theme Support Feature
 
@@ -267,7 +267,7 @@ The leaderboard automatically updates as users complete courses, win games, and 
 
 ### Design
 
-The leaderboard features a clean table format with user avatars, ranks, and statistics. Color coding highlights top positions (gold, silver, bronze) and the current user's position is emphasized for easy identification.
+The leaderboard features a clean table format with user avatars, ranks, and statistics. Color coding highlights top positions (gold, silver, bronze) and the current user's position is emphasised for easy identification.
 
 ---
 
