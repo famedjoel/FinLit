@@ -1,35 +1,36 @@
-// scripts/populate-course-data.js
+// Import the SQLite connection module
 import { connect } from '../config/sqlite-adapter.js';
 
+// This asynchronous function populates course, chapter and lesson data in the database.
+// It uses a transaction to ensure data integrity.
 async function populateCourseData() {
   try {
     console.log('Starting database population for course content...');
     const connection = await connect();
 
-    // First, let's check if we already have data
+    // Check if chapters already exist to avoid duplicate population.
     const existingChapters = await connection.all('SELECT * FROM chapters');
     if (existingChapters && existingChapters.length > 0) {
       console.log(`Database already contains ${existingChapters.length} chapters. Skipping population.`);
       return;
     }
 
-    // Get existing courses to reference their IDs
+    // Retrieve existing courses to reference their IDs.
     const courses = await connection.all('SELECT * FROM courses');
     if (!courses || courses.length === 0) {
       console.log('No courses found in database. Please run initSampleCourseData() first.');
       return;
     }
-
     console.log(`Found ${courses.length} courses. Populating chapters and lessons...`);
 
-    // Start a transaction for better performance and data integrity
+    // Begin a transaction for improved performance and data integrity.
     await connection.run('BEGIN TRANSACTION');
 
     try {
-      // Course 1: Personal Finance Fundamentals (ID: 1)
+      // For Course 1: Personal Finance Fundamentals.
       const course1 = courses.find(c => c.title === 'Personal Finance Fundamentals') || courses[0];
 
-      // Create chapters for Course 1
+      // Insert chapters for Course 1.
       const c1ch1 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
@@ -42,7 +43,7 @@ async function populateCourseData() {
         [course1.id, 'Building a Budget', 'Learn how to create and manage a budget', 1],
       );
 
-      // Create lessons for Chapter 1 of Course 1
+      // Insert lessons for the first chapter of Course 1.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -99,7 +100,7 @@ async function populateCourseData() {
           <p>Clear financial goals are the foundation of successful personal finance management. Well-defined goals give you direction and motivation to make smart financial decisions.</p>
           
           <h3>Types of Financial Goals</h3>
-          <p>Financial goals are commonly categorized by timeframe:</p>
+          <p>Financial goals are commonly categorised by timeframe:</p>
           
           <div class="goals-container">
             <div class="goal-category">
@@ -137,7 +138,7 @@ async function populateCourseData() {
         ],
       );
 
-      // Create lessons for Chapter 2 of Course 1
+      // Insert lessons for the second chapter of Course 1.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -190,18 +191,16 @@ async function populateCourseData() {
           <div class="methods-grid">
             <div class="method-card">
               <h4>📱 Budgeting Apps</h4>
-              <p>Apps like Mint, YNAB, or Personal Capital automatically categorize transactions and provide insights.</p>
-              <p class="pros">Pros: Convenient, automated categorization, visual reports</p>
+              <p>Apps like Mint, YNAB, or Personal Capital automatically categorise transactions and provide insights.</p>
+              <p class="pros">Pros: Convenient, automated categorisation, visual reports</p>
               <p class="cons">Cons: May require linking financial accounts, potential privacy concerns</p>
             </div>
-            
             <div class="method-card">
               <h4>📊 Spreadsheets</h4>
               <p>Create custom tracking systems in Excel or Google Sheets.</p>
-              <p class="pros">Pros: Highly customizable, no cost, complete control over your data</p>
+              <p class="pros">Pros: Highly customisable, no cost, complete control over your data</p>
               <p class="cons">Cons: Manual entry required, more time-consuming</p>
             </div>
-            
             <div class="method-card">
               <h4>📝 Pen and Paper</h4>
               <p>Traditional expense tracking in a notebook or journal.</p>
@@ -214,10 +213,10 @@ async function populateCourseData() {
         ],
       );
 
-      // Course 2: Investment Basics (ID: 2)
+      // For Course 2: Investment Basics.
       const course2 = courses.find(c => c.title === 'Investment Basics') || courses[1];
 
-      // Create chapters for Course 2
+      // Insert chapters for Course 2.
       const c2ch1 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
@@ -230,7 +229,7 @@ async function populateCourseData() {
         [course2.id, 'Investment Vehicles', 'Exploring different ways to invest your money', 1],
       );
 
-      // Create lessons for Course 2
+      // Insert lessons for the first chapter of Course 2.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -247,19 +246,16 @@ async function populateCourseData() {
               <h4>Beat Inflation</h4>
               <p>Money sitting in a regular savings account loses purchasing power over time due to inflation. Investing helps your money grow faster than the inflation rate.</p>
             </div>
-            
             <div class="reason-card">
               <div class="reason-icon">📈</div>
               <h4>Build Wealth</h4>
               <p>Over long periods, investments typically outperform savings accounts, allowing your money to grow substantially through the power of compounding.</p>
             </div>
-            
             <div class="reason-card">
               <div class="reason-icon">🏡</div>
               <h4>Achieve Financial Goals</h4>
               <p>Investing helps you build funds for major life goals like retirement, home ownership, or education funding.</p>
             </div>
-            
             <div class="reason-card">
               <div class="reason-icon">💼</div>
               <h4>Generate Passive Income</h4>
@@ -271,6 +267,7 @@ async function populateCourseData() {
         ],
       );
 
+      // Insert lessons for the first chapter of Course 2.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -293,7 +290,6 @@ async function populateCourseData() {
                 <li>Money market accounts</li>
               </ul>
             </div>
-            
             <div class="investment-type medium-risk">
               <h4>Medium Risk, Medium Return</h4>
               <ul>
@@ -303,7 +299,6 @@ async function populateCourseData() {
                 <li>Balanced mutual funds</li>
               </ul>
             </div>
-            
             <div class="investment-type high-risk">
               <h4>Higher Risk, Higher Return</h4>
               <ul>
@@ -320,6 +315,7 @@ async function populateCourseData() {
         ],
       );
 
+      // Insert lessons for the second chapter of Course 2.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -343,7 +339,6 @@ async function populateCourseData() {
                 <li>Can sell your shares to other investors</li>
               </ul>
             </div>
-            
             <div class="detail-section">
               <h4>Potential Returns</h4>
               <ul>
@@ -351,7 +346,6 @@ async function populateCourseData() {
                 <li><strong>Dividends:</strong> Regular payments from company profits</li>
               </ul>
             </div>
-            
             <div class="detail-section">
               <h4>Risks</h4>
               <ul>
@@ -376,7 +370,6 @@ async function populateCourseData() {
                 <li>Get your principal back at maturity</li>
               </ul>
             </div>
-            
             <div class="detail-section">
               <h4>Potential Returns</h4>
               <ul>
@@ -384,7 +377,6 @@ async function populateCourseData() {
                 <li><strong>Capital appreciation:</strong> Possible if interest rates fall</li>
               </ul>
             </div>
-            
             <div class="detail-section">
               <h4>Risks</h4>
               <ul>
@@ -399,6 +391,7 @@ async function populateCourseData() {
         ],
       );
 
+      // Insert lessons for the second chapter of Course 2.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -419,7 +412,6 @@ async function populateCourseData() {
                 <li>Typically purchased directly from the fund company</li>
               </ul>
             </div>
-            
             <div class="detail-section">
               <h4>Types of Mutual Funds</h4>
               <ul>
@@ -443,7 +435,6 @@ async function populateCourseData() {
                 <li>Most are passively managed (track an index)</li>
               </ul>
             </div>
-            
             <div class="detail-section">
               <h4>Types of ETFs</h4>
               <ul>
@@ -460,17 +451,17 @@ async function populateCourseData() {
         ],
       );
 
-      // Course 3: Advanced Trading Strategies (ID: 3)
+      // For Course 3: Advanced Trading Strategies.
       const course3 = courses.find(c => c.title === 'Advanced Trading Strategies') || courses[2];
 
-      // Create chapters for Course 3
+      // Insert chapter for Course 3.
       const c3ch1 = await connection.run(
         `INSERT INTO chapters (course_id, title, description, "order") 
          VALUES (?, ?, ?, ?)`,
         [course3.id, 'Technical Analysis', 'Understanding chart patterns and technical indicators', 0],
       );
 
-      // Create lessons for Course 3
+      // Insert lessons for the chapter of Course 3.
       await connection.run(
         `INSERT INTO lessons (chapter_id, title, content, "order", estimated_minutes) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -495,7 +486,6 @@ async function populateCourseData() {
                 </ul>
               </div>
             </div>
-            
             <div class="pattern-card">
               <h4>Double Top</h4>
               <p>A bearish reversal pattern that forms after an uptrend, showing two consecutive peaks at approximately the same price level.</p>
@@ -507,7 +497,6 @@ async function populateCourseData() {
                 </ul>
               </div>
             </div>
-            
             <div class="pattern-card">
               <h4>Double Bottom</h4>
               <p>A bullish reversal pattern that forms after a downtrend, showing two consecutive troughs at approximately the same price level.</p>
@@ -532,7 +521,7 @@ async function populateCourseData() {
           c3ch1.lastID,
           'Technical Indicators',
           `<h2>Technical Indicators</h2>
-          <p>Technical indicators are mathematical calculations based on price, volume, or open interest of a security or contract. They help traders analyze past patterns to predict future price movements.</p>
+          <p>Technical indicators are mathematical calculations based on price, volume, or open interest of a security or contract. They help traders analyse past patterns to predict future price movements.</p>
           
           <h3>Trend Indicators</h3>
           <p>These indicators help identify the direction of a market trend.</p>
@@ -555,7 +544,6 @@ async function populateCourseData() {
                 </ul>
               </div>
             </div>
-            
             <div class="indicator-card">
               <h4>MACD (Moving Average Convergence Divergence)</h4>
               <p>A trend-following momentum indicator that shows the relationship between two moving averages of a security's price.</p>
@@ -574,7 +562,6 @@ async function populateCourseData() {
                 </ul>
               </div>
             </div>
-            
             <div class="indicator-card">
               <h4>Parabolic SAR (Stop and Reverse)</h4>
               <p>Identifies potential reversals in price direction, placing dots on the chart that indicate stop or reverse points.</p>
@@ -599,23 +586,19 @@ async function populateCourseData() {
         ],
       );
 
-      // Update course counts
-      // For each course, count the chapters and lessons in DB and update the course record
+      // Update each course record with the count of chapters and lessons.
       for (const course of courses) {
-        // Count chapters
         const chapterCount = await connection.get(
           'SELECT COUNT(*) as count FROM chapters WHERE course_id = ?',
           course.id,
         );
 
-        // Count lessons
         const lessonCount = await connection.get(
           `SELECT COUNT(*) as count FROM lessons 
            WHERE chapter_id IN (SELECT id FROM chapters WHERE course_id = ?)`,
           course.id,
         );
 
-        // Update course record
         await connection.run(
           'UPDATE courses SET chapters_count = ?, lessons_count = ? WHERE id = ?',
           [chapterCount.count, lessonCount.count, course.id],
@@ -624,11 +607,11 @@ async function populateCourseData() {
         console.log(`Updated course ${course.title} with ${chapterCount.count} chapters and ${lessonCount.count} lessons`);
       }
 
-      // Commit the transaction
+      // Commit the transaction.
       await connection.run('COMMIT');
       console.log('Course data populated successfully!');
     } catch (error) {
-      // Rollback the transaction on error
+      // Roll back the transaction if any error occurs.
       await connection.run('ROLLBACK');
       console.error('Error populating course data:', error);
       throw error;
@@ -639,5 +622,5 @@ async function populateCourseData() {
   }
 }
 
-// Export the function to be called from another file
+// Export the function for use in other modules.
 export default populateCourseData;

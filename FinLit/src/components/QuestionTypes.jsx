@@ -1,9 +1,8 @@
 /* eslint-disable multiline-ternary */
 /* eslint-disable no-unused-vars */
-// src/components/QuestionTypes.jsx
 import React, { useState } from 'react';
 
-// Question Type: Multiple Choice
+// Multiple Choice Question component
 export const MultipleChoiceQuestion = ({
   question,
   options,
@@ -15,7 +14,6 @@ export const MultipleChoiceQuestion = ({
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
-
       <div className="options-container">
         {options.map((option, index) => (
           <div
@@ -36,7 +34,7 @@ export const MultipleChoiceQuestion = ({
   );
 };
 
-// Question Type: True/False
+// True/False Question component
 export const TrueFalseQuestion = ({
   question,
   correctAnswer,
@@ -45,7 +43,6 @@ export const TrueFalseQuestion = ({
   answerSubmitted,
 }) => {
   const options = ['True', 'False'];
-
   return (
     <div className="question-container">
       <h3 className="question">{question}</h3>
@@ -69,7 +66,7 @@ export const TrueFalseQuestion = ({
   );
 };
 
-// Question Type: Fill in the Blank
+// Fill in the Blank Question component
 export const FillInBlankQuestion = ({
   question,
   options,
@@ -79,38 +76,35 @@ export const FillInBlankQuestion = ({
   answerSubmitted,
   isCorrect,
 }) => {
-  // Split the question at the blank marker ____ or [blank] or just ___
+  // Split the question at recognised blank markers
   const parts = question.split(/____|\[blank\]|___/i);
 
-  // Determine if this question has options to choose from
+  // Determine if there are options provided
   const hasOptions = Array.isArray(options) && options.length > 0;
 
-  // Function to handle selecting an option
+  // Handle selection from dropdown or button options
   const handleOptionSelect = (optionIndex) => {
     if (!answerSubmitted) {
       onSelect(options[optionIndex]);
     }
   };
 
-  // Function to handle direct text input
+  // Handle changes in text input
   const handleTextInput = (e) => {
     if (!answerSubmitted) {
       onSelect(e.target.value);
     }
   };
 
-  // Determine correct answer text (could be index or direct string)
-  const correctAnswerText = typeof correctAnswer === 'number' && hasOptions
-    ? options[correctAnswer]
-    : correctAnswer;
+  // Compute the correct answer text, whether from options or as given directly
+  const correctAnswerText =
+    typeof correctAnswer === 'number' && hasOptions ? options[correctAnswer] : correctAnswer;
 
   return (
     <div className="question-container">
       <div className="question fill-blank-question">
         {parts[0]}
-
         {hasOptions ? (
-          // Display as dropdown if options exist
           <select
             value={userInput || ''}
             onChange={(e) => handleOptionSelect(parseInt(e.target.value))}
@@ -121,7 +115,9 @@ export const FillInBlankQuestion = ({
             `}
             disabled={answerSubmitted}
           >
-            <option value="" disabled>Select answer...</option>
+            <option value="" disabled>
+              Select answer...
+            </option>
             {options.map((option, index) => (
               <option key={index} value={index}>
                 {option}
@@ -129,7 +125,6 @@ export const FillInBlankQuestion = ({
             ))}
           </select>
         ) : (
-          // Display as text input if no options
           <input
             type="text"
             value={userInput || ''}
@@ -143,11 +138,9 @@ export const FillInBlankQuestion = ({
             placeholder="Enter your answer"
           />
         )}
-
         {parts[1] || ''}
       </div>
 
-      {/* Display options as buttons if available and not displaying as dropdown */}
       {hasOptions && !answerSubmitted && (
         <div className="options-buttons">
           {options.map((option, index) => (
@@ -164,14 +157,16 @@ export const FillInBlankQuestion = ({
 
       {answerSubmitted && !isCorrect && (
         <div className="correct-answer-display">
-          <p>Correct answer: <strong>{correctAnswerText}</strong></p>
+          <p>
+            Correct answer: <strong>{correctAnswerText}</strong>
+          </p>
         </div>
       )}
     </div>
   );
 };
 
-// Question Type: Matching
+// Matching Question component
 export const MatchingQuestion = ({
   question,
   terms = [],
@@ -184,26 +179,24 @@ export const MatchingQuestion = ({
 }) => {
   const [selectedTerm, setSelectedTerm] = useState(null);
 
-  // Process the data to handle both formats
+  // Prepare terms and definitions from the new or legacy format
   let processedTerms = [];
   let processedDefinitions = [];
 
-  // If items array is provided (new format)
   if (items && items.length > 0) {
-    processedTerms = items.map(item => item.term);
-    processedDefinitions = items.map(item => item.definition);
+    processedTerms = items.map((item) => item.term);
+    processedDefinitions = items.map((item) => item.definition);
   } else {
-    // Otherwise use the terms and definitions arrays (old format)
     processedTerms = terms;
     processedDefinitions = definitions;
   }
 
-  // Initialize matches array if not provided
+  // Initialise matches if none provided
   const matches = userMatches || Array(processedTerms.length).fill(null);
 
+  // Handle clicking a term; deselect if already matched
   const handleTermClick = (index) => {
     if (answerSubmitted) return;
-    // If this term already has a match, unselect it first
     if (matches[index] !== null) {
       const updatedMatches = [...matches];
       updatedMatches[index] = null;
@@ -212,24 +205,23 @@ export const MatchingQuestion = ({
     setSelectedTerm(index);
   };
 
+  // Handle clicking a definition to match with the selected term
   const handleDefinitionClick = (index) => {
     if (answerSubmitted || selectedTerm === null) return;
-
-    // Update the matches array
     const updatedMatches = [...matches];
     updatedMatches[selectedTerm] = index;
     onSelect(updatedMatches);
     setSelectedTerm(null);
   };
 
-  // Check if a definition is already matched
+  // Check whether a definition is already matched
   const isDefinitionMatched = (defIndex) => {
     return matches.includes(defIndex);
   };
 
-  // Get the term that matches with a definition
+  // Retrieve the term index matched with a definition
   const getMatchedTermIndex = (defIndex) => {
-    return matches.findIndex(match => match === defIndex);
+    return matches.findIndex((match) => match === defIndex);
   };
 
   return (
@@ -245,15 +237,13 @@ export const MatchingQuestion = ({
           <div className="terms-column">
             <h4>Terms</h4>
             {processedTerms.map((term, index) => {
-              // Determine the appropriate class for this term
               let termClass = 'matching-item term-item';
               if (selectedTerm === index) termClass += ' selected';
               if (answerSubmitted) {
-                if (correctMatches[index] === matches[index]) {
-                  termClass += ' correct-match';
-                } else {
-                  termClass += ' incorrect-match';
-                }
+                termClass +=
+                  correctMatches[index] === matches[index]
+                    ? ' correct-match'
+                    : ' incorrect-match';
               } else if (matches[index] !== null) {
                 termClass += ' matched';
               }
@@ -279,7 +269,6 @@ export const MatchingQuestion = ({
           <div className="definitions-column">
             <h4>Definitions</h4>
             {processedDefinitions.map((definition, index) => {
-              // Determine the appropriate class for this definition
               let defClass = 'matching-item definition-item';
 
               if (answerSubmitted) {
@@ -318,7 +307,10 @@ export const MatchingQuestion = ({
           <h4>Correct Matches:</h4>
           <ul>
             {processedTerms.map((term, index) => (
-              <li key={index} className={correctMatches[index] === matches[index] ? 'correct' : 'incorrect'}>
+              <li
+                key={index}
+                className={correctMatches[index] === matches[index] ? 'correct' : 'incorrect'}
+              >
                 <strong>{term}</strong>: {processedDefinitions[correctMatches[index]]}
                 {correctMatches[index] !== matches[index] && (
                   <span className="your-match">
@@ -334,7 +326,7 @@ export const MatchingQuestion = ({
   );
 };
 
-// Question Type: Financial Calculation
+// Financial Calculation Question component
 export const CalculationQuestion = ({
   question,
   correctAnswer,
@@ -348,7 +340,7 @@ export const CalculationQuestion = ({
   showHint,
   onToggleHint,
 }) => {
-  // Check if options are provided
+  // Determine if options are provided
   const hasOptions = Array.isArray(options) && options.length > 0;
 
   return (
@@ -371,7 +363,6 @@ export const CalculationQuestion = ({
         />
       </div>
 
-      {/* Display options as buttons if they exist and answer not submitted yet */}
       {hasOptions && !answerSubmitted && (
         <div className="calculation-options">
           {options.map((option, index) => (
@@ -399,10 +390,14 @@ export const CalculationQuestion = ({
 
       {showHint && (
         <div className="hint-container">
-          <p><strong>Hint:</strong> {hint}</p>
+          <p>
+            <strong>Hint:</strong> {hint}
+          </p>
           {formula && (
             <div className="formula-display">
-              <p><strong>Formula:</strong> {formula}</p>
+              <p>
+                <strong>Formula:</strong> {formula}
+              </p>
             </div>
           )}
         </div>
@@ -414,7 +409,10 @@ export const CalculationQuestion = ({
             {isCorrect
               ? 'Correct!'
               : `Incorrect. The correct answer is ${
-                  hasOptions && Number.isInteger(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length
+                  hasOptions &&
+                  Number.isInteger(correctAnswer) &&
+                  correctAnswer >= 0 &&
+                  correctAnswer < options.length
                     ? options[correctAnswer]
                     : correctAnswer
                 }.`}

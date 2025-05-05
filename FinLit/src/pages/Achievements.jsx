@@ -1,13 +1,14 @@
-// src/pages/Achievements.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Achievements.css';
 
-// Set API base URL dynamically
+// Set API base URL dynamically based on current window location
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 function Achievements() {
   const navigate = useNavigate();
+
+  // State hooks to manage user and achievement data
   const [user, setUser] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [userStats, setUserStats] = useState(null);
@@ -19,7 +20,7 @@ function Achievements() {
   const [showNewAchievementModal, setShowNewAchievementModal] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState(null);
 
-  // Achievement categories with icons
+  // Define achievement categories with icons
   const categories = [
     { id: 'all', name: 'All Achievements', icon: '🏆' },
     { id: 'quiz', name: 'Quiz Achievements', icon: '🎓' },
@@ -29,6 +30,7 @@ function Achievements() {
     { id: 'streak', name: 'Streak Achievements', icon: '🔥' },
   ];
 
+  // Verify if user exists in localStorage, else redirect to login page
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
@@ -38,6 +40,7 @@ function Achievements() {
     }
   }, [navigate]);
 
+  // Fetch achievements, user stats, and check for new achievements once the user state is set
   useEffect(() => {
     if (user) {
       fetchAchievements();
@@ -46,6 +49,7 @@ function Achievements() {
     }
   }, [user]);
 
+  // Fetch user's achievements from the API
   const fetchAchievements = async () => {
     try {
       setLoading(true);
@@ -60,6 +64,7 @@ function Achievements() {
     }
   };
 
+  // Fetch user stats from the API
   const fetchUserStats = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/stats/progress/${user.id}`);
@@ -71,6 +76,7 @@ function Achievements() {
     }
   };
 
+  // Check for new achievements and display notification modal if there are any
   const checkNewAchievements = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/achievements/new/${user.id}`);
@@ -85,39 +91,44 @@ function Achievements() {
     }
   };
 
+  // Set the selected achievement for showing its details in a modal
   const handleShowAchievementDetails = (achievement) => {
     setSelectedAchievement(achievement);
   };
 
+  // Close the achievement details modal
   const handleCloseDetails = () => {
     setSelectedAchievement(null);
   };
 
+  // Update the active category filter
   const handleCategoryChange = (categoryId) => {
     setActiveCategory(categoryId);
   };
 
+  // Update the search query state as user types
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  // Filter achievements based on active category, search query, and completion status
+  // Filter achievements based on category, search query, and completion status
   const filteredAchievements = achievements.filter(achievement => {
-    // Filter by category
+    // Category filter: show all or match specific category
     const categoryMatch = activeCategory === 'all' || achievement.category === activeCategory;
 
-    // Filter by search query
-    const searchMatch = searchQuery === '' ||
+    // Search filter: check if search query exists in name or description
+    const searchMatch =
+      searchQuery === '' ||
       achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Filter by completion status
+    // Completed filter: if "show completed" is enabled, only show completed achievements
     const completionMatch = !showCompleted || achievement.completed;
 
     return categoryMatch && searchMatch && completionMatch;
   });
 
-  // Group achievements by category for better organization
+  // Group the filtered achievements by category for better organization on UI
   const groupedAchievements = filteredAchievements.reduce((acc, achievement) => {
     if (!acc[achievement.category]) {
       acc[achievement.category] = [];
@@ -126,6 +137,7 @@ function Achievements() {
     return acc;
   }, {});
 
+  // Show loading spinner while data is being fetched
   if (loading) {
     return (
       <div className="achievements-container">
@@ -141,6 +153,7 @@ function Achievements() {
     <div className="achievements-container">
       <h2>🏆 Achievements</h2>
 
+      {/* Display user statistics if available */}
       {userStats && (
         <div className="achievement-stats">
           <div className="achievement-progress">
@@ -159,6 +172,7 @@ function Achievements() {
             </div>
           </div>
 
+          {/* Display individual stat cards */}
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">🎓</div>
@@ -184,6 +198,7 @@ function Achievements() {
         </div>
       )}
 
+      {/* Filters: category tabs, search box, and completion toggle */}
       <div className="achievements-filters">
         <div className="category-tabs">
           {categories.map(category => (
@@ -222,8 +237,10 @@ function Achievements() {
         </div>
       </div>
 
+      {/* Render grouped achievements */}
       <div className="achievements-list">
         {Object.entries(groupedAchievements).map(([category, categoryAchievements]) => {
+          // Get category information for display
           const categoryInfo = categories.find(c => c.id === category) || { name: 'Uncategorised', icon: '🏆' };
 
           return (
@@ -240,11 +257,13 @@ function Achievements() {
                     className={`achievement-card ${achievement.completed ? 'completed' : 'locked'}`}
                     onClick={() => handleShowAchievementDetails(achievement)}
                   >
+                    {/* Achievement icon */}
                     <div className="achievement-icon">{achievement.icon}</div>
                     <div className="achievement-info">
                       <h4 className="achievement-name">{achievement.name}</h4>
                       <p className="achievement-description">{achievement.description}</p>
 
+                      {/* Show progress bar if achievement is not completed */}
                       {!achievement.completed && (
                         <div className="achievement-progress-bar">
                           <div
@@ -257,6 +276,7 @@ function Achievements() {
                         </div>
                       )}
 
+                      {/* Display completed label and date when achievement is done */}
                       {achievement.completed && (
                         <div className="achievement-completed-label">
                           <span className="completed-icon">✓</span>
@@ -269,6 +289,7 @@ function Achievements() {
                         </div>
                       )}
                     </div>
+                    {/* Achievement reward section */}
                     <div className="achievement-reward">
                       <span className="reward-icon">💰</span>
                       <span className="reward-amount">{achievement.pointsReward}</span>
@@ -280,10 +301,12 @@ function Achievements() {
           );
         })}
 
+        {/* Render message if no achievements match the filters */}
         {filteredAchievements.length === 0 && (
           <div className="no-achievements">
             <p>No achievements found matching your criteria.</p>
             <button onClick={() => {
+              // Reset all filters
               setActiveCategory('all');
               setSearchQuery('');
               setShowCompleted(false);
@@ -335,6 +358,7 @@ function Achievements() {
                   )}
                 </div>
 
+                {/* If achievement is not completed, show a detailed progress bar */}
                 {!selectedAchievement.completed && (
                   <div className="detail-progress-bar">
                     <div
@@ -347,6 +371,7 @@ function Achievements() {
                   </div>
                 )}
 
+                {/* Tip section for guidance based on achievement category */}
                 <div className="detail-tip">
                   <h4>How to earn:</h4>
                   <p>
@@ -362,10 +387,10 @@ function Achievements() {
               <div className="achievement-detail-footer">
                 {selectedAchievement.completed
                   ? (
-                  <div className="completed-badge">Achievement Unlocked!</div>
+                    <div className="completed-badge">Achievement Unlocked!</div>
                     )
                   : (
-                  <div className="locked-badge">Keep Going!</div>
+                    <div className="locked-badge">Keep Going!</div>
                     )}
               </div>
             </div>

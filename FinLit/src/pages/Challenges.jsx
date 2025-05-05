@@ -1,14 +1,15 @@
 /* eslint-disable no-unused-vars */
-// src/pages/Challenges.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Challenges.css';
 
-// Get the current hostname for API calls
+// Set the base URL for API calls using the current window hostname and protocol
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 function Challenges() {
   const navigate = useNavigate();
+
+  // Local state declarations for user, challenges, modals, settings, etc.
   const [user, setUser] = useState(null);
   const [challenges, setChallenges] = useState([]);
   const [activeTab, setActiveTab] = useState('active');
@@ -31,7 +32,7 @@ function Challenges() {
     'calculation': true,
   });
 
-  // Quiz type options (from FinancialTrivia.jsx)
+  // Options for quiz types, difficulties, timer values, etc.
   const quizTypeOptions = [
     { value: 'standard', label: 'Standard Quiz', icon: '📚' },
     { value: 'progressive', label: 'Progressive Difficulty', icon: '📈' },
@@ -61,6 +62,7 @@ function Challenges() {
     { value: 'calculation', label: 'Financial Calculations', icon: '🧮' },
   ];
 
+  // useEffect to check for stored user data in localStorage; if not, redirect to login
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
@@ -70,6 +72,7 @@ function Challenges() {
     }
   }, [navigate]);
 
+  // useEffect to fetch challenges and users when the user or active tab changes
   useEffect(() => {
     if (user) {
       fetchChallenges();
@@ -77,16 +80,15 @@ function Challenges() {
     }
   }, [user, activeTab]);
 
+  // Fetch challenges for the current user depending on the active tab (active or completed)
   const fetchChallenges = async () => {
     try {
       setLoading(true);
       let response;
 
       if (activeTab === 'active') {
-        // For active tab, fetch both pending and accepted challenges
         response = await fetch(`${API_BASE_URL}/challenges/user/${user.id}`);
       } else {
-        // For completed tab, fetch only completed challenges
         response = await fetch(`${API_BASE_URL}/challenges/user/${user.id}?status=completed`);
       }
 
@@ -94,9 +96,8 @@ function Challenges() {
 
       const data = await response.json();
 
-      // For active tab, filter to show only pending and accepted challenges
-      // For completed tab, the server already filtered for us
       if (activeTab === 'active') {
+        // Filter challenges to only display pending or accepted ones
         const activeChallenges = data.filter(challenge =>
           challenge.status === 'pending' || challenge.status === 'accepted',
         );
@@ -113,14 +114,12 @@ function Challenges() {
     }
   };
 
+  // Fetch list of users (to select as opponents) excluding the current user
   const fetchUsers = async () => {
     try {
-      // For now, we'll implement a simple endpoint to get all users
-      // In a real app, you'd want to paginate or search users
       const response = await fetch(`${API_BASE_URL}/users`);
       if (response.ok) {
         const data = await response.json();
-        // Filter out current user
         setUsers(data.filter(u => u.id !== user.id));
       }
     } catch (err) {
@@ -128,13 +127,12 @@ function Challenges() {
     }
   };
 
-  // Update the handleCreateChallenge function in your Challenges.jsx file
-
+  // Create a new challenge with the selected options and send it to the API
   const handleCreateChallenge = async () => {
     if (!selectedUser) return;
 
     try {
-    // Make sure at least one question type is selected
+      // Filter out the enabled question types
       const selectedTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
@@ -144,7 +142,7 @@ function Challenges() {
         return;
       }
 
-      // Prepare quiz settings
+      // Consolidate quiz settings for the challenge
       const quizSettings = {
         quizType: selectedQuizType,
         difficulty: selectedDifficulty,
@@ -172,6 +170,7 @@ function Challenges() {
 
       if (!response.ok) throw new Error('Failed to create challenge');
 
+      // Close modal and refresh challenges
       setShowCreateModal(false);
       setSelectedUser('');
       fetchChallenges();
@@ -181,13 +180,13 @@ function Challenges() {
     }
   };
 
-  // Function to format quiz settings for display
+  // Format quiz settings to be displayed on challenge cards
   const formatQuizSettings = (settings) => {
     if (!settings) return 'Standard Settings';
-
     return `${settings.quizType} • ${settings.difficulty} • ${settings.questionCount}Q • ${settings.timer}s`;
   };
 
+  // Format date strings into a more readable format
   const formatDateTime = (dateString) => {
     const options = {
       month: 'short',
@@ -199,6 +198,7 @@ function Challenges() {
     return new Date(dateString).toLocaleString(undefined, options);
   };
 
+  // Accept a challenge by sending a POST request to the API
   const handleAcceptChallenge = async (challengeId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/accept`, {
@@ -210,7 +210,6 @@ function Challenges() {
 
       if (!response.ok) throw new Error('Failed to accept challenge');
 
-      // Refresh the challenges after accepting
       fetchChallenges();
     } catch (err) {
       console.error('Error accepting challenge:', err);
@@ -218,12 +217,12 @@ function Challenges() {
     }
   };
 
+  // Navigate to the game play view for the selected challenge
   const handlePlayChallenge = (challenge) => {
-    // Navigate to the trivia game with challenge context
     navigate(`/games/quiz?challengeId=${challenge.id}`);
   };
 
-  // Handle deletion of a challenge
+  // Delete a challenge via API call and refresh the list after deletion
   const handleDeleteChallenge = async (challengeId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
@@ -235,13 +234,10 @@ function Challenges() {
 
       if (!response.ok) throw new Error('Failed to delete challenge');
 
-      // Close confirmation dialog
       setDeleteConfirmation(null);
 
-      // Show success message
       alert('Challenge deleted successfully');
 
-      // Refresh the challenges list
       fetchChallenges();
     } catch (err) {
       console.error('Error deleting challenge:', err);
@@ -249,6 +245,7 @@ function Challenges() {
     }
   };
 
+  // Determine the current status of a challenge from the perspective of the user
   const getChallengeStatus = (challenge) => {
     if (challenge.status === 'pending' && challenge.challengedId === user.id) {
       return 'awaiting_acceptance';
@@ -259,7 +256,7 @@ function Challenges() {
       const hasPlayed = isChallenger ? challenge.challengerScore !== null : challenge.challengedScore !== null;
 
       if (!hasPlayed) {
-        return 'ready_to_play'; // This is the status that should show "READY TO PLAY"
+        return 'ready_to_play';
       }
 
       return 'waiting_opponent';
@@ -268,6 +265,7 @@ function Challenges() {
     return challenge.status;
   };
 
+  // Render a challenge card with its details and available actions
   const renderChallengeCard = (challenge) => {
     const status = getChallengeStatus(challenge);
     const isChallenger = challenge.challengerId === user.id;
@@ -282,7 +280,7 @@ function Challenges() {
           </span>
         </div>
 
-        {/* Quiz Settings Display */}
+        {/* Display quiz settings if available */}
         {challenge.quizSettings && (
           <div className="challenge-settings">
             <span className="settings-badge">
@@ -331,7 +329,7 @@ function Challenges() {
             </div>
           )}
 
-          {/* Delete button - only visible for challenges created by the user */}
+          {/* Display delete button only for challenges created by the current user */}
           {isChallenger && (
             <button
               className="btn-delete"
@@ -351,6 +349,7 @@ function Challenges() {
     );
   };
 
+  // Show a loading spinner when data is being fetched
   if (loading) {
     return (
       <div className="challenges-container">
@@ -369,6 +368,7 @@ function Challenges() {
         Challenge your friends to financial trivia battles and earn points!
       </p>
 
+      {/* Button to open the create challenge modal */}
       <button className="btn-create-challenge" onClick={() => setShowCreateModal(true)}>
         Create New Challenge
       </button>
@@ -409,6 +409,7 @@ function Challenges() {
           <div className="modal-content wide-modal">
             <h3>Create Challenge</h3>
 
+            {/* Opponent selection dropdown */}
             <div className="form-group">
               <label>Select Opponent</label>
               <select
@@ -500,33 +501,34 @@ function Challenges() {
               </div>
 
               <div className="form-group">
-  <label>Question Types</label>
-  <div className="question-types-grid">
-    {[
-      { value: 'multiple-choice', label: 'Multiple Choice', icon: '🔠' },
-      { value: 'true-false', label: 'True/False', icon: '✓✗' },
-      { value: 'fill-blank', label: 'Fill in the Blank', icon: '📝' },
-      { value: 'matching', label: 'Matching', icon: '🔄' },
-      { value: 'calculation', label: 'Financial Calculations', icon: '🧮' },
-    ].map(type => (
-      <label key={type.value} className="question-type-checkbox">
-        <input
-          type="checkbox"
-          checked={selectedQuestionTypes[type.value]}
-          onChange={() => {
-            setSelectedQuestionTypes({
-              ...selectedQuestionTypes,
-              [type.value]: !selectedQuestionTypes[type.value],
-            });
-          }}
-        />
-        <span>{type.icon} {type.label}</span>
-      </label>
-    ))}
-  </div>
-</div>
+                <label>Question Types</label>
+                <div className="question-types-grid">
+                  {[
+                    { value: 'multiple-choice', label: 'Multiple Choice', icon: '🔠' },
+                    { value: 'true-false', label: 'True/False', icon: '✓✗' },
+                    { value: 'fill-blank', label: 'Fill in the Blank', icon: '📝' },
+                    { value: 'matching', label: 'Matching', icon: '🔄' },
+                    { value: 'calculation', label: 'Financial Calculations', icon: '🧮' },
+                  ].map(type => (
+                    <label key={type.value} className="question-type-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuestionTypes[type.value]}
+                        onChange={() => {
+                          setSelectedQuestionTypes({
+                            ...selectedQuestionTypes,
+                            [type.value]: !selectedQuestionTypes[type.value],
+                          });
+                        }}
+                      />
+                      <span>{type.icon} {type.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
+            {/* Modal action buttons */}
             <div className="modal-actions">
               <button onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button

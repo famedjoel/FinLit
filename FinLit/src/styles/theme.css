@@ -1,5 +1,3 @@
-/* src/styles/theme.css */
-
 :root {
   /* Light theme variables (default) */
   --bg-primary: #f8f9fa;
@@ -18,7 +16,7 @@
   --error-color: #ef4444;
   --info-color: #0ea5e9;
   
-  /* Game-specific colors */
+  /* Game-specific colours */
   --essentials-color: #38b2ac;
   --luxuries-color: #ed8936;
   --savings-color: #4299e1;
@@ -50,7 +48,7 @@
   --error-color: #f87171;
   --info-color: #38bdf8;
   
-  /* Game-specific colors - slightly brighter for dark mode */
+  /* Game-specific colours - slightly brighter for dark mode */
   --essentials-color: #4fd1cb;
   --luxuries-color: #fbb97f;
   --savings-color: #7dd3fc;

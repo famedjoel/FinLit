@@ -1,14 +1,14 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect, useRef, useContext } from 'react';
 import { Sun, Cloud, CloudRain, Coins, ShoppingBag, ArrowRight, DollarSign, RefreshCw, Thermometer } from 'lucide-react';
-import { ThemeContext } from '../context/ThemeContext.jsx'; // Import ThemeContext
-import '../styles/LemonadeStand.css'; // Import enhanced styles
+import { ThemeContext } from '../context/ThemeContext.jsx';
+import '../styles/LemonadeStand.css';
 
 const LemonadeStand = () => {
   const weatherTypes = ['Sunny', 'Cloudy', 'Rainy'];
-  const { theme } = useContext(ThemeContext); // Get current theme from context
+  const { theme } = useContext(ThemeContext);
 
-  // Load saved game state from localStorage
+  // Load saved game state from localStorage or initialise default state
   const loadGameState = () => {
     const savedState = JSON.parse(localStorage.getItem('lemonadeStandGame'));
     return savedState || {
@@ -33,17 +33,16 @@ const LemonadeStand = () => {
   const [animateSale, setAnimateSale] = useState(false);
   const [showWeatherEffect, setShowWeatherEffect] = useState(true);
 
-  // Refs for animations
   const containerRef = useRef(null);
 
-  // Get the current hostname for API calls (works on all devices)
   const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
+  // Save game state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('lemonadeStandGame', JSON.stringify(gameState));
-  }, [gameState]); // Save progress after every change
+  }, [gameState]);
 
-  // Check if user is logged in
+  // Load user data from localStorage on initial render
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -51,18 +50,16 @@ const LemonadeStand = () => {
     }
   }, []);
 
-  // Track game start
+  // Track game start activity for logged-in users
   useEffect(() => {
-    // Only track if user is logged in and game hasn't been started yet
     if (user && !gameStarted && day === 1) {
-      trackGameActivity(0); // 0 score for just starting
+      trackGameActivity(0);
       setGameStarted(true);
     }
   }, [user, gameStarted, day]);
 
-  // Weather effect animation
+  // Trigger weather effect animations when weather changes
   useEffect(() => {
-    // Show weather effect when weather changes
     setShowWeatherEffect(true);
     const timer = setTimeout(() => {
       setShowWeatherEffect(false);
@@ -71,59 +68,43 @@ const LemonadeStand = () => {
     return () => clearTimeout(timer);
   }, [weather]);
 
-  // Create weather effects (raindrops, clouds, sun rays)
+  // Generate weather effects (raindrops, sun rays, clouds) based on current weather
   useEffect(() => {
-    if (!containerRef.current) return;
-    if (!showWeatherEffect) return;
+    if (!containerRef.current || !showWeatherEffect) return;
 
-    // Clean up previous effects
     const existingEffects = containerRef.current.querySelectorAll('.weather-effect');
     existingEffects.forEach(effect => effect.remove());
 
-    // Create new effects based on weather
     if (weather === 'Rainy') {
-      // Create raindrops
-      for (let i = 0; i < 20; i++) {
-        createRaindrop();
-      }
+      for (let i = 0; i < 20; i++) createRaindrop();
     } else if (weather === 'Sunny') {
-      // Create sun rays
       createSunRays();
     } else if (weather === 'Cloudy') {
-      // Create clouds
-      for (let i = 0; i < 3; i++) {
-        createCloud();
-      }
+      for (let i = 0; i < 3; i++) createCloud();
     }
 
-    // Cleanup function
     return () => {
       const effects = containerRef.current?.querySelectorAll('.weather-effect');
       effects?.forEach(effect => effect.remove());
     };
   }, [weather, showWeatherEffect]);
 
-  // Create raindrop element
+  // Create a raindrop element for rainy weather
   const createRaindrop = () => {
     if (!containerRef.current) return;
 
     const raindrop = document.createElement('div');
     raindrop.classList.add('raindrop', 'weather-effect');
-
-    // Random position and delay
     raindrop.style.left = `${Math.random() * 100}%`;
     raindrop.style.animationDelay = `${Math.random() * 2}s`;
     raindrop.style.animationDuration = `${0.5 + Math.random()}s`;
 
     containerRef.current.appendChild(raindrop);
 
-    // Remove raindrop after animation
-    setTimeout(() => {
-      raindrop.remove();
-    }, 3000);
+    setTimeout(() => raindrop.remove(), 3000);
   };
 
-  // Create sun rays element
+  // Create sun rays element for sunny weather
   const createSunRays = () => {
     if (!containerRef.current) return;
 
@@ -132,31 +113,24 @@ const LemonadeStand = () => {
 
     containerRef.current.appendChild(sunRays);
 
-    // Remove sun rays after animation
-    setTimeout(() => {
-      sunRays.remove();
-    }, 3000);
+    setTimeout(() => sunRays.remove(), 3000);
   };
 
-  // Create cloud element
+  // Create cloud elements for cloudy weather
   const createCloud = () => {
     if (!containerRef.current) return;
 
     const cloud = document.createElement('div');
     cloud.classList.add('cloud', 'weather-effect');
-
-    // Random position and speed
     cloud.style.top = `${20 + Math.random() * 30}%`;
     cloud.style.animationDuration = `${20 + Math.random() * 10}s`;
 
     containerRef.current.appendChild(cloud);
 
-    // Remove cloud after animation
-    setTimeout(() => {
-      cloud.remove();
-    }, 30000);
+    setTimeout(() => cloud.remove(), 30000);
   };
 
+  // Display appropriate weather icon based on current weather
   const WeatherIcon = () => {
     switch (weather) {
       case 'Sunny': return <Sun className="weather-icon" color={theme === 'dark' ? '#ffb74d' : '#f57f17'} />;
@@ -166,6 +140,7 @@ const LemonadeStand = () => {
     }
   };
 
+  // Calculate customer demand based on weather and lemonade price
   const calculateDemand = () => {
     let baseDemand = 50;
     if (weather === 'Sunny') baseDemand += 20;
@@ -178,10 +153,10 @@ const LemonadeStand = () => {
     return Math.floor(baseDemand * priceFactor);
   };
 
-  // Generate cups emoji for sales visualization
+  // Render cups emoji to visualise sales
   const renderCups = (count) => {
     const cups = [];
-    const maxDisplayCups = 20; // Limit to avoid overwhelming the UI
+    const maxDisplayCups = 20;
     const displayCount = Math.min(count, maxDisplayCups);
 
     for (let i = 0; i < displayCount; i++) {
@@ -199,9 +174,9 @@ const LemonadeStand = () => {
     return cups;
   };
 
-  // Track game activity (start, end, score update)
+  // Track game activity for analytics
   const trackGameActivity = async (score) => {
-    if (!user) return; // Only track if user is logged in
+    if (!user) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/progress/game`, {
@@ -229,7 +204,7 @@ const LemonadeStand = () => {
     }
   };
 
-  // Get appropriate weather class for theming
+  // Determine the appropriate weather class for styling
   const getWeatherClass = () => {
     switch (weather) {
       case 'Sunny': return 'day-sunny';
@@ -239,6 +214,7 @@ const LemonadeStand = () => {
     }
   };
 
+  // Handle purchasing items from the shop
   const buyItem = (item) => {
     if (money < 2) {
       setMessage('❌ Not enough money!');
@@ -252,7 +228,6 @@ const LemonadeStand = () => {
       ice: item === 'ice' ? prev.ice + 1 : prev.ice,
     }));
 
-    // Play purchase animation
     if (containerRef.current) {
       const purchaseEffect = document.createElement('div');
       purchaseEffect.classList.add('purchase-effect');
@@ -260,12 +235,11 @@ const LemonadeStand = () => {
 
       containerRef.current.appendChild(purchaseEffect);
 
-      setTimeout(() => {
-        purchaseEffect.remove();
-      }, 1000);
+      setTimeout(() => purchaseEffect.remove(), 1000);
     }
   };
 
+  // Handle selling lemonade to customers
   const sellLemonade = () => {
     if (lemons < 1 || sugar < 1 || ice < 1) {
       setMessage('❌ Not enough ingredients!');
@@ -288,22 +262,20 @@ const LemonadeStand = () => {
 
     setMessage(`✅ You sold ${cupsToSell} cups today and earned $${earnings.toFixed(2)}!`);
 
-    // Trigger the sale animation
     setAnimateSale(true);
     setTimeout(() => setAnimateSale(false), 2000);
   };
 
+  // Progress to the next day and update weather
   const nextDay = () => {
     if (day >= 7) {
       setMessage(`🎉 Game Over! You made $${money.toFixed(2)} in 7 days.`);
 
-      // Track final game score when game is completed at day 7
       if (user && !gameEnded) {
         trackGameActivity(Math.round(money));
         setGameEnded(true);
       }
 
-      // Show confetti effect
       if (containerRef.current) {
         for (let i = 0; i < 50; i++) {
           createConfetti();
@@ -313,7 +285,6 @@ const LemonadeStand = () => {
       return;
     }
 
-    // Choose next day's weather
     const newWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
 
     setGameState((prev) => ({
@@ -325,28 +296,23 @@ const LemonadeStand = () => {
     }));
   };
 
-  // Create confetti elements for game end celebration
+  // Create confetti for game end celebration
   const createConfetti = () => {
     if (!containerRef.current) return;
 
     const confetti = document.createElement('div');
     confetti.classList.add('confetti');
-
-    // Random position, color, and rotation
     confetti.style.left = `${Math.random() * 100}%`;
     confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
 
     containerRef.current.appendChild(confetti);
 
-    // Remove confetti after animation
-    setTimeout(() => {
-      confetti.remove();
-    }, 3000);
+    setTimeout(() => confetti.remove(), 3000);
   };
 
+  // Reset the game to its initial state
   const resetGame = () => {
-    // Track final score before reset if game was in progress
     if (user && gameStarted && !gameEnded && day > 1) {
       trackGameActivity(Math.round(money));
     }
@@ -379,19 +345,17 @@ const LemonadeStand = () => {
     return 'Very Low';
   };
 
-  // Get color for demand indicator
-  const getDemandColor = () => {
+  // Get colour for demand indicator
+  const getDemandColour = () => {
     const demand = calculateDemand();
 
     if (theme === 'dark') {
-      // Brighter colors for dark mode
       if (demand >= 40) return '#4caf50';
       if (demand >= 30) return '#8bc34a';
       if (demand >= 20) return '#ffeb3b';
       if (demand >= 10) return '#ff9800';
       return '#f44336';
     } else {
-      // Original colors for light mode
       if (demand >= 40) return '#4caf50';
       if (demand >= 30) return '#8bc34a';
       if (demand >= 20) return '#ffc107';
@@ -402,7 +366,6 @@ const LemonadeStand = () => {
 
   return (
     <div className={`lemonade-game ${theme === 'dark' ? 'dark-theme' : ''}`} ref={containerRef}>
-      {/* Decorative elements */}
       <div className="lemon-decoration one">🍋</div>
       <div className="lemon-decoration two">🍋</div>
       <div className="lemon-decoration three">🍋</div>
@@ -419,7 +382,6 @@ const LemonadeStand = () => {
         </div>
 
         <div className="main-content">
-          {/* Stats */}
           <div className="stats-grid">
             <div className="stat-card money">
               <DollarSign size={24} />
@@ -443,7 +405,6 @@ const LemonadeStand = () => {
             </div>
           </div>
 
-          {/* Weather info */}
           <div className="section">
             <h2 className="shop-title">
               <Thermometer size={20} />
@@ -452,7 +413,7 @@ const LemonadeStand = () => {
             <div className="weather-info">
               <div className="weather-detail">
                 <p><strong>Today&apos;s Weather:</strong> {weather}</p>
-                <p><strong>Estimated Demand:</strong> <span style={{ color: getDemandColor() }}>{getEstimatedDemand()}</span></p>
+                <p><strong>Estimated Demand:</strong> <span style={{ color: getDemandColour() }}>{getEstimatedDemand()}</span></p>
                 <p className="weather-tip">
                   {weather === 'Sunny'
                     ? 'Perfect day for selling lemonade! Expect more customers.'
@@ -464,7 +425,6 @@ const LemonadeStand = () => {
             </div>
           </div>
 
-          {/* Shop */}
           <div className="section">
             <h2 className="shop-title">
               <ShoppingBag size={20} />
@@ -483,7 +443,6 @@ const LemonadeStand = () => {
             </div>
           </div>
 
-          {/* Set Lemonade Price */}
           <div className="price-section">
             <div className="price-display">
               <span>Lemonade Price:</span>
@@ -503,7 +462,6 @@ const LemonadeStand = () => {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="action-buttons">
             <button onClick={sellLemonade} className="btn btn-sell">
               <Coins size={20} /> Sell Lemonade
@@ -513,16 +471,13 @@ const LemonadeStand = () => {
             </button>
           </div>
 
-          {/* Message */}
           {message && <div className="message">{message}</div>}
 
-          {/* Sales Report */}
           <div className="sales-report">
             <h3 className="sales-title">📊 Today&apos;s Sales</h3>
             <p>Cups Sold: {cupsSold}</p>
             <p>Total Cups Sold: {totalCupsSold}</p>
 
-            {/* Cup visualization */}
             {cupsSold > 0 && (
               <div className="cups-counter">
                 {renderCups(cupsSold)}
@@ -530,7 +485,6 @@ const LemonadeStand = () => {
             )}
           </div>
 
-          {/* Reset Game */}
           <button onClick={resetGame} className="btn btn-reset">
             <RefreshCw size={18} /> Reset Game
           </button>

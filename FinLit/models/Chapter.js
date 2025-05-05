@@ -1,14 +1,16 @@
-// models/Chapter.js
 import { connect } from '../config/sqlite-adapter.js';
 
-// Chapter model
+/*
+  Chapter model that provides database operations for chapters
+  and their related lessons. It supports creating, reading,
+  updating, and deleting chapter records.
+*/
 const Chapter = {
-  // Create a new chapter
+  // Creates a new chapter record in the database.
   create: async (chapterData) => {
     try {
       const connection = await connect();
 
-      // Insert the chapter
       const result = await connection.run(
         `INSERT INTO chapters (
           course_id, title, description, order, created_at, updated_at
@@ -23,7 +25,7 @@ const Chapter = {
         ],
       );
 
-      // Get the inserted chapter
+      // Retrieve the newly created chapter using its generated ID.
       const chapter = await connection.get(
         'SELECT * FROM chapters WHERE id = ?',
         result.lastID,
@@ -36,17 +38,18 @@ const Chapter = {
     }
   },
 
-  // Find all chapters for a course
+  // Retrieves all chapters for a specific course, including their lessons.
   findByCourseId: async (courseId) => {
     try {
       const connection = await connect();
 
+      // Query chapters for the given course ID, ordered by 'order'.
       const chapters = await connection.all(
         'SELECT * FROM chapters WHERE course_id = ? ORDER BY `order`',
         courseId,
       );
 
-      // For each chapter, get its lessons
+      // For each chapter, retrieve its associated lessons.
       const chaptersWithLessons = await Promise.all(
         chapters.map(async (chapter) => {
           const lessons = await connection.all(
@@ -55,7 +58,7 @@ const Chapter = {
           );
 
           const processedChapter = processChapterData(chapter);
-          processedChapter.lessons = lessons.map(lesson => ({
+          processedChapter.lessons = lessons.map((lesson) => ({
             id: lesson.id,
             title: lesson.title,
             order: lesson.order,
@@ -72,7 +75,7 @@ const Chapter = {
     }
   },
 
-  // Find a chapter by ID
+  // Retrieves a chapter by its ID along with its associated lessons.
   findById: async (id) => {
     try {
       const connection = await connect();
@@ -81,19 +84,16 @@ const Chapter = {
         'SELECT * FROM chapters WHERE id = ?',
         id,
       );
-
       if (!chapter) return null;
 
-      // Get lessons for this chapter
+      // Retrieve lessons for the chapter.
       const lessons = await connection.all(
         'SELECT id, title, `order` FROM lessons WHERE chapter_id = ? ORDER BY `order`',
         id,
       );
 
       const processedChapter = processChapterData(chapter);
-
-      // Add lessons to chapter
-      processedChapter.lessons = lessons.map(lesson => ({
+      processedChapter.lessons = lessons.map((lesson) => ({
         id: lesson.id,
         title: lesson.title,
         order: lesson.order,
@@ -106,51 +106,48 @@ const Chapter = {
     }
   },
 
-  // Update a chapter
+  // Updates an existing chapter record with the provided changes.
   update: async (id, updates) => {
     try {
       const connection = await connect();
 
-      // Check if chapter exists
+      // Verify that the chapter exists.
       const existingChapter = await connection.get(
         'SELECT * FROM chapters WHERE id = ?',
         id,
       );
-
       if (!existingChapter) {
         throw new Error('Chapter not found');
       }
 
-      // Build update query
+      // Dynamically construct the SQL update clause from the updates provided.
       const setClauses = [];
       const params = [];
 
       for (const [key, value] of Object.entries(updates)) {
-        // Convert camelCase to snake_case for DB
+        // Convert camelCase property names to snake_case for the database.
         const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
         setClauses.push(`${dbKey} = ?`);
         params.push(value);
       }
 
-      // Add updated_at
+      // Add updated_at timestamp.
       setClauses.push('updated_at = ?');
       params.push(new Date().toISOString());
 
-      // Add id to params
+      // Append chapter id for the WHERE clause.
       params.push(id);
 
-      // Execute update
       await connection.run(
         `UPDATE chapters SET ${setClauses.join(', ')} WHERE id = ?`,
         params,
       );
 
-      // Get updated chapter
+      // Retrieve the updated chapter record.
       const updatedChapter = await connection.get(
         'SELECT * FROM chapters WHERE id = ?',
         id,
       );
-
       return processChapterData(updatedChapter);
     } catch (error) {
       console.error('Error updating chapter:', error);
@@ -158,33 +155,32 @@ const Chapter = {
     }
   },
 
-  // Delete a chapter (and its lessons)
+  // Deletes a chapter and its dependent lessons from the database.
   delete: async (id) => {
     try {
       const connection = await connect();
 
-      // Start a transaction
+      // Begin a transaction to ensure atomicity of the deletion.
       await connection.run('BEGIN TRANSACTION');
 
       try {
-        // Delete lessons first (foreign key constraint)
+        // Remove associated lessons first to satisfy foreign key constraints.
         await connection.run(
           'DELETE FROM lessons WHERE chapter_id = ?',
           id,
         );
 
-        // Then delete the chapter
+        // Delete the chapter record.
         await connection.run(
           'DELETE FROM chapters WHERE id = ?',
           id,
         );
 
-        // Commit the transaction
+        // Commit the transaction if both deletions succeed.
         await connection.run('COMMIT');
-
         return true;
       } catch (err) {
-        // Rollback the transaction on error
+        // Roll back the transaction if an error occurs.
         await connection.run('ROLLBACK');
         throw err;
       }
@@ -195,11 +191,9 @@ const Chapter = {
   },
 };
 
-// Process chapter data from DB format
+// Converts database chapter data from snake_case to camelCase.
 function processChapterData(chapter) {
   if (!chapter) return null;
-
-  // Convert snake_case to camelCase
   return {
     id: chapter.id,
     courseId: chapter.course_id,

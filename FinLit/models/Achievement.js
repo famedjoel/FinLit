@@ -1,8 +1,7 @@
-// models/Achievement.js
 import { connect } from '../config/sqlite-adapter.js';
 
 const Achievement = {
-  // Create a new achievement definition
+  // Creates a new achievement record in the database.
   create: async (achievementData) => {
     try {
       const connection = await connect();
@@ -26,7 +25,7 @@ const Achievement = {
         ],
       );
 
-      // Get the inserted achievement
+      // Retrieve the newly inserted achievement.
       const achievement = await connection.get(
         'SELECT * FROM achievements WHERE id = ?',
         result.lastID,
@@ -39,7 +38,7 @@ const Achievement = {
     }
   },
 
-  // Get all achievements
+  // Retrieves all achievements from the database.
   getAll: async () => {
     try {
       const connection = await connect();
@@ -50,12 +49,12 @@ const Achievement = {
 
       return achievements.map(achievement => processAchievementData(achievement));
     } catch (error) {
-      console.error('Error getting all achievements:', error);
+      console.error('Error retrieving all achievements:', error);
       throw error;
     }
   },
 
-  // Get achievements by category
+  // Retrieves achievements by a given category.
   getByCategory: async (category) => {
     try {
       const connection = await connect();
@@ -67,12 +66,12 @@ const Achievement = {
 
       return achievements.map(achievement => processAchievementData(achievement));
     } catch (error) {
-      console.error('Error getting achievements by category:', error);
+      console.error('Error retrieving achievements by category:', error);
       throw error;
     }
   },
 
-  // Get a specific achievement by ID
+  // Finds an achievement by its ID.
   findById: async (id) => {
     try {
       const connection = await connect();
@@ -89,26 +88,21 @@ const Achievement = {
     }
   },
 
-  // Update an achievement
+  // Updates an achievement record with the specified updates.
   update: async (id, updates) => {
     try {
       const connection = await connect();
 
-      // Build update query
       const setClauses = [];
       const params = [];
-
       for (const [key, value] of Object.entries(updates)) {
-        // Convert camelCase to snake_case for DB
         const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
         setClauses.push(`${dbKey} = ?`);
         params.push(value);
       }
 
-      // Add id to params
       params.push(id);
 
-      // Execute update if there are fields to update
       if (setClauses.length > 0) {
         await connection.run(
           `UPDATE achievements SET ${setClauses.join(', ')} WHERE id = ?`,
@@ -116,7 +110,6 @@ const Achievement = {
         );
       }
 
-      // Return updated achievement
       return await Achievement.findById(id);
     } catch (error) {
       console.error('Error updating achievement:', error);
@@ -124,7 +117,7 @@ const Achievement = {
     }
   },
 
-  // Delete an achievement
+  // Deletes an achievement record using its ID.
   delete: async (id) => {
     try {
       const connection = await connect();
@@ -141,7 +134,7 @@ const Achievement = {
     }
   },
 
-  // Get achievements for a specific user with progress
+  // Retrieves achievements for a specific user, including progress details.
   getUserAchievements: async (userId) => {
     try {
       const connection = await connect();
@@ -156,13 +149,10 @@ const Achievement = {
 
       return userAchievements.map(achievement => {
         const processed = processAchievementData(achievement);
-        // Add user-specific fields
         processed.progress = achievement.progress || 0;
         processed.currentLevel = achievement.current_level || 1;
         processed.completed = achievement.completed === 1;
         processed.completedAt = achievement.completed_at;
-
-        // Calculate progress percentage
         processed.progressPercentage = Math.min(
           100,
           Math.round((processed.progress / processed.requirementValue) * 100),
@@ -171,32 +161,27 @@ const Achievement = {
         return processed;
       });
     } catch (error) {
-      console.error('Error getting user achievements:', error);
+      console.error('Error retrieving user achievements:', error);
       throw error;
     }
   },
 
-  // Update user achievement progress
+  // Updates the progress for a user's achievement and awards points upon completion.
   updateUserProgress: async (userId, achievementId, progressValue, transaction = null) => {
     try {
       const connection = await connect();
-
-      // Only start a transaction if one wasn't passed in
       const shouldManageTransaction = !transaction;
 
       try {
-        // Begin transaction only if we need to manage it ourselves
         if (shouldManageTransaction) {
           await connection.run('BEGIN TRANSACTION');
         }
 
-        // Get the achievement details
         const achievement = await Achievement.findById(achievementId);
         if (!achievement) {
           throw new Error('Achievement not found');
         }
 
-        // Get current user progress for this achievement
         let userAchievement = await connection.get(
           `SELECT * FROM user_achievements 
            WHERE user_id = ? AND achievement_id = ?`,
@@ -205,7 +190,6 @@ const Achievement = {
 
         const now = new Date().toISOString();
 
-        // If no record exists yet, create one
         if (!userAchievement) {
           await connection.run(
             `INSERT INTO user_achievements
@@ -223,18 +207,13 @@ const Achievement = {
           };
         }
 
-        // Calculate new progress value
         let newProgress = progressValue;
         if (progressValue > 0 && progressValue <= userAchievement.progress) {
-          // If the new value is less than current progress, we're setting an absolute value
-          // Otherwise, we're incrementing
           newProgress = userAchievement.progress + progressValue;
         }
 
-        // Check if the achievement is completed at this level
         const isCompleted = newProgress >= achievement.requirementValue;
 
-        // Update user achievement record
         await connection.run(
           `UPDATE user_achievements
            SET progress = ?, completed = ?, updated_at = ?,
@@ -244,16 +223,14 @@ const Achievement = {
             newProgress,
             isCompleted ? 1 : 0,
             now,
-            isCompleted, // Condition for updating completed_at
-            now, // New completed_at value
+            isCompleted,
+            now,
             userId,
             achievementId,
           ],
         );
 
-        // If newly completed, award points
         if (isCompleted && userAchievement.completed === 0) {
-          // Award points for completing the achievement
           await connection.run(
             `INSERT INTO user_points (user_id, total_points, last_updated)
              VALUES (?, ?, ?)
@@ -263,14 +240,12 @@ const Achievement = {
             [userId, achievement.pointsReward, now, achievement.pointsReward, now],
           );
 
-          // Record points history
           await connection.run(
             `INSERT INTO points_history (user_id, points_change, reason, reference_id)
              VALUES (?, ?, ?, ?)`,
             [userId, achievement.pointsReward, 'achievement_completed', `achievement_${achievementId}`],
           );
 
-          // Update user stats for achievement tracking
           await connection.run(
             `UPDATE user_stats
              SET points_earned = points_earned + ?
@@ -279,12 +254,10 @@ const Achievement = {
           );
         }
 
-        // Commit the transaction only if we started it
         if (shouldManageTransaction) {
           await connection.run('COMMIT');
         }
 
-        // Get updated user achievement
         const updatedUserAchievement = await connection.get(
           `SELECT a.*, ua.progress, ua.current_level, ua.completed, ua.completed_at
            FROM achievements a
@@ -295,7 +268,6 @@ const Achievement = {
 
         return processAchievementData(updatedUserAchievement);
       } catch (error) {
-        // Rollback the transaction on error only if we started it
         if (shouldManageTransaction) {
           await connection.run('ROLLBACK');
         }
@@ -307,12 +279,11 @@ const Achievement = {
     }
   },
 
-  // Get newly completed achievements for a user
+  // Retrieves achievements that were completed within the last 24 hours by a user.
   getNewlyCompletedAchievements: async (userId) => {
     try {
       const connection = await connect();
 
-      // Get achievements completed in the last 24 hours
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
@@ -328,26 +299,23 @@ const Achievement = {
 
       return newlyCompleted.map(achievement => processAchievementData(achievement));
     } catch (error) {
-      console.error('Error getting newly completed achievements:', error);
+      console.error('Error retrieving newly completed achievements:', error);
       throw error;
     }
   },
 
-  // Initialize default achievements in the database
+  // Initialises the default achievements if none are present in the database.
   initDefaultAchievements: async () => {
     try {
       const connection = await connect();
 
-      // Check if achievements already exist
       const existingAchievements = await connection.all('SELECT * FROM achievements');
       if (existingAchievements.length > 0) {
         console.log(`Database already contains ${existingAchievements.length} achievements.`);
         return;
       }
 
-      // Default achievement definitions
       const defaultAchievements = [
-        // Quiz achievements
         {
           name: 'Quiz Novice',
           description: 'Complete 5 financial trivia quizzes',
@@ -392,8 +360,6 @@ const Achievement = {
           level: 4,
           maxLevel: 4,
         },
-
-        // Question achievements
         {
           name: 'Question Starter',
           description: 'Answer 50 trivia questions',
@@ -427,8 +393,6 @@ const Achievement = {
           level: 3,
           maxLevel: 3,
         },
-
-        // Challenge achievements
         {
           name: 'Challenger',
           description: 'Send 5 challenges to other users',
@@ -473,8 +437,6 @@ const Achievement = {
           level: 3,
           maxLevel: 3,
         },
-
-        // Course achievements
         {
           name: 'Student',
           description: 'Complete 1 financial course',
@@ -508,8 +470,6 @@ const Achievement = {
           level: 3,
           maxLevel: 3,
         },
-
-        // Streak achievements
         {
           name: 'Consistent Learner',
           description: 'Login and take a quiz 3 days in a row',
@@ -545,24 +505,22 @@ const Achievement = {
         },
       ];
 
-      // Insert achievements
       for (const achievementData of defaultAchievements) {
         await Achievement.create(achievementData);
       }
 
-      console.log(`Initialized ${defaultAchievements.length} default achievements`);
+      console.log(`Initialised ${defaultAchievements.length} default achievements`);
     } catch (error) {
-      console.error('Error initializing default achievements:', error);
+      console.error('Error initialising default achievements:', error);
       throw error;
     }
   },
 };
 
-// Process achievement data from DB format
+// Converts a database achievement record (snake_case) into a standard camelCase JavaScript object.
 function processAchievementData(achievement) {
   if (!achievement) return null;
 
-  // Convert snake_case to camelCase
   return {
     id: achievement.id,
     name: achievement.name,

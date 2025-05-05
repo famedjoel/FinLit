@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-// src/components/QuestionTypeHandler.jsx
 import React, { useState } from 'react';
 import {
   MultipleChoiceQuestion,
@@ -19,20 +18,20 @@ const QuestionTypeHandler = ({
 }) => {
   const [showHint, setShowHint] = useState(false);
 
-  // Determine if the fill-in-blank or calculation answer is correct
+  // Determine if the text answer is correct.
+  // For 'fill-blank', the comparison is case insensitive.
+  // For 'calculation', a small margin of error (0.01) is allowed.
   const isTextAnswerCorrect = () => {
     if (currentQuestion.type === 'fill-blank') {
-      // Case insensitive comparison for fill-in-blank
       return selectedAnswer?.toLowerCase() === currentQuestion.correctAnswer.toLowerCase();
     } else if (currentQuestion.type === 'calculation') {
-      // For calculations, allow a small margin of error (0.01)
       const tolerance = 0.01;
       return Math.abs(selectedAnswer - currentQuestion.correctAnswer) <= tolerance;
     }
     return false;
   };
 
-  // Render different question types
+  // Render the appropriate question type component based on the current question type.
   switch (currentQuestion.type) {
     case 'multiple-choice':
       return (
@@ -99,7 +98,7 @@ const QuestionTypeHandler = ({
       );
 
     default:
-      // Fallback to multiple choice
+      // Fallback: render the multiple-choice question if the type is unrecognised.
       return (
         <MultipleChoiceQuestion
           question={currentQuestion.question}

@@ -1,12 +1,14 @@
+/* eslint-disable multiline-ternary */
 import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import '../styles/CourseContent.css';
 
-// API endpoint base URL
+// Set API endpoint base URL using the current protocol and hostname
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 const CourseContent = () => {
+  // State variables for tracking UI and API data
   const [markingComplete, setMarkingComplete] = useState(false);
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -24,7 +26,7 @@ const CourseContent = () => {
   const [error, setError] = useState(null);
   const { theme } = useContext(ThemeContext);
 
-  // Load user data
+  // Retrieve the stored user from local storage when the component mounts
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -32,14 +34,13 @@ const CourseContent = () => {
     }
   }, []);
 
-  // Load course data
+  // Fetch course details and chapters from the API
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Add debugging logs
         console.log(`Attempting to fetch course ${courseId} details`);
 
         // Fetch course details
@@ -53,7 +54,7 @@ const CourseContent = () => {
         const courseData = await courseResponse.json();
         console.log('Course data received:', courseData);
 
-        // Fetch chapters for this course
+        // Fetch chapters for the course
         console.log(`Fetching chapters for course ${courseId}`);
         const chaptersResponse = await fetch(`${API_BASE_URL}/api/courses/${courseId}/chapters`);
         console.log(`Chapters response status: ${chaptersResponse.status}`);
@@ -65,13 +66,13 @@ const CourseContent = () => {
         const chaptersData = await chaptersResponse.json();
         console.log(`Received ${chaptersData.length} chapters`);
 
-        // Set current course with chapters
+        // Combine course data with chapters
         setCurrentCourse({
           ...courseData,
           chapters: chaptersData,
         });
 
-        // Fetch user progress if logged in
+        // If a user is logged in, fetch their progress for the course
         if (user) {
           console.log(`Fetching progress for user ${user.id} and course ${courseId}`);
           const progressResponse = await fetch(`${API_BASE_URL}/api/users/${user.id}/courses/${courseId}/progress`);
@@ -82,9 +83,9 @@ const CourseContent = () => {
             console.log('Progress data received:', progressData);
 
             if (progressData.enrolled) {
-              // Set progress data
               const progressMap = {};
 
+              // Build a nested progress map for chapters and lessons
               progressData.chapters.forEach(chapter => {
                 progressMap[chapter.id] = {};
 
@@ -98,9 +99,8 @@ const CourseContent = () => {
 
               setProgress(progressMap);
 
-              // If user has a next lesson to continue, navigate to it
+              // Set the next lesson/chapter indices based on user's progress
               if (progressData.nextLessonId && progressData.nextChapterId) {
-                // Find the chapter and lesson indices
                 const chapterIndex = chaptersData.findIndex(chapter => chapter.id === progressData.nextChapterId);
 
                 if (chapterIndex >= 0) {
@@ -131,7 +131,7 @@ const CourseContent = () => {
     }
   }, [courseId, user]);
 
-  // Fetch lesson content when switching lessons
+  // Fetch the content for the current lesson
   useEffect(() => {
     const fetchLessonContent = async () => {
       if (!currentCourse || !currentCourse.chapters[currentChapterIndex]) {
@@ -157,7 +157,7 @@ const CourseContent = () => {
         const lessonData = await lessonResponse.json();
         console.log('Lesson data received:', lessonData);
 
-        // Update lesson content in current course
+        // Merge the fetched lesson data with the current lesson data
         const updatedChapters = [...currentCourse.chapters];
         updatedChapters[currentChapterIndex].lessons[currentLessonIndex] = {
           ...updatedChapters[currentChapterIndex].lessons[currentLessonIndex],
@@ -169,7 +169,7 @@ const CourseContent = () => {
           chapters: updatedChapters,
         });
 
-        // Update progress to mark lesson as visited
+        // If user is logged in, mark the lesson as visited on the server
         if (user) {
           const chapterId = chapter.id;
 
@@ -187,7 +187,7 @@ const CourseContent = () => {
             }),
           });
 
-          // Update local progress state
+          // Update local progress state to reflect the lesson visit
           setProgress(prev => ({
             ...prev,
             [chapterId]: {
@@ -207,7 +207,7 @@ const CourseContent = () => {
     fetchLessonContent();
   }, [currentChapterIndex, currentLessonIndex, currentCourse, user]);
 
-  // Handle navigation through chapters and lessons
+  // Navigate to a given lesson/chapter and reset quiz state
   const navigateToLesson = (chapterIndex, lessonIndex) => {
     setCurrentChapterIndex(chapterIndex);
     setCurrentLessonIndex(lessonIndex);
@@ -217,9 +217,9 @@ const CourseContent = () => {
     window.scrollTo(0, 0);
   };
 
-  // Mark lesson as completed
+  // Mark current lesson as completed and update progress on the server
   const markLessonCompleted = async () => {
-    if (markingComplete) return; // Prevent double clicks
+    if (markingComplete) return;
 
     if (!currentCourse || !currentCourse.chapters[currentChapterIndex]) {
       return;
@@ -235,7 +235,7 @@ const CourseContent = () => {
     try {
       setMarkingComplete(true);
 
-      // Update local state immediately for better UX
+      // Update local progress state
       setProgress(prev => ({
         ...prev,
         [chapter.id]: {
@@ -247,8 +247,8 @@ const CourseContent = () => {
         },
       }));
 
+      // Update progress on the server
       if (user) {
-        // Update server with completed status
         console.log(`Marking lesson ${lesson.id} as completed for user ${user.id}`);
         const lessonResponse = await fetch(`${API_BASE_URL}/api/progress/lesson`, {
           method: 'POST',
@@ -259,7 +259,7 @@ const CourseContent = () => {
             userId: user.id,
             lessonId: lesson.id,
             status: 'completed',
-            position: 100, // 100% progress
+            position: 100,
           }),
         });
 
@@ -267,7 +267,7 @@ const CourseContent = () => {
           throw new Error('Failed to update lesson progress');
         }
 
-        // Explicitly update course progress
+        // Calculate overall course progress to update the course progress on the server
         const completedLessonsCount = calculateCompletedLessonsCount();
         const totalLessonsCount = calculateTotalLessonsCount();
         const overallProgress = Math.round((completedLessonsCount / totalLessonsCount) * 100);
@@ -290,12 +290,11 @@ const CourseContent = () => {
           throw new Error('Failed to update course progress');
         }
 
-        // Fetch updated progress from server to ensure sync
+        // Refresh progress data from the server
         const progressResponse = await fetch(`${API_BASE_URL}/api/users/${user.id}/courses/${currentCourse.id}/progress`);
         if (progressResponse.ok) {
           const progressData = await progressResponse.json();
 
-          // Update progress state with server data
           const serverProgress = {};
           progressData.chapters.forEach(chapter => {
             serverProgress[chapter.id] = {};
@@ -310,18 +309,17 @@ const CourseContent = () => {
         }
       }
 
-      // Show quiz if available
+      // If the lesson has a quiz, display quiz UI. Otherwise, navigate to the next lesson.
       if (lesson.quiz) {
         setShowQuiz(true);
         setQuizAnswers(Array(lesson.quiz.questions.length).fill(null));
       } else {
-        // Navigate to next lesson if no quiz
         navigateToNext();
       }
     } catch (err) {
       console.error('Error marking lesson as completed:', err);
 
-      // Revert local state on error
+      // Roll back local progress update if there is an error
       setProgress(prev => ({
         ...prev,
         [chapter.id]: {
@@ -333,15 +331,13 @@ const CourseContent = () => {
         },
       }));
 
-      // Show error to user
       alert('Failed to mark lesson as completed. Please try again.');
     } finally {
       setMarkingComplete(false);
     }
   };
 
-
-  // Navigate to next lesson
+  // Navigate to the next lesson or chapter or display course completion message
   const navigateToNext = () => {
     if (!currentCourse || !currentCourse.chapters[currentChapterIndex]) {
       return;
@@ -349,18 +345,15 @@ const CourseContent = () => {
 
     const chapter = currentCourse.chapters[currentChapterIndex];
     if (currentLessonIndex < chapter.lessons.length - 1) {
-      // Next lesson in same chapter
       navigateToLesson(currentChapterIndex, currentLessonIndex + 1);
     } else if (currentChapterIndex < currentCourse.chapters.length - 1) {
-      // First lesson in next chapter
       navigateToLesson(currentChapterIndex + 1, 0);
     } else {
-      // Course completed
       alert("Congratulations! You've completed the course!");
     }
   };
 
-  // Calculate the total number of lessons in the course
+  // Calculate total number of lessons in the course
   const calculateTotalLessonsCount = () => {
     if (!currentCourse) return 0;
 
@@ -372,7 +365,7 @@ const CourseContent = () => {
     return totalLessons;
   };
 
-  // Calculate the number of completed lessons
+  // Calculate total number of completed lessons
   const calculateCompletedLessonsCount = () => {
     if (!currentCourse) return 0;
 
@@ -388,7 +381,7 @@ const CourseContent = () => {
     return completedLessons;
   };
 
-  // Handle quiz answer selection
+  // Handle quiz option selection; only allow changes before the quiz is submitted
   const handleQuizAnswerSelect = (questionIndex, answerIndex) => {
     if (!quizSubmitted) {
       const newAnswers = [...quizAnswers];
@@ -397,8 +390,9 @@ const CourseContent = () => {
     }
   };
 
-  // Submit quiz answers
+  // Submit the quiz answers to the server and calculate the score
   const submitQuiz = async () => {
+    // Ensure all quiz questions have been answered
     if (quizAnswers.includes(null)) {
       alert('Please answer all questions before submitting.');
       return;
@@ -408,7 +402,6 @@ const CourseContent = () => {
 
     try {
       if (user && lesson.quiz) {
-        // Submit quiz to server
         console.log(`Submitting quiz ${lesson.quiz.id} for user ${user.id}`);
         const response = await fetch(`${API_BASE_URL}/api/progress/quiz`, {
           method: 'POST',
@@ -428,16 +421,14 @@ const CourseContent = () => {
           setQuizScore(result.score);
           setQuizSubmitted(true);
 
-          // If passed, the server already marked the lesson as completed
           return;
         } else {
           console.error('Error submitting quiz:', await response.text());
         }
       }
 
-      // If not logged in or server request failed, calculate locally
+      // Fallback: calculate score locally if server submission fails
       let score = 0;
-
       quizAnswers.forEach((answer, index) => {
         if (answer.toString() === lesson.quiz.questions[index].correctAnswer.toString()) {
           score++;
@@ -450,9 +441,8 @@ const CourseContent = () => {
     } catch (err) {
       console.error('Error submitting quiz:', err);
 
-      // Fallback to local calculation
+      // Fallback: calculate score locally on error
       let score = 0;
-
       quizAnswers.forEach((answer, index) => {
         if (answer.toString() === lesson.quiz.questions[index].correctAnswer.toString()) {
           score++;
@@ -465,7 +455,7 @@ const CourseContent = () => {
     }
   };
 
-  // Calculate overall course progress
+  // Calculate the overall progress for the course
   const calculateOverallProgress = () => {
     if (!currentCourse) return 0;
 
@@ -475,12 +465,12 @@ const CourseContent = () => {
     return totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
   };
 
-  // Check if a specific lesson is completed
+  // Check if a specific lesson has been completed
   const isLessonCompleted = (chapterId, lessonId) => {
     return progress[chapterId]?.[lessonId]?.completed || false;
   };
 
-  // Render current lesson content
+  // Render content for the current lesson or quiz if available
   const renderLessonContent = () => {
     if (!currentCourse || !currentCourse.chapters[currentChapterIndex]) {
       return <div>Loading course content...</div>;
@@ -495,8 +485,7 @@ const CourseContent = () => {
 
     return (
       <div className="lesson-content">
-        {showQuiz && lesson.quiz
-          ? (
+        {showQuiz && lesson.quiz ? (
           <div className="quiz-container">
             <h2>Lesson Quiz</h2>
             <p>Test your knowledge of the concepts covered in this lesson.</p>
@@ -539,18 +528,27 @@ const CourseContent = () => {
                   ? (
                   <div className="quiz-pass-message">
                     <p>Congratulations! You&apos;ve passed the quiz.</p>
-                    <button className="primary-button" onClick={navigateToNext}>Continue to Next Lesson</button>
+                    <button className="primary-button" onClick={navigateToNext}>
+                      Continue to Next Lesson
+                    </button>
                   </div>
                     )
                   : (
                   <div className="quiz-fail-message">
                     <p>You might want to review this lesson before continuing.</p>
                     <div className="quiz-actions">
-                      <button className="secondary-button" onClick={() => setShowQuiz(false)}>Review Lesson</button>
-                      <button className="primary-button" onClick={() => {
-                        setQuizAnswers(Array(lesson.quiz.questions.length).fill(null));
-                        setQuizSubmitted(false);
-                      }}>Retry Quiz</button>
+                      <button className="secondary-button" onClick={() => setShowQuiz(false)}>
+                        Review Lesson
+                      </button>
+                      <button
+                        className="primary-button"
+                        onClick={() => {
+                          setQuizAnswers(Array(lesson.quiz.questions.length).fill(null));
+                          setQuizSubmitted(false);
+                        }}
+                      >
+                        Retry Quiz
+                      </button>
                     </div>
                   </div>
                     )}
@@ -566,9 +564,9 @@ const CourseContent = () => {
               </button>
                 )}
           </div>
-            )
-          : (
+        ) : (
           <>
+            {/* Render lesson content using dangerouslySetInnerHTML */}
             <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
 
             <div className="lesson-navigation">
@@ -588,27 +586,25 @@ const CourseContent = () => {
               </button>
 
               <button className="primary-button" onClick={markLessonCompleted} disabled={markingComplete}>
-              {markingComplete
-                ? 'Saving...'
-                : (isLessonCompleted(chapter.id, lesson.id)
-                    ? 'Continue to Next'
-                    : 'Mark as Completed')
-  }
-
+                {markingComplete
+                  ? 'Saving...'
+                  : (isLessonCompleted(chapter.id, lesson.id)
+                      ? 'Continue to Next'
+                      : 'Mark as Completed')}
               </button>
             </div>
           </>
-            )}
+        )}
       </div>
     );
   };
 
-  // Loading state
+  // Display loading state while API calls are in progress
   if (loading) {
     return <div className="loading">Loading course...</div>;
   }
 
-  // Error state
+  // Display error message if there was an error fetching data
   if (error) {
     return (
       <div className="course-error">
@@ -621,7 +617,7 @@ const CourseContent = () => {
     );
   }
 
-  // No course found
+  // Fallback if no course data is available
   if (!currentCourse) {
     return <div className="loading">Course not found</div>;
   }
@@ -642,6 +638,7 @@ const CourseContent = () => {
       </div>
 
       <div className="course-layout">
+        {/* Toggle button for table of contents */}
         <button
           className="toc-toggle"
           onClick={() => setShowTableOfContents(!showTableOfContents)}

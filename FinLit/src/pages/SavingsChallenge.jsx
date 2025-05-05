@@ -14,32 +14,36 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 // Get the current hostname for API calls
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
-// Load audio files
+// Initialise audio files for challenge, streak bonus and goal reached alerts
 const challengeAudio = new Audio(challengeSound);
 const streakAudio = new Audio(streakSound);
 const goalAudio = new Audio(goalSound);
 
+// Preset money denominations available for selection
 const moneyOptions = [1, 5, 10, 20, 50];
 
-// List of random daily challenges
+// Daily challenges available for users
 const challenges = [
-  { text: 'Save at least $5 today!', minAmount: 5, reward: 2 },
-  { text: 'Save at least $10 today!', minAmount: 10, reward: 5 },
-  { text: 'Save exactly $7 today!', minAmount: 7, reward: 3 },
+  { text: 'Save at least £5 today!', minAmount: 5, reward: 2 },
+  { text: 'Save at least £10 today!', minAmount: 10, reward: 5 },
+  { text: 'Save exactly £7 today!', minAmount: 7, reward: 3 },
   { text: 'Save an even amount today!', isEven: true, reward: 4 },
-  { text: 'Save a multiple of $5 today!', isMultipleOfFive: true, reward: 3 },
+  { text: 'Save a multiple of £5 today!', isMultipleOfFive: true, reward: 3 },
 ];
 
 const SavingsChallenge = () => {
+  // Retrieve savings data from local storage or initialise with 30 zeroes
   const [savings, setSavings] = useState(() => {
     const savedData = localStorage.getItem('savingsData');
     return savedData ? JSON.parse(savedData) : Array(30).fill(0);
   });
 
+  // Calculate the total saved amount
   const [totalSaved, setTotalSaved] = useState(() => {
     return savings.reduce((acc, val) => acc + val, 0);
   });
 
+  // Retrieve user's savings goal or set to default (£300)
   const [goal, setGoal] = useState(() => {
     const savedGoal = localStorage.getItem('savingsGoal');
     return savedGoal ? JSON.parse(savedGoal) : 300;
@@ -49,21 +53,26 @@ const SavingsChallenge = () => {
   const [streak, setStreak] = useState(0);
   const [challenge, setChallenge] = useState(null);
   const [challengeCompleted, setChallengeCompleted] = useState(false);
+
+  // Create audio objects for deposit and removal sounds
   const dropAudio = new Audio(dropSound);
   const removeAudio = new Audio(removeSound);
+
+  // Notifications for user feedback
   const [notifications, setNotifications] = useState([]);
+  // User details initialisation
   const [user, setUser] = useState(null);
-  // Inside your component function, add:
+
+  // Apply theme from the context
   const { theme } = useContext(ThemeContext);
 
-
-  // Add state for mute
+  // Mute state persisted in local storage
   const [isMuted, setIsMuted] = useState(() => {
     const savedMute = localStorage.getItem('savingsMuted');
     return savedMute ? JSON.parse(savedMute) : false;
   });
 
-  // Load user data
+  // Load user data from local storage after mounting
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -71,7 +80,7 @@ const SavingsChallenge = () => {
     }
   }, []);
 
-  // Track game activity when savings change
+  // Track game progress when savings are updated
   useEffect(() => {
     const trackActivity = async () => {
       if (!user) return;
@@ -79,7 +88,7 @@ const SavingsChallenge = () => {
       const today = new Date().toDateString();
       const lastTrackedDate = localStorage.getItem('lastTrackedDate');
 
-      // Only track once per day or when totalSaved changes
+      // Track once per day if savings have been updated
       if (totalSaved > 0 && lastTrackedDate !== today) {
         try {
           const response = await fetch(`${API_BASE_URL}/progress/game`, {
@@ -107,7 +116,7 @@ const SavingsChallenge = () => {
             localStorage.setItem('lastTrackedDate', today);
           }
         } catch (error) {
-          console.error('Error tracking savings challenge activity:', error);
+          console.error('Error tracking activity:', error);
         }
       }
     };
@@ -115,6 +124,7 @@ const SavingsChallenge = () => {
     trackActivity();
   }, [user, totalSaved, streak, goalReached, challengeCompleted]);
 
+  // Initialise daily challenge and save progress
   useEffect(() => {
     const today = new Date().toDateString();
     const savedChallenge = localStorage.getItem('dailyChallenge');
@@ -134,29 +144,31 @@ const SavingsChallenge = () => {
 
     if (totalSaved >= goal && goal > 0) {
       setGoalReached(true);
-      showNotification('🎉 Goal Reached! Great job!', 'success', goalAudio);
+      showNotification('🎉 Goal Reached! Well done!', 'success', goalAudio);
       setTimeout(() => setGoalReached(false), 5000);
     }
   }, [savings, goal, totalSaved]);
 
+  // Display a notification with optional sound
   const showNotification = (message, type, sound) => {
     const newNotification = { id: Date.now(), message, type };
     setNotifications((prev) => [...prev, newNotification]);
 
-    if (sound && !isMuted) sound.play(); // Only play if not muted
+    if (sound && !isMuted) sound.play();
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== newNotification.id));
     }, 4000);
   };
 
-  // Add mute toggle function
+  // Toggle the mute state and persist the choice
   const toggleMute = () => {
     const newMuteState = !isMuted;
     setIsMuted(newMuteState);
     localStorage.setItem('savingsMuted', JSON.stringify(newMuteState));
   };
 
+  // Check whether the current deposit meets the daily challenge criteria
   const checkChallengeCompletion = (amount) => {
     if (!challenge || challengeCompleted) return;
 
@@ -181,6 +193,7 @@ const SavingsChallenge = () => {
     }
   };
 
+  // Manage depositing money into a day’s savings slot
   const handleDrop = (dayIndex, amount) => {
     const updatedSavings = [...savings];
     updatedSavings[dayIndex] += amount;
@@ -198,7 +211,7 @@ const SavingsChallenge = () => {
 
     if (streak >= 3) {
       updatedSavings[dayIndex] += 5;
-      showNotification('🔥 Streak Bonus! +$5 Added!', 'success', streakAudio);
+      showNotification('🔥 Streak Bonus! +£5 Added!', 'success', streakAudio);
     }
 
     setSavings(updatedSavings);
@@ -206,6 +219,7 @@ const SavingsChallenge = () => {
     if (!isMuted) dropAudio.play();
   };
 
+  // Manage removal of money from a day’s savings slot
   const handleRemove = (dayIndex) => {
     const removedAmount = savings[dayIndex];
     if (removedAmount > 0) {
@@ -217,6 +231,7 @@ const SavingsChallenge = () => {
     }
   };
 
+  // Reset all savings and related state data
   const resetSavings = () => {
     setSavings(Array(30).fill(0));
     setTotalSaved(0);
@@ -226,6 +241,7 @@ const SavingsChallenge = () => {
     localStorage.removeItem('savingsGoal');
   };
 
+  // Generate a weekly report of savings totals
   const getWeeklyReport = () => {
     const weeklyTotals = [];
     for (let i = 0; i < savings.length; i += 7) {
@@ -234,7 +250,6 @@ const SavingsChallenge = () => {
     }
     return weeklyTotals;
   };
-
 
   return (
       <div className={`savings-challenge ${theme === 'dark' ? 'dark-mode' : ''}`}>
@@ -252,7 +267,7 @@ const SavingsChallenge = () => {
               <h2>💰 30-Day Savings Challenge</h2>
               <p className="description">Drag and drop money into each day&apos;s slot. Click a slot to remove money.</p>
 
-              {/* Mute button */}
+              {/* Mute toggle button */}
               <button
                   className="mute-button"
                   onClick={toggleMute}
@@ -264,7 +279,7 @@ const SavingsChallenge = () => {
 
           <div className="goal-container">
               <div className="goal-setting">
-                  <label>Set Goal: $</label>
+                  <label>Set Goal: £</label>
                   <input
                       type="number"
                       value={goal}
@@ -274,7 +289,7 @@ const SavingsChallenge = () => {
 
               <div className="progress-overview">
                   <div className="progress-stat">
-                      <span className="stat-value">${totalSaved}</span>
+                      <span className="stat-value">£{totalSaved}</span>
                       <span className="stat-label">Total Saved</span>
                   </div>
                   <div className="progress-stat">
@@ -310,11 +325,11 @@ const SavingsChallenge = () => {
               <div className="progress-info">
                   <div className="progress-label">
                       <h3>Progress to Goal</h3>
-                      <span className="goal-info">Target: ${goal}</span>
+                      <span className="goal-info">Target: £{goal}</span>
                   </div>
                   <div className="progress-amount">
-                      <span className="current-amount">${totalSaved}</span>
-                      <span className="remaining-amount">${goal - totalSaved} to go</span>
+                      <span className="current-amount">£{totalSaved}</span>
+                      <span className="remaining-amount">£{goal - totalSaved} to go</span>
                   </div>
               </div>
 
@@ -358,7 +373,7 @@ const SavingsChallenge = () => {
                   {getWeeklyReport().map((weekTotal, index) => (
                       <div key={index} className="week-card">
                           <h4>Week {index + 1}</h4>
-                          <p className="week-total">${weekTotal}</p>
+                          <p className="week-total">£{weekTotal}</p>
                       </div>
                   ))}
               </div>
@@ -369,8 +384,9 @@ const SavingsChallenge = () => {
   );
 };
 
-// Draggable Money Component
+// Component for draggable money
 const DraggableMoney = ({ amount }) => {
+  // Initiate drag event and pass the amount data
   const handleDragStart = (e) => {
     e.dataTransfer.setData('amount', amount);
   };
@@ -381,17 +397,19 @@ const DraggableMoney = ({ amount }) => {
             draggable
             onDragStart={handleDragStart}
         >
-            💵 ${amount}
+            💵 £{amount}
         </div>
   );
 };
 
-// Day Slot Component
+// Component representing each day in the challenge grid
 const DaySlot = ({ day, savedAmount, onDrop, onRemove }) => {
+  // Allow items to be dragged over
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
+  // Handle drop event and retrieve the deposited amount
   const handleDrop = (e) => {
     const amount = Number(e.dataTransfer.getData('amount'));
     onDrop(day - 1, amount);
@@ -406,13 +424,13 @@ const DaySlot = ({ day, savedAmount, onDrop, onRemove }) => {
         >
             <div className="day-number">Day {day}</div>
             <div className="day-amount">
-                ${savedAmount}
+                £{savedAmount}
             </div>
         </div>
   );
 };
 
-// PropTypes Validation
+// PropTypes for the DaySlot component
 DaySlot.propTypes = {
   day: PropTypes.number.isRequired,
   onDrop: PropTypes.func.isRequired,
@@ -420,6 +438,7 @@ DaySlot.propTypes = {
   savedAmount: PropTypes.number.isRequired,
 };
 
+// PropTypes for the DraggableMoney component
 DraggableMoney.propTypes = {
   amount: PropTypes.number.isRequired,
 };

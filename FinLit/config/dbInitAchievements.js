@@ -1,7 +1,6 @@
-// config/dbInitAchievements.js
 import { connect } from './sqlite-adapter.js';
 
-// Initialize database tables for achievements and rewards
+// InitialiSe database tables for achievements and rewards
 export async function initAchievementsSystem() {
   try {
     const connection = await connect();

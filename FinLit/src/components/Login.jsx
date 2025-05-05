@@ -7,6 +7,7 @@ import '../styles/auth.css';
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 function Login() {
+  // Initialise state for form fields and submission status.
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
@@ -14,10 +15,12 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Update state when an input field changes.
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Handle form submission and perform API login call.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -27,6 +30,7 @@ function Login() {
       console.log(`Submitting to ${API_BASE_URL}/login`);
       console.log('Form data:', formData);
 
+      // Request to login endpoint.
       const res = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,7 +40,7 @@ function Login() {
       const data = await res.json();
       console.log('Server response:', data);
 
-      // Simulating quiz-like status and score log for Figure 6.10
+      // Log status and score for demonstration purposes.
       console.log('POST /api/submit-quiz status:', res.status);
       console.log('User score:', data.score ?? 'N/A');
 
@@ -45,21 +49,23 @@ function Login() {
 
       if (res.ok) {
         console.log('Login successful. Redirecting to dashboard...');
+        // Save user details and trigger login status change.
         localStorage.setItem('user', JSON.stringify(data.user));
         window.dispatchEvent(new Event('loginStatusChange'));
-        window.location.href = '/dashboard'; // or use navigate("/dashboard");
+        // Redirect to the dashboard.
+        window.location.href = '/dashboard'; // Alternatively, use navigate("/dashboard");
       }
     } catch (error) {
       console.error('Login error:', error);
-      setMessage(
-        'Connection error: Unable to reach the server. Please check your network connection or try again later.',
-      );
+      // Inform the user of a connection issue.
+      setMessage('Connection error: Unable to reach the server. Please check your network connection or try again later.');
       setMessageType('error');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Toggle the visibility of the password.
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -94,33 +100,29 @@ function Login() {
             required
             disabled={isLoading}
           />
-          <span
-            className="password-toggle"
-            onClick={togglePasswordVisibility}
-          >
+          <span className="password-toggle" onClick={togglePasswordVisibility}>
             {showPassword ? '🙈' : '👁️'}
           </span>
         </div>
 
-        <button
-          type="submit"
-          className="auth-btn"
-          disabled={isLoading}
-        >
+        <button type="submit" className="auth-btn" disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
 
+      {/* Display server message if available */}
       {message && (
         <div className={`auth-message ${messageType}`}>
           {message}
         </div>
       )}
 
+      {/* Link for users without an account */}
       <div className="auth-switch">
         Don&apos;t have an account? <Link to="/signup">Sign Up</Link>
       </div>
 
+      {/* Show the server information */}
       <div className="server-info">
         <small>Server: {API_BASE_URL}</small>
       </div>

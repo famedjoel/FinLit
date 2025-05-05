@@ -1,6 +1,5 @@
-// models/Course.js
 import { connect } from '../config/sqlite-adapter.js';
-import Chapter from './Chapter.js'; // Import the Chapter model
+import Chapter from './Chapter.js';
 
 // Course model
 const Course = {

@@ -4,17 +4,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 
-// Get the directory name using ES modules approach
+// Resolve directory and database path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Database path
 const dbPath = path.join(__dirname, '../database.sqlite');
 
 // SQLite database instance
 let db = null;
 
-// Initialize the database connection
+// Initialise the database connection and create tables if they do not exist
 async function initDatabase() {
   if (db) return db;
 
@@ -24,9 +22,6 @@ async function initDatabase() {
       driver: sqlite3.Database,
     });
 
-    console.log('SQLite connection has been established successfully.');
-
-    // Create tables if they don't exist
     await db.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +40,6 @@ async function initDatabase() {
       )
     `);
 
-    // Create trivia questions table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS trivia_questions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +54,6 @@ async function initDatabase() {
       )
     `);
 
-    // Create app_settings table for version tracking
     await db.exec(`
       CREATE TABLE IF NOT EXISTS app_settings (
         key TEXT PRIMARY KEY,
@@ -70,23 +63,21 @@ async function initDatabase() {
 
     return db;
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.error('Database connection error:', error);
     throw error;
   }
 }
 
-// Create a User model with Mongoose-like API
+// User model with methods for database operations
 const User = {
   // Create a new user
   create: async (userData) => {
     try {
       const connection = await initDatabase();
 
-      // Hash password
       const salt = await bcrypt.genSalt(10);
       userData.password = await bcrypt.hash(userData.password, salt);
 
-      // Convert object fields to JSON strings
       if (typeof userData.preferences === 'object') {
         userData.preferences = JSON.stringify(userData.preferences);
       }
@@ -100,10 +91,8 @@ const User = {
         userData.recentActivity = JSON.stringify(userData.recentActivity);
       }
 
-      // Current timestamp
       const now = new Date().toISOString();
 
-      // Insert into database
       const result = await connection.run(
         `INSERT INTO users (
           username, email, password, avatar, 
@@ -126,7 +115,6 @@ const User = {
         ],
       );
 
-      // Get the inserted user
       const user = await connection.get(
         'SELECT * FROM users WHERE id = ?',
         result.lastID,
@@ -139,12 +127,11 @@ const User = {
     }
   },
 
-  // Find a user by criteria
+  // Find a user by specific criteria
   findOne: async (criteria) => {
     try {
       const connection = await initDatabase();
 
-      // Build WHERE clause
       const whereClauses = [];
       const params = [];
 
@@ -191,7 +178,6 @@ const User = {
     try {
       const connection = await initDatabase();
 
-      // Get the current user
       const currentUser = await connection.get(
         'SELECT * FROM users WHERE id = ?',
         id,
@@ -201,17 +187,14 @@ const User = {
         return null;
       }
 
-      // Prepare updates
       const setClauses = [];
       const params = [];
 
       for (const [key, value] of Object.entries(updates)) {
-        // Skip id field
         if (key === 'id') continue;
 
         setClauses.push(`${key} = ?`);
 
-        // Convert objects to JSON strings
         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
           params.push(JSON.stringify(value));
         } else if (Array.isArray(value)) {
@@ -221,20 +204,15 @@ const User = {
         }
       }
 
-      // Add updatedAt
       setClauses.push('updatedAt = ?');
       params.push(new Date().toISOString());
-
-      // Add the ID to params
       params.push(id);
 
-      // Execute update
       await connection.run(
         `UPDATE users SET ${setClauses.join(', ')} WHERE id = ?`,
         params,
       );
 
-      // Return updated user if requested
       if (options.new !== false) {
         const updatedUser = await connection.get(
           'SELECT * FROM users WHERE id = ?',
@@ -251,11 +229,10 @@ const User = {
   },
 };
 
-// Process user data from database to include methods and parse JSON fields
+// Process user data to parse JSON fields and add methods
 function processUserData(user) {
   if (!user) return null;
 
-  // Parse JSON strings to objects
   try {
     user.preferences = JSON.parse(user.preferences || '{"theme":"light","notifications":true}');
     user.courseProgress = JSON.parse(user.courseProgress || '[]');
@@ -265,12 +242,10 @@ function processUserData(user) {
     console.error('Error parsing user JSON data:', error);
   }
 
-  // Add comparePassword method
   user.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
   };
 
-  // Add save method
   user.save = async function () {
     const userCopy = { ...this };
     delete userCopy.save;
@@ -283,7 +258,7 @@ function processUserData(user) {
   return user;
 }
 
-// Connect to the database
+// Establish database connection
 const connect = async () => {
   return await initDatabase();
 };

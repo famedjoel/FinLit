@@ -1,20 +1,22 @@
-// models/Lesson.js
 import { connect } from '../config/sqlite-adapter.js';
 
-// Lesson model
+/*
+  Lesson model for handling lesson-related database operations.
+  All dates are generated in ISO format and resources are stored as JSON.
+*/
+
 const Lesson = {
-  // Create a new lesson
+  // Inserts a new lesson into the database and returns the created record.
   create: async (lessonData) => {
     try {
       const connection = await connect();
 
-      // Process resources array to JSON string
+      // Convert resources to JSON string if provided as an array.
       let resources = '[]';
       if (Array.isArray(lessonData.resources)) {
         resources = JSON.stringify(lessonData.resources);
       }
 
-      // Insert the lesson
       const result = await connection.run(
         `INSERT INTO lessons (
           chapter_id, title, content, resources, order, 
@@ -32,7 +34,6 @@ const Lesson = {
         ],
       );
 
-      // Get the inserted lesson
       const lesson = await connection.get(
         'SELECT * FROM lessons WHERE id = ?',
         result.lastID,
@@ -45,7 +46,7 @@ const Lesson = {
     }
   },
 
-  // Find all lessons for a chapter
+  // Retrieves all lessons for a given chapter, ordered by the "order" field.
   findByChapterId: async (chapterId) => {
     try {
       const connection = await connect();
@@ -62,7 +63,7 @@ const Lesson = {
     }
   },
 
-  // Find a lesson by ID
+  // Retrieves a lesson by its ID, including any linked quiz and questions.
   findById: async (id) => {
     try {
       const connection = await connect();
@@ -74,7 +75,6 @@ const Lesson = {
 
       if (!lesson) return null;
 
-      // Get quiz for this lesson if it exists
       const quiz = await connection.get(
         'SELECT * FROM quizzes WHERE lesson_id = ?',
         id,
@@ -82,10 +82,8 @@ const Lesson = {
 
       const processedLesson = processLessonData(lesson);
 
-      // Add quiz to lesson if it exists
       if (quiz) {
         try {
-          // Get questions for this quiz
           const questions = await connection.all(
             'SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY `order`',
             quiz.id,
@@ -121,12 +119,11 @@ const Lesson = {
     }
   },
 
-  // Update a lesson
+  // Updates the properties of an existing lesson.
   update: async (id, updates) => {
     try {
       const connection = await connect();
 
-      // Check if lesson exists
       const existingLesson = await connection.get(
         'SELECT * FROM lessons WHERE id = ?',
         id,
@@ -136,36 +133,33 @@ const Lesson = {
         throw new Error('Lesson not found');
       }
 
-      // Process resources array to JSON string if present
+      // Convert resources array to JSON if necessary.
       if (updates.resources && Array.isArray(updates.resources)) {
         updates.resources = JSON.stringify(updates.resources);
       }
 
-      // Build update query
       const setClauses = [];
       const params = [];
 
+      // Convert camelCase keys to snake_case for database column names.
       for (const [key, value] of Object.entries(updates)) {
-        // Convert camelCase to snake_case for DB
         const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
         setClauses.push(`${dbKey} = ?`);
         params.push(value);
       }
 
-      // Add updated_at
+      // Update the modification date.
       setClauses.push('updated_at = ?');
       params.push(new Date().toISOString());
 
-      // Add id to params
+      // The final parameter is the lesson ID.
       params.push(id);
 
-      // Execute update
       await connection.run(
         `UPDATE lessons SET ${setClauses.join(', ')} WHERE id = ?`,
         params,
       );
 
-      // Get updated lesson
       const updatedLesson = await connection.get(
         'SELECT * FROM lessons WHERE id = ?',
         id,
@@ -178,16 +172,14 @@ const Lesson = {
     }
   },
 
-  // Delete a lesson
+  // Deletes a lesson and its associated quiz data within a transaction.
   delete: async (id) => {
     try {
       const connection = await connect();
 
-      // Start a transaction
       await connection.run('BEGIN TRANSACTION');
 
       try {
-        // Delete quiz questions first (foreign key constraint)
         const quiz = await connection.get(
           'SELECT id FROM quizzes WHERE lesson_id = ?',
           id,
@@ -199,25 +191,21 @@ const Lesson = {
             quiz.id,
           );
 
-          // Then delete the quiz
           await connection.run(
             'DELETE FROM quizzes WHERE id = ?',
             quiz.id,
           );
         }
 
-        // Finally delete the lesson
         await connection.run(
           'DELETE FROM lessons WHERE id = ?',
           id,
         );
 
-        // Commit the transaction
         await connection.run('COMMIT');
 
         return true;
       } catch (err) {
-        // Rollback the transaction on error
         await connection.run('ROLLBACK');
         throw err;
       }
@@ -228,11 +216,10 @@ const Lesson = {
   },
 };
 
-// Process lesson data from DB format
+// Helper function to format lesson data for application use.
 function processLessonData(lesson) {
   if (!lesson) return null;
 
-  // Parse resources JSON string to array
   let resources = [];
   try {
     resources = JSON.parse(lesson.resources || '[]');
@@ -240,7 +227,6 @@ function processLessonData(lesson) {
     console.error('Error parsing lesson resources:', e);
   }
 
-  // Convert snake_case to camelCase
   return {
     id: lesson.id,
     chapterId: lesson.chapter_id,

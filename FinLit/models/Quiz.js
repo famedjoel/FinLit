@@ -1,18 +1,17 @@
-// models/Quiz.js
 import { connect } from '../config/sqlite-adapter.js';
 
-// Quiz model
+// Quiz model encapsulating quiz-related database operations
 const Quiz = {
-  // Create a new quiz
+  // Create a new quiz with optional questions
   create: async (quizData) => {
     try {
       const connection = await connect();
 
-      // Start a transaction
+      // Begin transaction
       await connection.run('BEGIN TRANSACTION');
 
       try {
-        // Insert the quiz
+        // Insert a new quiz record
         const quizResult = await connection.run(
           `INSERT INTO quizzes (
             lesson_id, title, instructions, passing_score, created_at, updated_at
@@ -29,12 +28,12 @@ const Quiz = {
 
         const quizId = quizResult.lastID;
 
-        // Insert questions if provided
+        // If questions are provided, add each one to the quiz_questions table
         if (Array.isArray(quizData.questions) && quizData.questions.length > 0) {
           for (let i = 0; i < quizData.questions.length; i++) {
             const question = quizData.questions[i];
 
-            // Process options array to JSON string
+            // Convert options array to a JSON string
             let options = '[]';
             if (Array.isArray(question.options)) {
               options = JSON.stringify(question.options);
@@ -52,7 +51,7 @@ const Quiz = {
                 options,
                 question.correctAnswer,
                 question.explanation || '',
-                i, // Use array index as order
+                i, // Order based on array index
                 new Date().toISOString(),
                 new Date().toISOString(),
               ],
@@ -60,13 +59,13 @@ const Quiz = {
           }
         }
 
-        // Commit the transaction
+        // Commit transaction after successful insertion
         await connection.run('COMMIT');
 
-        // Get the created quiz with questions
+        // Return the complete quiz with its questions
         return await Quiz.findById(quizId);
       } catch (err) {
-        // Rollback the transaction on error
+        // Roll back transaction if an error occurs
         await connection.run('ROLLBACK');
         throw err;
       }
@@ -76,11 +75,12 @@ const Quiz = {
     }
   },
 
-  // Find a quiz by ID
+  // Retrieve a quiz and its associated questions by quiz ID
   findById: async (id) => {
     try {
       const connection = await connect();
 
+      // Fetch the quiz record
       const quiz = await connection.get(
         'SELECT * FROM quizzes WHERE id = ?',
         id,
@@ -88,13 +88,13 @@ const Quiz = {
 
       if (!quiz) return null;
 
-      // Get questions for this quiz
+      // Fetch related questions in the specified order
       const questions = await connection.all(
         'SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY `order`',
         id,
       );
 
-      // Process the quiz data
+      // Assemble and return the processed quiz object
       const processedQuiz = {
         id: quiz.id,
         lessonId: quiz.lesson_id,
@@ -121,11 +121,12 @@ const Quiz = {
     }
   },
 
-  // Find a quiz by lesson ID
+  // Retrieve a quiz by its associated lesson ID
   findByLessonId: async (lessonId) => {
     try {
       const connection = await connect();
 
+      // Locate the quiz using the lesson identifier
       const quiz = await connection.get(
         'SELECT * FROM quizzes WHERE lesson_id = ?',
         lessonId,
@@ -133,7 +134,7 @@ const Quiz = {
 
       if (!quiz) return null;
 
-      // Use the existing findById method to get the full quiz with questions
+      // Leverage findById to include the questions
       return await Quiz.findById(quiz.id);
     } catch (error) {
       console.error('Error finding quiz by lesson ID:', error);
@@ -141,16 +142,16 @@ const Quiz = {
     }
   },
 
-  // Update a quiz
+  // Update an existing quiz and optionally its questions
   update: async (id, updates) => {
     try {
       const connection = await connect();
 
-      // Start a transaction
+      // Begin transaction for updating
       await connection.run('BEGIN TRANSACTION');
 
       try {
-        // Check if quiz exists
+        // Confirm that the quiz exists
         const existingQuiz = await connection.get(
           'SELECT * FROM quizzes WHERE id = ?',
           id,
@@ -160,7 +161,7 @@ const Quiz = {
           throw new Error('Quiz not found');
         }
 
-        // Update quiz properties
+        // Update core quiz details if any are provided
         if (updates.title || updates.instructions || updates.passingScore) {
           const setClauses = [];
           const params = [];
@@ -180,33 +181,32 @@ const Quiz = {
             params.push(updates.passingScore);
           }
 
-          // Add updated_at
+          // Update the modification timestamp
           setClauses.push('updated_at = ?');
           params.push(new Date().toISOString());
 
-          // Add id to params
+          // Include quiz identifier in parameters
           params.push(id);
 
-          // Execute update
           await connection.run(
             `UPDATE quizzes SET ${setClauses.join(', ')} WHERE id = ?`,
             params,
           );
         }
 
-        // Update questions if provided
+        // Replace quiz questions if a new set is provided
         if (Array.isArray(updates.questions) && updates.questions.length > 0) {
-          // Delete existing questions
+          // Remove existing questions to prepare for insertion of new ones
           await connection.run(
             'DELETE FROM quiz_questions WHERE quiz_id = ?',
             id,
           );
 
-          // Insert new questions
+          // Insert each new question sequentially
           for (let i = 0; i < updates.questions.length; i++) {
             const question = updates.questions[i];
 
-            // Process options array to JSON string
+            // Convert options to a JSON string if available
             let options = '[]';
             if (Array.isArray(question.options)) {
               options = JSON.stringify(question.options);
@@ -224,7 +224,7 @@ const Quiz = {
                 options,
                 question.correctAnswer,
                 question.explanation || '',
-                i, // Use array index as order
+                i, // Index defines the display order
                 new Date().toISOString(),
                 new Date().toISOString(),
               ],
@@ -232,13 +232,13 @@ const Quiz = {
           }
         }
 
-        // Commit the transaction
+        // Finalise update by committing the transaction
         await connection.run('COMMIT');
 
-        // Get the updated quiz with questions
+        // Return the updated quiz with questions
         return await Quiz.findById(id);
       } catch (err) {
-        // Rollback the transaction on error
+        // Roll back all changes if an error occurs
         await connection.run('ROLLBACK');
         throw err;
       }
@@ -248,33 +248,33 @@ const Quiz = {
     }
   },
 
-  // Delete a quiz
+  // Delete a quiz and its related questions
   delete: async (id) => {
     try {
       const connection = await connect();
 
-      // Start a transaction
+      // Begin a transaction for deletion
       await connection.run('BEGIN TRANSACTION');
 
       try {
-        // Delete quiz questions first (foreign key constraint)
+        // Remove associated quiz questions first (to satisfy foreign key constraints)
         await connection.run(
           'DELETE FROM quiz_questions WHERE quiz_id = ?',
           id,
         );
 
-        // Then delete the quiz
+        // Remove the quiz record
         await connection.run(
           'DELETE FROM quizzes WHERE id = ?',
           id,
         );
 
-        // Commit the transaction
+        // Commit the deletion transaction
         await connection.run('COMMIT');
 
         return true;
       } catch (err) {
-        // Rollback the transaction on error
+        // Roll back on any error encountered during deletion
         await connection.run('ROLLBACK');
         throw err;
       }

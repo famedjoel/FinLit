@@ -3,16 +3,14 @@
 /* eslint-disable no-useless-catch */
 /* eslint-disable no-case-declarations */
 /* eslint-disable no-unused-vars */
-// src/pages/FinancialTrivia.jsx
 import { useState, useEffect, useRef } from 'react';
 import '../styles/FinancialTrivia.css';
 import '../styles/FinancialTriviaQuizTypes.css';
-import '../styles/QuestionTypes.css'; // Import the new question type styles
+import '../styles/QuestionTypes.css';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 
 const FinancialTrivia = () => {
-  // State variables
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -57,24 +55,20 @@ const FinancialTrivia = () => {
   const [masteryData, setMasteryData] = useState({});
   const [categoryPerformance, setCategoryPerformance] = useState({});
 
-  // Load challenge settings when in challenge mode
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Check if user is logged in
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
 
-        // Fetch categories
         const categoriesResponse = await fetch(`${API_BASE_URL}/trivia/categories`);
         if (categoriesResponse.ok) {
           const categoriesData = await categoriesResponse.json();
           setCategories(categoriesData);
         }
 
-        // Check URL parameters
         const params = new URLSearchParams(window.location.search);
         const challengeId = params.get('challengeId');
         const urlDifficulty = params.get('difficulty');
@@ -82,23 +76,18 @@ const FinancialTrivia = () => {
         const urlType = params.get('type');
 
         if (challengeId) {
-          // This is a challenge - fetch challenge-specific questions
           await fetchQuestionsForChallenge(challengeId);
         } else if (urlType === 'daily') {
-          // Daily challenge mode
           const today = new Date().toDateString();
           const dateSeed = Date.parse(today);
           fetchDailyChallenge(dateSeed);
         } else if (urlType === 'progressive') {
-          // Progressive difficulty mode
           setGameType('progressive');
           fetchQuestions('easy', urlCategory || selectedCategory, 5);
         } else if (urlType === 'marathon') {
-          // Marathon mode
           setGameType('marathon');
           fetchQuestions(urlDifficulty || difficulty, urlCategory || selectedCategory, 20);
         } else {
-          // Regular trivia mode - fetch questions based on URL params or defaults
           if (urlDifficulty) setDifficulty(urlDifficulty);
           if (urlCategory) setSelectedCategory(urlCategory);
 
@@ -119,7 +108,6 @@ const FinancialTrivia = () => {
   }, []);
 
 
-  // Quiz type options
   const [quizType, setQuizType] = useState('standard');
   const [currentStreak, setCurrentStreak] = useState(0);
   const [topStreak, setTopStreak] = useState(0);
@@ -127,7 +115,6 @@ const FinancialTrivia = () => {
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
   const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
 
-  // New: Selected question types
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState({
     'multiple-choice': true,
     'true-false': true,
@@ -136,7 +123,6 @@ const FinancialTrivia = () => {
     'calculation': true,
   });
 
-  // Question count options
   const questionCountOptions = [
     { value: 3, label: '3 (Quick Quiz)' },
     { value: 5, label: '5 questions' },
@@ -145,7 +131,6 @@ const FinancialTrivia = () => {
     { value: 20, label: '20 questions' },
   ];
 
-  // Timer settings options
   const timerOptions = [
     { value: 15, label: '15 seconds' },
     { value: 30, label: '30 seconds' },
@@ -154,7 +139,6 @@ const FinancialTrivia = () => {
     { value: 0, label: 'No time limit' },
   ];
 
-  // Quiz type options
   const quizTypeOptions = [
     {
       value: 'standard',
@@ -182,7 +166,6 @@ const FinancialTrivia = () => {
     },
   ];
 
-  // Question type options
   const questionTypeOptions = [
     { value: 'multiple-choice', label: 'Multiple Choice', icon: '🔠' },
     { value: 'true-false', label: 'True/False', icon: '✓✗' },
@@ -191,7 +174,6 @@ const FinancialTrivia = () => {
     { value: 'calculation', label: 'Financial Calculations', icon: '🧮' },
   ];
 
-  // Financial categories
   const financialCategories = [
     { id: 'all', name: 'All Topics', icon: '📚' },
     { id: 'investing', name: 'Investing', icon: '📈' },
@@ -207,20 +189,16 @@ const FinancialTrivia = () => {
   // Get the current hostname for API calls
   const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
-  // Load user data if available
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
-    // Load available categories from the server
     fetchCategories();
 
-    // Check if daily challenge was already completed today
     checkDailyChallengeStatus();
 
-    // Check for quiz type in URL parameters
     const queryParams = new URLSearchParams(window.location.search);
     const typeParam = queryParams.get('type');
 
@@ -229,21 +207,18 @@ const FinancialTrivia = () => {
     }
   }, []);
 
-  // Check if daily challenge was completed today
   const checkDailyChallengeStatus = () => {
     const lastCompleted = localStorage.getItem('dailyChallengeCompleted');
     if (lastCompleted) {
       const lastDate = new Date(lastCompleted);
       const today = new Date();
 
-      // Compare if the saved date is today
       if (lastDate.toDateString() === today.toDateString()) {
         setDailyChallengeCompleted(true);
       }
     }
   };
 
-  // Fetch available categories from the server
   const fetchCategories = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/trivia/categories`);
@@ -252,28 +227,23 @@ const FinancialTrivia = () => {
         const data = await response.json();
         setCategories(data);
       } else {
-        // If categories endpoint fails, use our predefined list
         setCategories(financialCategories.map(cat => cat.id));
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Use predefined categories as fallback
       setCategories(financialCategories.map(cat => cat.id));
     }
   };
 
-  // Fetch questions based on quiz type
   const fetchQuestions = async (difficulty, category, limit = 10) => {
     try {
       setLoading(true);
       setError('');
 
-      // Get the selected question types
       const questionTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
 
-      // Build query parameters
       const params = new URLSearchParams();
       if (difficulty) params.append('difficulty', difficulty);
       if (category && category !== 'all') params.append('category', category);
@@ -291,14 +261,12 @@ const FinancialTrivia = () => {
       setScore(0);
       setShowResults(false);
 
-      // Only auto-start in non-setup mode (direct link with params)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('type') || urlParams.get('difficulty') || urlParams.get('category')) {
         setGameActive(true);
         setTimeLeft(timer);
       }
 
-      // Handle different quiz types
       switch (quizType) {
         case 'daily':
           await fetchDailyChallenge();
@@ -334,7 +302,6 @@ const FinancialTrivia = () => {
       const challenge = await response.json();
 
       if (challenge.quizSettings) {
-        // Apply challenge settings
         setChallengeSettings(challenge.quizSettings);
         setQuizType(challenge.quizSettings.quizType);
         setDifficulty(challenge.quizSettings.difficulty);
@@ -343,7 +310,6 @@ const FinancialTrivia = () => {
         setQuestionCount(challenge.quizSettings.questionCount);
         setSelectedCategory(challenge.quizSettings.category);
 
-        // Set selected question types
         const selectedTypes = {};
         questionTypeOptions.forEach(type => {
           selectedTypes[type.value] = challenge.quizSettings.questionTypes.includes(type.value);
@@ -359,10 +325,8 @@ const FinancialTrivia = () => {
   };
 
 
-  // Fetch standard quiz questions with question types filter
   const fetchStandardQuestions = async () => {
     try {
-      // Get the selected question types
       const enabledTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
@@ -377,7 +341,6 @@ const FinancialTrivia = () => {
         url += `&category=${selectedCategory}`;
       }
 
-      // Add question types as a parameter
       url += `&types=${enabledTypes.join(',')}`;
 
       const response = await fetch(url);
@@ -398,20 +361,17 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Fetch daily challenge questions
   const fetchDailyChallenge = async (dateSeed) => {
     try {
       setLoading(true);
       setError(null);
       setGameType('daily');
 
-      // Generate a seed based on the current date
       const today = new Date();
       const dateSeed = `${today.getFullYear()}${today.getMonth()}${today.getDate()}`;
 
       let url = `${API_BASE_URL}/trivia/questions?limit=5&dateSeed=${dateSeed}`;
 
-      // Get the selected question types
       const enabledTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
@@ -444,10 +404,8 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Fetch progressive difficulty questions
   const fetchProgressiveQuestions = async () => {
     try {
-      // Get the selected question types
       const enabledTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
@@ -456,7 +414,6 @@ const FinancialTrivia = () => {
         throw new Error('Please select at least one question type');
       }
 
-      // Fetch questions for all difficulty levels
       const easyUrl = `${API_BASE_URL}/trivia/questions?difficulty=easy&limit=5&types=${enabledTypes.join(',')}`;
       const mediumUrl = `${API_BASE_URL}/trivia/questions?difficulty=medium&limit=5&types=${enabledTypes.join(',')}`;
       const hardUrl = `${API_BASE_URL}/trivia/questions?difficulty=hard&limit=5&types=${enabledTypes.join(',')}`;
@@ -475,7 +432,6 @@ const FinancialTrivia = () => {
       const mediumData = await mediumResponse.json();
       const hardData = await hardResponse.json();
 
-      // Combine all questions
       const combinedQuestions = [...easyData, ...mediumData, ...hardData];
 
       if (combinedQuestions.length === 0) {
@@ -488,10 +444,8 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Fetch marathon questions
   const fetchMarathonQuestions = async () => {
     try {
-      // Get the selected question types
       const enabledTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
@@ -500,7 +454,6 @@ const FinancialTrivia = () => {
         throw new Error('Please select at least one question type');
       }
 
-      // Start with easy questions for marathon mode
       let url = `${API_BASE_URL}/trivia/questions?difficulty=${difficulty}&limit=20&types=${enabledTypes.join(',')}`;
 
       if (selectedCategory !== 'all') {
@@ -525,10 +478,8 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Fetch more questions for marathon mode
   const fetchMoreMarathonQuestions = async () => {
     try {
-      // Determine difficulty based on streak
       let marathonDifficulty = 'easy';
       if (currentStreak >= 20) {
         marathonDifficulty = 'hard';
@@ -536,7 +487,6 @@ const FinancialTrivia = () => {
         marathonDifficulty = 'medium';
       }
 
-      // Get the selected question types
       const enabledTypes = Object.entries(selectedQuestionTypes)
         .filter(([_, enabled]) => enabled)
         .map(([type]) => type);
@@ -564,14 +514,12 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Load questions when difficulty, category, or quiz type changes
   useEffect(() => {
     if (!quizStarted) {
       fetchQuestions();
     }
   }, [difficulty, selectedCategory, questionCount, quizType, selectedQuestionTypes]);
 
-  // Show notification function
   const showNotification = (message, type) => {
     const id = Date.now();
     setNotifications((prev) => [...prev, { id, message, type }]);
@@ -581,22 +529,18 @@ const FinancialTrivia = () => {
     }, 3000);
   };
 
-  // Track game progress
   const trackGameProgress = async (finalScore) => {
-    if (!user) return; // Only track if user is logged in
+    if (!user) return;
 
     try {
-      // Calculate category-specific performance data
       const categoryPerformance = {};
       const questionTypePerformance = {};
       const difficultyPerformance = {};
 
-      // Calculate correct answers per category
       userAnswers.forEach(answer => {
         const question = questions.find(q => q.question === answer.question);
         if (!question) return;
 
-        // Track by category
         const category = question.category || 'general';
         if (!categoryPerformance[category]) {
           categoryPerformance[category] = {
@@ -611,7 +555,6 @@ const FinancialTrivia = () => {
           categoryPerformance[category].correct += 1;
         }
 
-        // Track by question type
         const questionType = question.type || 'multiple-choice';
         if (!questionTypePerformance[questionType]) {
           questionTypePerformance[questionType] = { total: 0, correct: 0 };
@@ -621,7 +564,6 @@ const FinancialTrivia = () => {
           questionTypePerformance[questionType].correct += 1;
         }
 
-        // Track by difficulty
         const questionDifficulty = question.difficulty || 'medium';
         if (!difficultyPerformance[questionDifficulty]) {
           difficultyPerformance[questionDifficulty] = { total: 0, correct: 0 };
@@ -632,14 +574,12 @@ const FinancialTrivia = () => {
         }
       });
 
-      // Calculate mastery percentages
       const masteryData = {};
       Object.keys(categoryPerformance).forEach(category => {
         const data = categoryPerformance[category];
         masteryData[category] = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
       });
 
-      // Send enhanced data to the server
       const response = await fetch(`${API_BASE_URL}/progress/game`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -674,7 +614,6 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Timer countdown
   useEffect(() => {
     let timer;
     if (quizStarted && !answerSubmitted && !showScore && timeLeft > 0 && timerEnabled && timerSetting > 0) {
@@ -688,14 +627,12 @@ const FinancialTrivia = () => {
     return () => clearTimeout(timer);
   }, [timeLeft, answerSubmitted, showScore, quizStarted, timerEnabled]);
 
-  // Start quiz
   const startQuiz = () => {
     if (questions.length === 0) {
       showNotification('No questions available. Try a different mode or category.', 'error');
       return;
     }
 
-    // Reset state for new quiz
     setQuizStarted(true);
     setTimeLeft(timerSetting);
     setCurrentQuestion(0);
@@ -710,12 +647,10 @@ const FinancialTrivia = () => {
     setUserAnswers([]);
     setShowHint(false);
 
-    // Shuffle questions for standard and daily modes
     if (quizType === 'standard' || quizType === 'daily') {
       setQuestions(prevQuestions => [...prevQuestions].sort(() => Math.random() - 0.5));
     }
 
-    // Sort questions by difficulty for progressive mode
     if (quizType === 'progressive') {
       setQuestions(prevQuestions =>
         [...prevQuestions].sort((a, b) => {
@@ -726,19 +661,14 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Check if answer is correct based on question type
   const checkAnswer = () => {
-    // If no answer is selected, return false
     if (selectedAnswer === null || selectedAnswer === undefined) return false;
 
-    // Get the current question
     const currentQ = questions[currentQuestion];
     if (!currentQ) return false;
 
-    // Get the question type, defaulting to multiple-choice if not specified
     const questionType = currentQ.type || 'multiple-choice';
 
-    // Check answer based on question type
     switch (questionType) {
       case 'multiple-choice':
       case 'true-false':
@@ -746,14 +676,11 @@ const FinancialTrivia = () => {
 
       case 'fill-blank':
         try {
-        // First, safely handle the case when selectedAnswer might not be a string
           const userAnswer = String(selectedAnswer || '').trim();
 
-          // Handle options-based fill-in-the-blank
           if (Array.isArray(currentQ.options) && currentQ.options.length > 0) {
             const correctOptionIndex = currentQ.correctAnswer;
 
-            // If correctAnswer is a direct index to the options array
             if (Number.isInteger(Number(correctOptionIndex)) &&
               correctOptionIndex >= 0 &&
               correctOptionIndex < currentQ.options.length) {
@@ -761,10 +688,8 @@ const FinancialTrivia = () => {
               return userAnswer.toLowerCase() === correctOption.toLowerCase();
             }
 
-            // If correctAnswer is the actual answer
             return userAnswer.toLowerCase() === String(currentQ.correctAnswer || '').toLowerCase().trim();
           } else {
-          // Direct text comparison for free-text questions
             return userAnswer.toLowerCase() === String(currentQ.correctAnswer || '').toLowerCase().trim();
           }
         } catch (error) {
@@ -773,39 +698,28 @@ const FinancialTrivia = () => {
         }
 
       case 'matching':
-      // Handle both formats of matching questions
         if (Array.isArray(currentQ.items) && currentQ.items.length > 0) {
-        // New format with items array
-        // Compare with sequential matches [0,1,2,3...] since items are already in correct order
           const expectedMatches = Array.from({ length: currentQ.items.length }, (_, i) => i);
           return JSON.stringify(selectedAnswer) === JSON.stringify(expectedMatches);
         } else if (Array.isArray(currentQ.correctMatches)) {
-        // Old format with explicit correctMatches
           return JSON.stringify(selectedAnswer) === JSON.stringify(currentQ.correctMatches);
         } else {
-        // Fallback for any other format
           return false;
         }
 
       case 'calculation':
-      // Allow small tolerance for floating point errors
         const tolerance = 0.01;
 
-        // Handle calculation questions with options
         if (Array.isArray(currentQ.options) && currentQ.options.length > 0) {
-        // If correctAnswer is an index into the options array
           if (Number.isInteger(currentQ.correctAnswer) &&
             currentQ.correctAnswer >= 0 &&
             currentQ.correctAnswer < currentQ.options.length) {
-          // Compare with the option at the specified index
             return Math.abs(parseFloat(selectedAnswer) -
                          parseFloat(currentQ.options[currentQ.correctAnswer])) <= tolerance;
           } else {
-          // Direct numeric comparison - either way is fine
             return Math.abs(parseFloat(selectedAnswer) - parseFloat(currentQ.correctAnswer)) <= tolerance;
           }
         } else {
-        // Standard calculation question without options
           return Math.abs(parseFloat(selectedAnswer) - parseFloat(currentQ.correctAnswer)) <= tolerance;
         }
 
@@ -820,7 +734,6 @@ const FinancialTrivia = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch challenge details first
       const challengeResponse = await fetch(`${API_BASE_URL}/challenges/${challengeId}`);
       if (!challengeResponse.ok) {
         throw new Error('Failed to fetch challenge details.');
@@ -834,7 +747,6 @@ const FinancialTrivia = () => {
 
       const settings = challengeData.quizSettings;
 
-      // Build query parameters
       const params = new URLSearchParams();
 
       if (settings.difficulty) {
@@ -864,7 +776,6 @@ const FinancialTrivia = () => {
         throw new Error('No questions found for this challenge. Maybe invalid settings?');
       }
 
-      // Apply settings
       setDifficulty(settings.difficulty || 'medium');
       setGameType(settings.quizType || 'standard');
       setTimer(settings.timer || 30);
@@ -873,7 +784,6 @@ const FinancialTrivia = () => {
       setSelectedCategory(settings.category || 'all');
       setQuestionCount(settings.questionCount || 10);
 
-      // Update selected question types
       const updatedQuestionTypes = {
         'multiple-choice': false,
         'true-false': false,
@@ -908,7 +818,6 @@ const FinancialTrivia = () => {
   };
 
 
-  // Submit the score for a challenge
   const submitChallengeScore = async () => {
     if (!challengeMode || !currentChallenge || !user) return;
 
@@ -931,12 +840,9 @@ const FinancialTrivia = () => {
       const result = await response.json();
       console.log('Challenge score submitted:', result);
 
-      // If both players have completed, show the final result
       if (result.status === 'completed') {
-      // Update current challenge with results
         setCurrentChallenge(result);
 
-        // Show a special message for challenge completion
         setResultMessage(
           result.winnerId === user.id
             ? '🏆 You won the challenge!'
@@ -945,7 +851,6 @@ const FinancialTrivia = () => {
               : '❌ You lost the challenge.',
         );
       } else {
-      // Show message that opponent still needs to play
         setResultMessage(
           'Your score has been submitted. Waiting for your opponent to play.',
         );
@@ -956,7 +861,6 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Function to handle game start
   const startGame = () => {
     setGameActive(true);
     setCurrentQuestionIndex(0);
@@ -966,22 +870,15 @@ const FinancialTrivia = () => {
     setCategoryPerformance({});
     setMasteryData({});
   };
-  // some other functions here (like trackGameProgress, fetchMoreMarathonQuestions, etc.)
-
-  // Update the endGame function in your FinancialTrivia.jsx file
 
   const endGame = async () => {
-  // Set UI states
     setShowScore(true);
     setQuizFinished(true);
 
-    // Calculate score percentage for messages
     const percentage = calculateScorePercentage();
 
-    // Calculate mastery levels
     calculateMastery();
 
-    // Handle challenge mode
     if (challengeId && user && score > 0) {
       try {
         const challengeResponse = await fetch(`${API_BASE_URL}/challenges/${challengeId}/score`, {
@@ -1008,7 +905,6 @@ const FinancialTrivia = () => {
         setMessage('Failed to submit challenge score. Please try again.');
       }
     } else {
-    // Set a generic result message for normal mode
       if (percentage >= 90) {
         setMessage("Outstanding! You're a financial genius!");
       } else if (percentage >= 70) {
@@ -1016,17 +912,14 @@ const FinancialTrivia = () => {
       } else if (percentage >= 50) {
         setMessage('Good effort! Keep learning to improve your score!');
       } else {
-        setMessage('Keep practicing! Financial literacy is a journey.');
+        setMessage('Keep practising! Financial literacy is a journey.');
       }
     }
 
-    // If user is logged in, track progress
     if (user) {
       await trackGameProgress(score);
 
-      // Update the leaderboard
       try {
-      // Update leaderboard
         const leaderboardResponse = await fetch(`${API_BASE_URL}/leaderboard/financial-trivia`, {
           method: 'POST',
           headers: {
@@ -1043,7 +936,6 @@ const FinancialTrivia = () => {
           console.error('Failed to update leaderboard');
         }
 
-        // Award completion points (only for regular games, not challenges)
         if (!challengeId) {
           const pointsResponse = await fetch(`${API_BASE_URL}/challenges/award-points`, {
             method: 'POST',
@@ -1052,7 +944,7 @@ const FinancialTrivia = () => {
             },
             body: JSON.stringify({
               userId: user.id,
-              points: 10, // Base points for completing a game
+              points: 10,
               reason: 'game_completed',
             }),
           });
@@ -1062,7 +954,6 @@ const FinancialTrivia = () => {
           }
         }
 
-        // Save detailed stats
         saveUserStats(masteryData, categoryPerformance);
       } catch (error) {
         console.error('Error updating leaderboard or points:', error);
@@ -1070,28 +961,22 @@ const FinancialTrivia = () => {
     }
   };
 
-  // Calculate score percentage
   const calculateScorePercentage = () => {
     if (questions.length === 0) return 0;
     return Math.round((score / questions.length) * 100);
   };
 
-  // Calculate mastery levels based on performance
   const calculateMastery = () => {
-  // Calculate mastery levels for each category
     const mastery = {};
     const performance = { ...categoryPerformance };
 
-    // Initialize all categories with 0% mastery
     categories.forEach(category => {
       mastery[category] = 0;
-      // Initialize performance tracking if not already set
       if (!performance[category]) {
         performance[category] = { correct: 0, total: 0 };
       }
     });
 
-    // Update based on current quiz session
     questions.forEach((question, index) => {
       const category = question.category || 'general';
       if (!performance[category]) {
@@ -1100,13 +985,11 @@ const FinancialTrivia = () => {
 
       performance[category].total++;
 
-      // Check if question was answered correctly - adapt this to match your answer tracking
       if (userAnswers[index] && userAnswers[index].isCorrect) {
         performance[category].correct++;
       }
     });
 
-    // Calculate mastery percentages
     Object.keys(performance).forEach(category => {
       if (performance[category].total > 0) {
         mastery[category] = Math.round(
@@ -1119,7 +1002,6 @@ const FinancialTrivia = () => {
     setCategoryPerformance(performance);
   };
 
-  // Save user statistics to the server
   const saveUserStats = async (mastery, performance) => {
     try {
       if (!user) return;
@@ -1153,7 +1035,6 @@ const FinancialTrivia = () => {
     }
   };
 
-  // ✅ THEN define goToNextQuestion BELOW
 
   const goToNextQuestion = () => {
     setTotalQuestionsAnswered(prev => prev + 1);
@@ -1192,7 +1073,6 @@ const FinancialTrivia = () => {
   };
 
 
-  // Handle answer submission
   const handleAnswerSubmit = (answer) => {
     if (selectedAnswer === null) {
       showNotification('Please select an answer first!', 'warning');
@@ -1204,9 +1084,7 @@ const FinancialTrivia = () => {
     setAnswerIsCorrect(isCorrect);
 
     if (!answerSubmitted) {
-      // For matching questions, ensure we're setting an array
       if (questions[currentQuestion].type === 'matching') {
-        // If answer is not already an array, initialize it
         if (!Array.isArray(selectedAnswer)) {
           const termsLength = questions[currentQuestion].terms?.length ||
                              (questions[currentQuestion].items?.length || 0);
@@ -1215,12 +1093,10 @@ const FinancialTrivia = () => {
           setSelectedAnswer(answer);
         }
       } else {
-        // For other question types
         setSelectedAnswer(answer);
       }
     }
 
-    // Save the user's answer for this question
     setUserAnswers(prev => [
       ...prev,
       {
@@ -1237,22 +1113,18 @@ const FinancialTrivia = () => {
     ]);
 
     if (isCorrect) {
-      // Calculate points based on difficulty and quiz type
-      let difficultyPoints = 10; // Default easy points
+      let difficultyPoints = 10;
 
       if (quizType === 'progressive') {
-        // Use progressive difficulty for scoring
         difficultyPoints = progressiveDifficulty === 'easy'
           ? 10
           : progressiveDifficulty === 'medium' ? 20 : 30;
       } else {
-        // Use question's actual difficulty for scoring
         difficultyPoints = questions[currentQuestion].difficulty === 'easy'
           ? 10
           : questions[currentQuestion].difficulty === 'medium' ? 20 : 30;
       }
 
-      // Add bonus points for harder question types
       let questionTypeBonus = 0;
       switch (questions[currentQuestion].type) {
         case 'matching':
@@ -1268,13 +1140,11 @@ const FinancialTrivia = () => {
           questionTypeBonus = 0;
       }
 
-      // Add time bonus for timed quizzes
       const timeBonus = timerEnabled && timerSetting > 0 ? Math.round(timeLeft * 0.2) : 0;
       const totalPoints = difficultyPoints + questionTypeBonus + timeBonus;
 
       setScore(prev => prev + totalPoints);
 
-      // Update streak for marathon mode
       if (quizType === 'marathon') {
         const newStreak = currentStreak + 1;
         setCurrentStreak(newStreak);
@@ -1289,28 +1159,24 @@ const FinancialTrivia = () => {
 
       showNotification(pointsMessage, 'success');
     } else {
-      // Reset streak for marathon mode on wrong answer
       if (quizType === 'marathon') {
         setCurrentStreak(0);
       }
       showNotification('❌ Incorrect!', 'error');
     }
 
-    // Move to next question after 2 seconds
     setTimeout(() => goToNextQuestion(), 2000);
   };
 
-  // Handle time up
   const handleTimeUp = () => {
     setAnswerSubmitted(true);
     setAnswerIsCorrect(false);
 
-    // Save the time-up as a skipped answer
     setUserAnswers(prev => [
       ...prev,
       {
         question: questions[currentQuestion].question,
-        userAnswer: null, // No answer selected
+        userAnswer: null,
         correctAnswer: questions[currentQuestion].correctAnswer,
         questionType: questions[currentQuestion].type || 'multiple-choice',
         options: questions[currentQuestion].options,
@@ -1319,28 +1185,22 @@ const FinancialTrivia = () => {
       },
     ]);
 
-    // Reset streak for marathon mode on time up
     if (quizType === 'marathon') {
       setCurrentStreak(0);
     }
 
     showNotification("⏰ Time's up!", 'warning');
 
-    // Move to next question after 2 seconds
     setTimeout(() => goToNextQuestion(), 2000);
   };
 
-  // Handle answer selection
   const handleAnswerSelect = (answer) => {
     try {
       if (!answerSubmitted) {
-        // For fill-blank, make sure we're working with a string
         if (questions[currentQuestion].type === 'fill-blank') {
           setSelectedAnswer(String(answer || ''));
         }
-        // For matching questions, ensure we're working with an array
         else if (questions[currentQuestion].type === 'matching') {
-          // If answer is not already an array, initialize it
           if (!Array.isArray(answer)) {
             const termsLength = questions[currentQuestion].terms?.length ||
                                (questions[currentQuestion].items?.length || 0);
@@ -1349,7 +1209,6 @@ const FinancialTrivia = () => {
             setSelectedAnswer(answer);
           }
         }
-        // For calculation questions, ensure we're working with a number
         else if (questions[currentQuestion].type === 'calculation') {
           try {
             const numericValue = parseFloat(answer);
@@ -1359,23 +1218,19 @@ const FinancialTrivia = () => {
             setSelectedAnswer(0);
           }
         }
-        // For other types
         else {
           setSelectedAnswer(answer);
         }
       }
     } catch (error) {
       console.error('Error handling answer selection:', error);
-      // Fail gracefully without crashing the app
     }
   };
 
-  // Toggle hint visibility for calculation questions
   const toggleHint = () => {
     setShowHint(!showHint);
   };
 
-  // Reset the quiz
   const resetQuiz = () => {
     setQuizStarted(false);
     setShowScore(false);
@@ -1395,15 +1250,12 @@ const FinancialTrivia = () => {
     setShowHint(false);
   };
 
-  // Export results as text file
   const exportResultsAsText = () => {
-    // Create a text representation of the results
     let resultsText = 'Financial Trivia Quiz Results\n';
     resultsText += `Quiz Type: ${quizTypeOptions.find(t => t.value === quizType)?.label}\n`;
     resultsText += `Final Score: ${score}\n`;
     resultsText += `Correct Answers: ${userAnswers.filter(a => a.isCorrect).length} out of ${userAnswers.length}\n\n`;
 
-    // Add each question and answer
     userAnswers.forEach((answer, index) => {
       resultsText += `Question ${index + 1} (${answer.questionType}): ${answer.question}\n`;
 
@@ -1438,7 +1290,6 @@ const FinancialTrivia = () => {
       resultsText += `Explanation: ${answer.explanation}\n\n`;
     });
 
-    // Create a download link
     const element = document.createElement('a');
     const file = new Blob([resultsText], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
@@ -1448,11 +1299,9 @@ const FinancialTrivia = () => {
     document.body.removeChild(element);
   };
 
-  // Generate certificate
   const generateCertificate = () => {
     const correctPercentage = (userAnswers.filter(a => a.isCorrect).length / userAnswers.length) * 100;
 
-    // Only generate a certificate if the user got at least 80% correct
     if (correctPercentage < 80) {
       showNotification('Score at least 80% to earn a certificate!', 'warning');
       return;
@@ -1461,15 +1310,12 @@ const FinancialTrivia = () => {
     setShowCertificate(true);
   };
 
-  // Toggle question type
   const toggleQuestionType = (type) => {
     setSelectedQuestionTypes(prev => {
-      // Make sure at least one question type is selected
       const otherTypesSelected = Object.entries(prev)
         .filter(([key]) => key !== type)
         .some(([_, enabled]) => enabled);
 
-      // If trying to unselect the last selected type, prevent it
       if (prev[type] && !otherTypesSelected) {
         showNotification('At least one question type must be selected', 'warning');
         return prev;
@@ -1482,23 +1328,19 @@ const FinancialTrivia = () => {
     });
   };
 
-  // Change difficulty level
   const changeDifficulty = (level) => {
     setDifficulty(level);
     resetQuiz();
   };
 
-  // Change category
   const changeCategory = (category) => {
     setSelectedCategory(category);
     resetQuiz();
   };
 
-  // Change quiz type
   const changeQuizType = (type) => {
     setQuizType(type);
 
-    // Adjust settings based on quiz type
     switch (type) {
       case 'daily':
         setQuestionCount(5);
@@ -1511,27 +1353,22 @@ const FinancialTrivia = () => {
         setTimerEnabled(true);
         break;
       case 'marathon':
-        // Marathon mode uses unlimited questions
         setTimerSetting(20);
         setTimerEnabled(true);
         break;
       case 'standard':
       default:
-        // Keep current settings
         break;
     }
 
     resetQuiz();
   };
 
-  // Handle showing quit confirmation dialog
   const handleQuitClick = () => {
     setShowQuitConfirmation(true);
   };
 
-  // Handle actual quitting after confirmation
   const handleConfirmQuit = () => {
-    // Track progress if user has played at least one question
     if (currentQuestion > 0 && user && !quizFinished) {
       trackGameProgress(score);
     }
@@ -1541,71 +1378,52 @@ const FinancialTrivia = () => {
     showNotification('Quiz exited', 'info');
   };
 
-  // Handle canceling the quit action
   const handleCancelQuit = () => {
     setShowQuitConfirmation(false);
   };
 
-  // Get category icon and name for display
   const getCategoryInfo = (categoryId) => {
     const category = financialCategories.find(cat => cat.id === categoryId) || financialCategories[0];
     return category;
   };
 
-  // In your FinancialTrivia component, add these at the component level (not inside renderQuestion)
   const [matchingSelectedTerm, setMatchingSelectedTerm] = useState(null);
   const [matchingMatches, setMatchingMatches] = useState([]);
 
-  // Initialize matching state whenever current question changes
   useEffect(() => {
     if (questions[currentQuestion]?.type === 'matching') {
       const currentQ = questions[currentQuestion];
       const isNewFormat = Array.isArray(currentQ.items) && currentQ.items.length > 0;
 
-      // Determine the number of terms based on the format
       const termsCount = isNewFormat
         ? currentQ.items.length
         : (currentQ.terms ? currentQ.terms.length : 0);
 
-      // Reset the matching-related state
       setSelectedTerm(null);
 
-      // Initialize selectedAnswer as an array of nulls with the right length
       setSelectedAnswer(Array(termsCount).fill(null));
 
-      // You can also reset the matching matches if you're using that state
       setMatchingMatches(Array(termsCount).fill(null));
     }
   }, [currentQuestion, questions]);
 
-
-  // Render the matching question type
-  // Render the matching question type
-  // Render the matching question type
-
   const renderMatchingQuestion = (currentQ) => {
-  // Determine if using new format (items) or old format (terms/definitions)
     const isNewFormat = Array.isArray(currentQ.items) && currentQ.items.length > 0;
 
-    // Extract terms and definitions based on format
     let terms = [];
     let definitions = [];
 
     if (isNewFormat) {
-    // New format with items array
       terms = currentQ.items.map(item => item.term);
       definitions = currentQ.items.map(item => item.definition);
     } else {
-    // Old format with separate arrays
       terms = currentQ.terms || [];
       definitions = currentQ.definitions || [];
     }
 
-    // Function to remove a match
     const removeMatch = (termIndex) => {
       if (answerSubmitted) return;
 
-      // Create a copy of the current matches and remove the match for this term
       const updatedMatches = [...selectedAnswer];
       updatedMatches[termIndex] = null;
       setSelectedAnswer(updatedMatches);
@@ -1624,9 +1442,7 @@ const FinancialTrivia = () => {
           <div className="terms-column">
             <h4>Terms</h4>
             {terms.map((term, index) => {
-              // Check if this term has been matched
               const isMatched = Array.isArray(selectedAnswer) && selectedAnswer[index] !== null;
-              // Get the matched definition index if it exists
               const matchedDefIndex = isMatched ? selectedAnswer[index] : null;
 
               return (
@@ -1658,7 +1474,7 @@ const FinancialTrivia = () => {
                       {!answerSubmitted && (
                         <button
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent triggering the parent click
+                            e.stopPropagation();
                             removeMatch(index);
                           }}
                           className="undo-match-btn"
@@ -1686,9 +1502,7 @@ const FinancialTrivia = () => {
           <div className="definitions-column">
             <h4>Definitions</h4>
             {definitions.map((definition, index) => {
-              // Check if this definition has been matched
               const isMatched = Array.isArray(selectedAnswer) && selectedAnswer.includes(index);
-              // Get the term index that matches to this definition
               const matchedTermIndex = isMatched ? selectedAnswer.findIndex(val => val === index) : null;
 
               return (
@@ -1697,7 +1511,6 @@ const FinancialTrivia = () => {
                   onClick={() => {
                     if (answerSubmitted || isMatched || selectedTerm === null) return;
 
-                    // Update the selectedAnswer array with the new match
                     const newMatches = [...(selectedAnswer || Array(terms.length).fill(null))];
                     newMatches[selectedTerm] = index;
                     setSelectedAnswer(newMatches);
@@ -1751,17 +1564,13 @@ const FinancialTrivia = () => {
           <h4>Correct Matches:</h4>
           <ul>
             {terms.map((term, index) => {
-              // Get the correct definition index based on format
               let correctDefIndex;
               if (isNewFormat) {
-                // For new format, matches are sequential
                 correctDefIndex = index;
               } else {
-                // For old format, use correctMatches array
                 correctDefIndex = currentQ.correctMatches[index];
               }
 
-              // Get user's answer
               const userDefIndex = Array.isArray(selectedAnswer) ? selectedAnswer[index] : null;
               const isCorrectMatch = userDefIndex === correctDefIndex;
 
@@ -1784,7 +1593,6 @@ const FinancialTrivia = () => {
     );
   };
 
-  // Render different question types
   const renderQuestion = () => {
     if (!questions[currentQuestion]) return null;
 
@@ -1839,15 +1647,11 @@ const FinancialTrivia = () => {
         );
 
       case 'fill-blank':
-        // Split the question at the blank marker
         const parts = currentQ.question.split(/____|\[blank\]|___/i);
 
-        // Check if this question has options
         const hasOptions = Array.isArray(currentQ.options) && currentQ.options.length > 0;
 
-        // Fix: Safely handle the input and prevent crashes
         const handleFillBlankChange = (e) => {
-          // Safe handling - prevents the component from crashing
           try {
             if (!answerSubmitted) {
               handleAnswerSelect(e.target.value);
@@ -1860,10 +1664,8 @@ const FinancialTrivia = () => {
         return (
             <div className="question-container">
               <div className="question fill-blank-question">
-                {/* First part of the question */}
                 {parts[0] || ''}
 
-                {/* Input field */}
                 <input
                   type="text"
                   value={selectedAnswer || ''}
@@ -1873,11 +1675,9 @@ const FinancialTrivia = () => {
                   disabled={answerSubmitted}
                 />
 
-                {/* Second part of the question */}
                 {parts[1] || ''}
               </div>
 
-              {/* Display options as buttons if they exist and answer not submitted yet */}
               {hasOptions && !answerSubmitted && (
                 <div className="fill-blank-options">
                   {currentQ.options.map((option, index) => (
@@ -1892,7 +1692,6 @@ const FinancialTrivia = () => {
                 </div>
               )}
 
-              {/* Show correct answer after submission if answer was wrong */}
               {answerSubmitted && !checkAnswer() && (
                 <div className="correct-answer-display">
                   <p>Correct answer: <strong>
@@ -1905,13 +1704,9 @@ const FinancialTrivia = () => {
             </div>
         );
 
-
-        // Then modify your case 'matching' to use these component-level state variables:
-        // In your renderQuestion function's matching case:
       case 'matching':
         return renderMatchingQuestion(currentQ);
 
-        // Enhanced Calculation Question handling with options support
       case 'calculation':
         const hasOption = Array.isArray(currentQ.options) && currentQ.options.length > 0;
 
@@ -1935,7 +1730,6 @@ const FinancialTrivia = () => {
         />
       </div>
 
-      {/* Display options as buttons if they exist and answer not submitted yet */}
       {hasOption && !answerSubmitted && (
         <div className="options-container" style={{
           display: 'flex',
@@ -1996,7 +1790,6 @@ const FinancialTrivia = () => {
         );
 
       default:
-        // Fall back to multiple choice if type is unknown
         return (
           <div className="question-container">
             <h3 className="question">{currentQ.question}</h3>
@@ -2020,8 +1813,6 @@ const FinancialTrivia = () => {
         );
     }
   };
-
-  // Complete render section for FinancialTrivia.jsx
 
   return (
   <div className="financial-trivia-container">
@@ -2361,7 +2152,6 @@ const FinancialTrivia = () => {
         </div>
 
         <div className="question-container">
-          {/* Render the current question based on its type */}
           {renderQuestion()}
 
           {answerSubmitted && (

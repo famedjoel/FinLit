@@ -1,15 +1,14 @@
 /* eslint-disable no-unused-vars */
-// models/UserStats.js
 import { connect } from '../config/sqlite-adapter.js';
 import Achievement from './Achievement.js';
 
 const UserStats = {
-  // Initialize user stats for a new user
-  initializeForUser: async (userId) => {
+  // Initialise user stats for a new user
+  initialiseForUser: async (userId) => {
     try {
       const connection = await connect();
 
-      // Check if stats already exist for this user
+      // Check if stats already exist for the user
       const existingStats = await connection.get(
         'SELECT * FROM user_stats WHERE user_id = ?',
         userId,
@@ -19,7 +18,7 @@ const UserStats = {
         return processUserStatsData(existingStats);
       }
 
-      // Create new stats record
+      // Create a new stats record for the user
       await connection.run(
         `INSERT INTO user_stats (
           user_id, quizzes_completed, questions_answered,
@@ -29,7 +28,7 @@ const UserStats = {
         userId,
       );
 
-      // Get the new stats
+      // Retrieve the newly created stats
       const stats = await connection.get(
         'SELECT * FROM user_stats WHERE user_id = ?',
         userId,
@@ -37,12 +36,12 @@ const UserStats = {
 
       return processUserStatsData(stats);
     } catch (error) {
-      console.error('Error initializing user stats:', error);
+      console.error('Error initialising user stats:', error);
       throw error;
     }
   },
 
-  // Get stats for a user
+  // Retrieve stats for a user
   getForUser: async (userId) => {
     try {
       const connection = await connect();
@@ -53,64 +52,58 @@ const UserStats = {
       );
 
       if (!stats) {
-        // Initialize if not exists
-        return await UserStats.initializeForUser(userId);
+        // Initialise stats if they do not exist
+        return await UserStats.initialiseForUser(userId);
       }
 
       return processUserStatsData(stats);
     } catch (error) {
-      console.error('Error getting user stats:', error);
+      console.error('Error retrieving user stats:', error);
       throw error;
     }
   },
 
-  // Update a specific stat for a user and check for achievements
+  // Update a specific stat for a user and check for related achievements
   updateStat: async (userId, statName, value, increment = true, transaction = null) => {
     try {
       const connection = await connect();
-
-      // Check if we need to manage the transaction ourselves
       const shouldManageTransaction = !transaction;
 
       try {
-        // Begin transaction only if we need to manage it ourselves
         if (shouldManageTransaction) {
           await connection.run('BEGIN TRANSACTION');
         }
 
-        // Check if stats exist for this user
+        // Ensure stats exist for the user
         const existingStats = await connection.get(
           'SELECT * FROM user_stats WHERE user_id = ?',
           userId,
         );
 
         if (!existingStats) {
-          // Initialize if not exists
-          await UserStats.initializeForUser(userId);
+          await UserStats.initialiseForUser(userId);
         }
 
         // Update the specified stat
         if (increment) {
-          // Increment the stat
           await connection.run(
             `UPDATE user_stats SET ${statName} = ${statName} + ? WHERE user_id = ?`,
             [value, userId],
           );
         } else {
-          // Set the stat to a specific value
           await connection.run(
             `UPDATE user_stats SET ${statName} = ? WHERE user_id = ?`,
             [value, userId],
           );
         }
 
-        // Get updated stats
+        // Retrieve updated stats
         const updatedStats = await connection.get(
           'SELECT * FROM user_stats WHERE user_id = ?',
           userId,
         );
 
-        // Check for achievements related to this stat
+        // Check for achievements related to the updated stat
         const achievements = await connection.all(
           `SELECT * FROM achievements 
            WHERE requirement_type = ?`,
@@ -119,9 +112,7 @@ const UserStats = {
 
         const updatedAchievements = [];
 
-        // Update progress for each relevant achievement
         for (const achievement of achievements) {
-          // Get current progress for this achievement
           const userAchievement = await connection.get(
             `SELECT * FROM user_achievements 
              WHERE user_id = ? AND achievement_id = ?`,
@@ -130,17 +121,14 @@ const UserStats = {
 
           const currentValue = updatedStats[statName];
 
-          // If achievement is not already completed, update progress
           if (!userAchievement || userAchievement.completed === 0) {
-            // Calculate progress as a number (should be the current value of the stat)
             const progress = currentValue;
 
-            // Update achievement progress and pass the current transaction
             const updatedAchievement = await Achievement.updateUserProgress(
               userId,
               achievement.id,
               progress,
-              connection, // Pass the current connection
+              connection,
             );
 
             if (updatedAchievement) {
@@ -149,7 +137,6 @@ const UserStats = {
           }
         }
 
-        // Commit the transaction only if we started it
         if (shouldManageTransaction) {
           await connection.run('COMMIT');
         }
@@ -159,7 +146,6 @@ const UserStats = {
           updatedAchievements,
         };
       } catch (error) {
-        // Rollback the transaction on error only if we started it
         if (shouldManageTransaction) {
           await connection.run('ROLLBACK');
         }
@@ -171,30 +157,24 @@ const UserStats = {
     }
   },
 
-
-  // Update multiple stats at once
+  // Update multiple stats for a user
   updateMultipleStats: async (userId, statsObject) => {
     try {
       const connection = await connect();
 
-      // Begin transaction
       await connection.run('BEGIN TRANSACTION');
 
       try {
-        // Check if stats exist for this user
         const existingStats = await connection.get(
           'SELECT * FROM user_stats WHERE user_id = ?',
           userId,
         );
 
         if (!existingStats) {
-          // Initialize if not exists
-          await UserStats.initializeForUser(userId);
+          await UserStats.initialiseForUser(userId);
         }
 
-        // Update each stat in the object
         for (const [statName, value] of Object.entries(statsObject)) {
-          // Skip invalid stat names
           if (!statName || typeof value !== 'number') continue;
 
           await connection.run(
@@ -203,18 +183,15 @@ const UserStats = {
           );
         }
 
-        // Get updated stats
         const updatedStats = await connection.get(
           'SELECT * FROM user_stats WHERE user_id = ?',
           userId,
         );
 
-        // Commit the transaction
         await connection.run('COMMIT');
 
         return processUserStatsData(updatedStats);
       } catch (error) {
-        // Rollback the transaction on error
         await connection.run('ROLLBACK');
         throw error;
       }
@@ -224,45 +201,38 @@ const UserStats = {
     }
   },
 
-  // Update login streak
+  // Update the user's login streak
   updateLoginStreak: async (userId) => {
     try {
       const connection = await connect();
 
-      // Get user's current streak and last active date
       const stats = await UserStats.getForUser(userId);
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Normalize to start of day
+      today.setHours(0, 0, 0, 0);
 
-      let newStreak = 1; // Default to 1 (today)
+      let newStreak = 1;
 
       if (stats.lastActiveDate) {
         const lastActive = new Date(stats.lastActiveDate);
-        lastActive.setHours(0, 0, 0, 0); // Normalize to start of day
+        lastActive.setHours(0, 0, 0, 0);
 
-        // Calculate days difference
         const diffTime = Math.abs(today - lastActive);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 1) {
-          // Consecutive day
           newStreak = stats.streakDays + 1;
         } else if (diffDays > 1) {
-          // Streak broken
           newStreak = 1;
         } else if (diffDays === 0) {
-          // Same day, keep current streak
           newStreak = stats.streakDays;
         }
       }
 
-      // Update streak and last active date
       const result = await UserStats.updateMultipleStats(userId, {
         streak_days: newStreak,
         last_active_date: today.toISOString(),
       });
 
-      // Check for streak achievements
       await UserStats.updateStat(userId, 'streak_days', newStreak, false);
 
       return result;
@@ -272,16 +242,14 @@ const UserStats = {
     }
   },
 
-  // Track quiz completion
+  // Track quiz completion and update related stats
   trackQuizCompleted: async (userId, score, questionsAnswered) => {
     try {
-      // Update multiple stats related to quiz completion
       const statsToUpdate = {
         quizzes_completed: { value: 1, increment: true },
         questions_answered: { value: questionsAnswered, increment: true },
       };
 
-      // Update each stat and collect achievement updates
       let allUpdatedAchievements = [];
 
       for (const [statName, config] of Object.entries(statsToUpdate)) {
@@ -295,7 +263,6 @@ const UserStats = {
         allUpdatedAchievements = [...allUpdatedAchievements, ...updatedAchievements];
       }
 
-      // Also update login streak when completing a quiz
       await UserStats.updateLoginStreak(userId);
 
       return {
@@ -308,7 +275,7 @@ const UserStats = {
     }
   },
 
-  // Track challenge sent
+  // Track a challenge sent by the user
   trackChallengeSent: async (userId) => {
     try {
       const { stats, updatedAchievements } = await UserStats.updateStat(
@@ -328,7 +295,7 @@ const UserStats = {
     }
   },
 
-  // Track challenge won
+  // Track a challenge won by the user
   trackChallengeWon: async (userId) => {
     try {
       const { stats, updatedAchievements } = await UserStats.updateStat(
@@ -348,7 +315,7 @@ const UserStats = {
     }
   },
 
-  // Track course completion
+  // Track course completion by the user
   trackCourseCompleted: async (userId) => {
     try {
       const { stats, updatedAchievements } = await UserStats.updateStat(
@@ -369,11 +336,10 @@ const UserStats = {
   },
 };
 
-// Process user stats data from DB format
+// Convert database stats format to camelCase for easier usage
 function processUserStatsData(stats) {
   if (!stats) return null;
 
-  // Convert snake_case to camelCase
   return {
     id: stats.id,
     userId: stats.user_id,

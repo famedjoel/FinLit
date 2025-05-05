@@ -5,7 +5,7 @@ import '../styles/profile.css';
 // Get the current hostname for API calls (works on all devices)
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
-// Additional avatar options with more variety
+// Array of avatar image paths available for selection
 const avatarOptions = [
   '/avatars/avatar1.png',
   '/avatars/avatar2.png',
@@ -16,6 +16,7 @@ const avatarOptions = [
 ];
 
 function Profile() {
+  // Initialise navigation and state hooks
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -29,13 +30,14 @@ function Profile() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [loading, setLoading] = useState(true);
+  // State for user statistics
   const [stats, setStats] = useState({
     coursesCompleted: 0,
     gamesPlayed: 0,
     learningStreakDays: 0,
   });
 
-  // Financial goal suggestions
+  // Suggested financial goals for user reference
   const goalSuggestions = [
     'Save for an emergency fund',
     'Pay off credit card debt',
@@ -46,6 +48,7 @@ function Profile() {
     'Save for a down payment on a house',
   ];
 
+  // Check authentication on component mount and load profile data
   useEffect(() => {
     const checkAuth = () => {
       const storedUser = localStorage.getItem('user');
@@ -61,17 +64,16 @@ function Profile() {
     checkAuth();
   }, [navigate]);
 
+  // Retrieve profile information and dashboard statistics from the API
   const fetchUserProfile = async (userId) => {
     try {
       setLoading(true);
 
-      // First fetch basic profile info
       const profileResponse = await fetch(`${API_BASE_URL}/profile/${userId}`);
       if (!profileResponse.ok) throw new Error('Failed to fetch profile');
 
       const profileData = await profileResponse.json();
 
-      // Then fetch dashboard data for stats
       const dashboardResponse = await fetch(`${API_BASE_URL}/dashboard/${userId}`);
       let dashboardData = {};
 
@@ -79,7 +81,7 @@ function Profile() {
         dashboardData = await dashboardResponse.json();
       }
 
-      // Initialize form data with profile info (removed bio)
+      // Update form data using the fetched profile details
       setFormData({
         username: profileData.username || '',
         email: profileData.email || '',
@@ -88,7 +90,7 @@ function Profile() {
         newGoal: '',
       });
 
-      // Set user stats
+      // Update user statistics from dashboard data
       setStats({
         coursesCompleted: dashboardData.totalCoursesCompleted || 0,
         gamesPlayed: (dashboardData.gameProgress || []).length,
@@ -104,6 +106,7 @@ function Profile() {
     }
   };
 
+  // Update form state when input values change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -112,6 +115,7 @@ function Profile() {
     }));
   };
 
+  // Append a new financial goal to the list
   const addFinancialGoal = () => {
     if (!formData.newGoal.trim()) return;
 
@@ -122,6 +126,7 @@ function Profile() {
     }));
   };
 
+  // Remove a financial goal at the specified index
   const removeFinancialGoal = (index) => {
     setFormData(prev => ({
       ...prev,
@@ -129,6 +134,7 @@ function Profile() {
     }));
   };
 
+  // Submit updated profile information to the API
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -151,7 +157,7 @@ function Profile() {
         setMessage(data.message || 'Profile updated successfully!');
         setMessageType('success');
 
-        // Update local storage with new username and avatar
+        // Update local storage with the revised profile details
         const updatedUser = {
           ...user,
           username: formData.username,
@@ -160,10 +166,10 @@ function Profile() {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
 
-        // Dispatch event to update other components
+        // Dispatch event to notify other components of the change
         window.dispatchEvent(new Event('loginStatusChange'));
 
-        // Exit edit mode
+        // Exit editing mode
         setIsEditing(false);
       } else {
         setMessage(data.message || 'Failed to update profile');
@@ -176,6 +182,7 @@ function Profile() {
     }
   };
 
+  // Show a loading spinner while data is being retrieved
   if (loading) {
     return (
       <div className="profile-container">
@@ -203,14 +210,14 @@ function Profile() {
           <p className="profile-email">{formData.email}</p>
           {!isEditing
             ? (
-            <button className="edit-profile-btn" onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </button>
+              <button className="edit-profile-btn" onClick={() => setIsEditing(true)}>
+                Edit Profile
+              </button>
               )
             : (
-            <button className="cancel-edit-btn" onClick={() => setIsEditing(false)}>
-              Cancel
-            </button>
+              <button className="cancel-edit-btn" onClick={() => setIsEditing(false)}>
+                Cancel
+              </button>
               )}
         </div>
       </div>
@@ -232,115 +239,115 @@ function Profile() {
 
       {isEditing
         ? (
-        <form onSubmit={handleSubmit} className="profile-form">
-          <div className="form-section">
-            <h2>Basic Information</h2>
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-section" id="avatar-selection">
-            <h2>Choose Avatar</h2>
-            <div className="avatar-grid">
-              {avatarOptions.map((avatar, index) => (
-                <div
-                  key={index}
-                  className={`avatar-option ${formData.avatar === avatar ? 'selected' : ''}`}
-                  onClick={() => setFormData({ ...formData, avatar })}
-                >
-                  <img src={avatar} alt={`Avatar ${index + 1}`} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h2>Financial Goals</h2>
-            <div className="goals-list">
-              {formData.financialGoals.length > 0
-                ? (
-                    formData.financialGoals.map((goal, index) => (
-                  <div key={index} className="goal-item">
-                    <span>{goal}</span>
-                    <button
-                      type="button"
-                      className="remove-goal-btn"
-                      onClick={() => removeFinancialGoal(index)}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                    ))
-                  )
-                : (
-                <p className="no-goals">No financial goals added yet.</p>
-                  )}
+          <form onSubmit={handleSubmit} className="profile-form">
+            <div className="form-section">
+              <h2>Basic Information</h2>
+              <div className="form-group">
+                <label htmlFor="username">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
             </div>
 
-            <div className="add-goal">
-              <input
-                type="text"
-                name="newGoal"
-                value={formData.newGoal}
-                onChange={handleInputChange}
-                placeholder="Add a new financial goal..."
-              />
-              <button
-                type="button"
-                className="add-goal-btn"
-                onClick={addFinancialGoal}
-              >
-                Add
-              </button>
-            </div>
-
-            <div className="goal-suggestions">
-              <h3>Suggestions:</h3>
-              <div className="suggestion-tags">
-                {goalSuggestions.map((suggestion, index) => (
-                  <span
+            <div className="form-section" id="avatar-selection">
+              <h2>Choose Avatar</h2>
+              <div className="avatar-grid">
+                {avatarOptions.map((avatar, index) => (
+                  <div
                     key={index}
-                    className="suggestion-tag"
-                    onClick={() => setFormData({ ...formData, newGoal: suggestion })}
+                    className={`avatar-option ${formData.avatar === avatar ? 'selected' : ''}`}
+                    onClick={() => setFormData({ ...formData, avatar })}
                   >
-                    {suggestion}
-                  </span>
+                    <img src={avatar} alt={`Avatar ${index + 1}`} />
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
 
-          <button type="submit" className="save-profile-btn">Save Profile</button>
-        </form>
+            <div className="form-section">
+              <h2>Financial Goals</h2>
+              <div className="goals-list">
+                {formData.financialGoals.length > 0
+                  ? (
+                      formData.financialGoals.map((goal, index) => (
+                      <div key={index} className="goal-item">
+                        <span>{goal}</span>
+                        <button
+                          type="button"
+                          className="remove-goal-btn"
+                          onClick={() => removeFinancialGoal(index)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      ))
+                    )
+                  : (
+                    <p className="no-goals">No financial goals added yet.</p>
+                    )}
+              </div>
+
+              <div className="add-goal">
+                <input
+                  type="text"
+                  name="newGoal"
+                  value={formData.newGoal}
+                  onChange={handleInputChange}
+                  placeholder="Add a new financial goal..."
+                />
+                <button
+                  type="button"
+                  className="add-goal-btn"
+                  onClick={addFinancialGoal}
+                >
+                  Add
+                </button>
+              </div>
+
+              <div className="goal-suggestions">
+                <h3>Suggestions:</h3>
+                <div className="suggestion-tags">
+                  {goalSuggestions.map((suggestion, index) => (
+                    <span
+                      key={index}
+                      className="suggestion-tag"
+                      onClick={() => setFormData({ ...formData, newGoal: suggestion })}
+                    >
+                      {suggestion}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="save-profile-btn">Save Profile</button>
+          </form>
           )
         : (
-        <div className="profile-details">
-          <div className="profile-section">
-            <h2>My Financial Goals</h2>
-            {formData.financialGoals.length > 0
-              ? (
-              <ul className="goals-display">
-                {formData.financialGoals.map((goal, index) => (
-                  <li key={index} className="goal-display-item">
-                    <span className="goal-icon">🎯</span> {goal}
-                  </li>
-                ))}
-              </ul>
-                )
-              : (
-              <p className="no-goals">No financial goals added yet. Edit your profile to add some!</p>
-                )}
+          <div className="profile-details">
+            <div className="profile-section">
+              <h2>My Financial Goals</h2>
+              {formData.financialGoals.length > 0
+                ? (
+                  <ul className="goals-display">
+                    {formData.financialGoals.map((goal, index) => (
+                      <li key={index} className="goal-display-item">
+                        <span className="goal-icon">🎯</span> {goal}
+                      </li>
+                    ))}
+                  </ul>
+                  )
+                : (
+                  <p className="no-goals">No financial goals added yet. Edit your profile to add some!</p>
+                  )}
+            </div>
           </div>
-        </div>
           )}
 
       {message && (

@@ -1,4 +1,3 @@
-// routes/courseRoutes.js
 import Course from '../models/Course.js';
 import Chapter from '../models/Chapter.js';
 import Lesson from '../models/Lesson.js';
@@ -6,13 +5,10 @@ import Quiz from '../models/Quiz.js';
 import { connect } from '../config/sqlite-adapter.js';
 
 export function setupCourseRoutes(app) {
-  console.log('Setting up course routes...');
-
-  // Get all courses with optional filters
+  // ROUTE: Retrieve all courses with optional query filters
   app.get('/api/courses', async (req, res) => {
     try {
       const { level, status, limit, search } = req.query;
-
       const filters = {};
       if (level && level !== 'All') filters.level = level;
       if (status) filters.status = status;
@@ -27,19 +23,17 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Get a specific course by ID
+  // ROUTE: Retrieve a course by its ID
   app.get('/api/courses/:courseId', async (req, res) => {
     try {
       const { courseId } = req.params;
       console.log(`Fetching course with ID: ${courseId}`);
 
       const course = await Course.findById(parseInt(courseId));
-
       if (!course) {
         console.log(`Course with ID ${courseId} not found`);
         return res.status(404).json({ message: 'Course not found' });
       }
-
       console.log(`Successfully found course: ${course.title}`);
       res.json(course);
     } catch (error) {
@@ -48,7 +42,7 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Get chapters for a specific course
+  // ROUTE: Retrieve chapters for a given course along with their lessons
   app.get('/api/courses/:courseId/chapters', async (req, res) => {
     try {
       const { courseId } = req.params;
@@ -58,18 +52,15 @@ export function setupCourseRoutes(app) {
         return res.status(404).json({ message: 'No chapters found for this course' });
       }
 
-      // For each chapter, get its lessons
       const chaptersWithLessons = await Promise.all(
         chapters.map(async (chapter) => {
           const lessons = await Lesson.findByChapterId(chapter.id);
-
-          // Return only lesson IDs, titles, and order for the chapter view
+          // Provide only essential lesson data
           const simplifiedLessons = lessons.map(lesson => ({
             id: lesson.id,
             title: lesson.title,
             order: lesson.order,
           }));
-
           return {
             ...chapter,
             lessons: simplifiedLessons,
@@ -84,7 +75,7 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Get a specific lesson by ID
+  // ROUTE: Retrieve a lesson by its ID
   app.get('/api/lessons/:lessonId', async (req, res) => {
     try {
       const { lessonId } = req.params;
@@ -93,7 +84,6 @@ export function setupCourseRoutes(app) {
       if (!lesson) {
         return res.status(404).json({ message: 'Lesson not found' });
       }
-
       res.json(lesson);
     } catch (error) {
       console.error(`Error fetching lesson ${req.params.lessonId}:`, error);
@@ -101,7 +91,7 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Get a specific chapter by ID
+  // ROUTE: Retrieve a chapter by its ID
   app.get('/api/chapters/:chapterId', async (req, res) => {
     try {
       const { chapterId } = req.params;
@@ -110,7 +100,6 @@ export function setupCourseRoutes(app) {
       if (!chapter) {
         return res.status(404).json({ message: 'Chapter not found' });
       }
-
       res.json(chapter);
     } catch (error) {
       console.error(`Error fetching chapter ${req.params.chapterId}:`, error);
@@ -118,33 +107,28 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Track user's course progress
+  // ROUTE: Record or update a user's lesson progress
   app.post('/api/progress/lesson', async (req, res) => {
     try {
       const { userId, lessonId, status, position } = req.body;
-
       if (!userId || !lessonId || !status) {
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      // Check if lesson exists
+      // Confirm that the lesson exists
       const lesson = await Lesson.findById(parseInt(lessonId));
       if (!lesson) {
         return res.status(404).json({ message: 'Lesson not found' });
       }
 
       const connection = await connect();
-
-      // First, check if there's an existing progress record
       const existingProgress = await connection.get(
         'SELECT * FROM user_lesson_progress WHERE user_id = ? AND lesson_id = ?',
         [userId, lessonId],
       );
 
       const now = new Date().toISOString();
-
       if (existingProgress) {
-        // Update existing record
         await connection.run(
           `UPDATE user_lesson_progress 
            SET status = ?, position = ?, 
@@ -153,7 +137,6 @@ export function setupCourseRoutes(app) {
           [status, position, status, status, now, userId, lessonId],
         );
       } else {
-        // Create new record
         await connection.run(
           `INSERT INTO user_lesson_progress 
            (user_id, lesson_id, status, position, started_at, completed_at)
@@ -169,19 +152,13 @@ export function setupCourseRoutes(app) {
         );
       }
 
-      // If lesson is completed, update course progress
+      // Update course progress if the lesson is completed
       if (status === 'completed') {
-        // Get chapter id for this lesson
         const chapterId = lesson.chapterId;
-
-        // Get course id for this chapter
         const chapter = await Chapter.findById(chapterId);
         const courseId = chapter.courseId;
-
-        // Update course progress
         await updateCourseProgress(userId, courseId);
       }
-
       res.json({ message: 'Progress updated successfully' });
     } catch (error) {
       console.error('Error updating lesson progress:', error);
@@ -189,21 +166,18 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Get user's progress for a specific course
+  // ROUTE: Retrieve a user's progress for a specific course
   app.get('/api/users/:userId/courses/:courseId/progress', async (req, res) => {
     try {
       const { userId, courseId } = req.params;
-
       const connection = await connect();
 
-      // Check if user is enrolled in this course
-      const enrollment = await connection.get(
+      // Confirm if the user is enrolled; enrol if missing
+      const enrolment = await connection.get(
         'SELECT * FROM user_course_progress WHERE user_id = ? AND course_id = ?',
         [userId, courseId],
       );
-
-      // If not enrolled, create enrollment
-      if (!enrollment) {
+      if (!enrolment) {
         await connection.run(
           `INSERT INTO user_course_progress 
            (user_id, course_id, status, progress, enrolled_at)
@@ -212,36 +186,31 @@ export function setupCourseRoutes(app) {
         );
       }
 
-      // Get course details with chapters
       const course = await Course.findById(parseInt(courseId));
       if (!course) {
         return res.status(404).json({ message: 'Course not found' });
       }
 
-      // Get all chapters for this course
+      // Retrieve chapters and corresponding lesson progress
       const chapters = await Chapter.findByCourseId(parseInt(courseId));
-
-      // Get progress for all lessons in this course
       const progress = await Promise.all(
         chapters.map(async (chapter) => {
           const lessons = await Lesson.findByChapterId(chapter.id);
-
           const lessonProgress = await Promise.all(
             lessons.map(async (lesson) => {
-              const progress = await connection.get(
+              const prog = await connection.get(
                 'SELECT * FROM user_lesson_progress WHERE user_id = ? AND lesson_id = ?',
                 [userId, lesson.id],
               );
-
               return {
                 id: lesson.id,
                 title: lesson.title,
                 order: lesson.order,
-                progress: progress
+                progress: prog
                   ? {
-                      status: progress.status,
-                      position: progress.position,
-                      completed: progress.status === 'completed',
+                      status: prog.status,
+                      position: prog.position,
+                      completed: prog.status === 'completed',
                     }
                   : {
                       status: 'not-started',
@@ -251,7 +220,6 @@ export function setupCourseRoutes(app) {
               };
             }),
           );
-
           return {
             id: chapter.id,
             title: chapter.title,
@@ -261,10 +229,9 @@ export function setupCourseRoutes(app) {
         }),
       );
 
-      // Calculate overall progress
+      // Calculate overall progress percentage
       let completedLessons = 0;
       let totalLessons = 0;
-
       progress.forEach(chapter => {
         chapter.lessons.forEach(lesson => {
           totalLessons++;
@@ -273,22 +240,14 @@ export function setupCourseRoutes(app) {
           }
         });
       });
+      const overallProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
-      const overallProgress = totalLessons > 0
-        ? Math.round((completedLessons / totalLessons) * 100)
-        : 0;
-
-      // Find next uncompleted lesson
+      // Identify the next uncompleted lesson
       let nextChapterId = null;
       let nextLessonId = null;
-
-      // Sort chapters by order
       const sortedChapters = [...progress].sort((a, b) => a.order - b.order);
-
       for (const chapter of sortedChapters) {
-        // Sort lessons by order
         const sortedLessons = [...chapter.lessons].sort((a, b) => a.order - b.order);
-
         for (const lesson of sortedLessons) {
           if (lesson.progress.status !== 'completed') {
             nextChapterId = chapter.id;
@@ -296,17 +255,14 @@ export function setupCourseRoutes(app) {
             break;
           }
         }
-
         if (nextLessonId) break;
       }
 
-      // Update overall progress in database
+      // Update the user's overall course progress
       await connection.run(
         'UPDATE user_course_progress SET progress = ? WHERE user_id = ? AND course_id = ?',
         [overallProgress, userId, courseId],
       );
-
-      // If all lessons are completed, mark course as completed
       if (completedLessons === totalLessons && totalLessons > 0) {
         await connection.run(
           `UPDATE user_course_progress 
@@ -315,7 +271,6 @@ export function setupCourseRoutes(app) {
           [new Date().toISOString(), userId, courseId],
         );
       }
-
       res.json({
         courseId: parseInt(courseId),
         enrolled: true,
@@ -330,24 +285,20 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Submit a quiz attempt
+  // ROUTE: Submit a quiz attempt and record results
   app.post('/api/progress/quiz', async (req, res) => {
     try {
       const { userId, quizId, answers } = req.body;
-
       if (!userId || !quizId || !Array.isArray(answers)) {
         return res.status(400).json({ message: 'Missing required fields' });
       }
-
-      // Get quiz details
       const quiz = await Quiz.findById(parseInt(quizId));
       if (!quiz) {
         return res.status(404).json({ message: 'Quiz not found' });
       }
 
-      // Calculate score
+      // Determine the quiz score based on correct answers
       let correctAnswers = 0;
-
       quiz.questions.forEach((question, index) => {
         if (index < answers.length) {
           if (answers[index].toString() === question.correctAnswer.toString()) {
@@ -355,13 +306,10 @@ export function setupCourseRoutes(app) {
           }
         }
       });
-
       const score = Math.round((correctAnswers / quiz.questions.length) * 100);
       const passed = score >= quiz.passingScore;
-
       const connection = await connect();
 
-      // Record the quiz attempt
       const attemptResult = await connection.run(
         `INSERT INTO user_quiz_attempts 
          (user_id, quiz_id, score, passed, answers, started_at, completed_at)
@@ -377,12 +325,9 @@ export function setupCourseRoutes(app) {
         ],
       );
 
-      // If passed, mark the lesson as completed
+      // If the user has passed, mark the associated lesson as completed
       if (passed) {
-        // Get the lesson ID for this quiz
         const lessonId = quiz.lessonId;
-
-        // Update lesson progress
         await connection.run(
           `INSERT INTO user_lesson_progress 
            (user_id, lesson_id, status, position, started_at, completed_at)
@@ -393,12 +338,10 @@ export function setupCourseRoutes(app) {
           [userId, lessonId, new Date().toISOString(), new Date().toISOString()],
         );
 
-        // Also update course progress
         const lesson = await Lesson.findById(lessonId);
         const chapter = await Chapter.findById(lesson.chapterId);
         await updateCourseProgress(userId, chapter.courseId);
       }
-
       res.json({
         quizId: parseInt(quizId),
         score,
@@ -413,12 +356,10 @@ export function setupCourseRoutes(app) {
     }
   });
 
-  // Helper function to update course progress
+  // HELPER: Update the overall course progress for a user
   async function updateCourseProgress(userId, courseId) {
     try {
       const connection = await connect();
-
-      // Get all lessons for this course
       const lessons = await connection.all(
         `SELECT l.id
          FROM lessons l
@@ -426,8 +367,6 @@ export function setupCourseRoutes(app) {
          WHERE c.course_id = ?`,
         [courseId],
       );
-
-      // Get completed lessons
       const completedLessonsResult = await connection.all(
         `SELECT COUNT(*) as count
          FROM user_lesson_progress ulp
@@ -436,19 +375,14 @@ export function setupCourseRoutes(app) {
          WHERE ulp.user_id = ? AND c.course_id = ? AND ulp.status = 'completed'`,
         [userId, courseId],
       );
-
-      // Calculate progress percentage
       const totalLessons = lessons.length;
       const completed = completedLessonsResult[0]?.count || 0;
       const progress = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
 
-      // Update course progress
       await connection.run(
         'UPDATE user_course_progress SET progress = ? WHERE user_id = ? AND course_id = ?',
         [progress, userId, courseId],
       );
-
-      // If all lessons completed, mark course as completed
       if (progress === 100) {
         await connection.run(
           `UPDATE user_course_progress 
@@ -457,7 +391,6 @@ export function setupCourseRoutes(app) {
           [new Date().toISOString(), userId, courseId],
         );
       }
-
       return progress;
     } catch (error) {
       console.error('Error updating course progress:', error);

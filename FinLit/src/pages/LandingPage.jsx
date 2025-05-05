@@ -2,20 +2,20 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/landing-page.css';
-import { ThemeContext } from '../context/ThemeContext.jsx'; // Import ThemeContext
+import { ThemeContext } from '../context/ThemeContext.jsx';
 
 function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const { theme } = useContext(ThemeContext); // Get current theme
+  const { theme } = useContext(ThemeContext); // Access the current theme from context
 
-  // Check login status
   useEffect(() => {
+    // Determine if the user is logged in by checking local storage
     const user = localStorage.getItem('user');
     setIsLoggedIn(!!user);
   }, []);
 
-  // Testimonials data
+  // Testimonials data for the carousel
   const testimonials = [
     {
       id: 1,
@@ -40,7 +40,7 @@ function LandingPage() {
     },
   ];
 
-  // Features data
+  // Features data displayed in the features section
   const features = [
     {
       id: 1,
@@ -68,7 +68,7 @@ function LandingPage() {
     },
   ];
 
-  // FAQ data
+  // FAQ data for the FAQ section
   const faqs = [
     {
       id: 1,
@@ -87,15 +87,15 @@ function LandingPage() {
     },
   ];
 
-  // Change testimonial every 5 seconds
   useEffect(() => {
+    // Automatically change the testimonial every 5 seconds
     const interval = setInterval(() => {
       setTestimonialIndex((prevIndex) =>
         prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1,
       );
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // Clean up the interval on component unmount
   }, [testimonials.length]);
 
   return (
@@ -185,7 +185,7 @@ function LandingPage() {
           </div>
           <div className="game-preview-card">
             <h3>💳 Money Match</h3>
-            <p>Master budgeting by categorizing needs vs. wants.</p>
+            <p>Master budgeting by categorising needs vs. wants.</p>
             <Link to="/games/money-match" className="btn-play">Play Now</Link>
           </div>
         </div>
@@ -241,7 +241,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Call-to-Action Section */}
       <section className="cta-section">
         <h2>Ready to Build Your Financial Future?</h2>
         <p>Join thousands of others who are mastering finance the fun way.</p>

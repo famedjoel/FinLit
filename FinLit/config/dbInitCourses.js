@@ -1,7 +1,6 @@
-// config/dbInitCourses.js
 import { connect } from './sqlite-adapter.js';
 
-// Initialize database tables for courses
+// InitialiSe database tables for courses
 export async function initCourseTables() {
   try {
     const connection = await connect();

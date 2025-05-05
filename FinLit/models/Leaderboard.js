@@ -1,4 +1,3 @@
-// models/Leaderboard.js
 import { connect } from '../config/sqlite-adapter.js';
 
 const Leaderboard = {

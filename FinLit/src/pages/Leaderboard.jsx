@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-// src/pages/Leaderboard.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Leaderboard.css';
@@ -18,6 +17,7 @@ function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Initialise user and fetch leaderboard data when the active tab changes
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -26,12 +26,14 @@ function Leaderboard() {
     fetchLeaderboardData();
   }, [activeTab]);
 
+  // Fetch user-specific rank and points when user or active tab changes
   useEffect(() => {
     if (user) {
       fetchUserRankAndPoints();
     }
   }, [user, activeTab]);
 
+  // Fetch leaderboard data based on the active tab
   const fetchLeaderboardData = async () => {
     try {
       setLoading(true);
@@ -54,6 +56,7 @@ function Leaderboard() {
     }
   };
 
+  // Fetch the user's rank and points for the active tab
   const fetchUserRankAndPoints = async () => {
     try {
       if (activeTab === 'trivia') {
@@ -73,6 +76,7 @@ function Leaderboard() {
     }
   };
 
+  // Display loading spinner while data is being fetched
   if (loading) {
     return (
       <div className="leaderboard-container">
@@ -107,7 +111,7 @@ function Leaderboard() {
         </button>
       </div>
 
-      {/* Show user stats if logged in */}
+      {/* Display user stats if logged in */}
       {user && userPoints && (
         <div className="user-stats-banner">
           <div className="user-stat">
@@ -127,7 +131,7 @@ function Leaderboard() {
         </div>
       )}
 
-      {/* Main Leaderboard Content */}
+      {/* Main leaderboard content */}
       <div className="leaderboard-content">
         {activeTab === 'trivia'
           ? (
@@ -192,7 +196,7 @@ function Leaderboard() {
             )}
       </div>
 
-      {/* CTA if not logged in */}
+      {/* Call-to-action for users who are not logged in */}
       {!user && (
         <div className="cta-login">
           <p>Login to see your rank and compete with others!</p>

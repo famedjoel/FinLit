@@ -2,16 +2,15 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-
 import '../styles/dashboard.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-// import GameProgress from "./GameProgress";
 import DashboardCourseItem from './DashboardCourseItem.jsx';
 
 // Get the current hostname for API calls (works on all devices)
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 function Dashboard() {
+  // Initialise navigation and state hooks
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
@@ -20,14 +19,13 @@ function Dashboard() {
   const [validCourseIds, setValidCourseIds] = useState([]);
   const { theme } = useContext(ThemeContext);
 
-  // Fetch valid course IDs when the component loads
+  // Fetch valid courses upon component mount
   useEffect(() => {
     const fetchValidCourses = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/courses`);
         if (response.ok) {
           const courses = await response.json();
-          // Extract just the IDs
           const ids = courses.map(course => course.id);
           setValidCourseIds(ids);
         }
@@ -39,20 +37,22 @@ function Dashboard() {
     fetchValidCourses();
   }, []);
 
+  // Check authentication status and listen for changes
   useEffect(() => {
     const checkAuth = () => {
       const storedUser = localStorage.getItem('user');
       if (!storedUser) {
         navigate('/login');
       } else {
-        setUser(JSON.parse(storedUser));
-        fetchDashboardData(JSON.parse(storedUser).id);
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        fetchDashboardData(parsedUser.id);
       }
     };
 
     checkAuth();
 
-    // Add listeners for logout or other auth changes
+    // Listen for authentication updates
     window.addEventListener('loginStatusChange', checkAuth);
     window.addEventListener('storage', (event) => {
       if (event.key === 'user') {
@@ -66,15 +66,14 @@ function Dashboard() {
     };
   }, [navigate]);
 
+  // Retrieve dashboard data for the given user ID
   const fetchDashboardData = async (userId) => {
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/dashboard/${userId}`);
-
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');
       }
-
       const data = await response.json();
       setDashboardData(data);
       setLoading(false);
@@ -85,13 +84,14 @@ function Dashboard() {
     }
   };
 
+  // Handle user logout by clearing storage and redirecting to login
   const handleLogout = () => {
     localStorage.removeItem('user');
     window.dispatchEvent(new Event('loginStatusChange'));
     navigate('/login');
   };
 
-  // Format the timestamp to a readable format
+  // Format a date string to a human-readable format (British English)
   const formatDate = (dateString) => {
     const options = {
       year: 'numeric',
@@ -103,12 +103,11 @@ function Dashboard() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Get appropriate icon for activity
+  // Return an appropriate icon based on the activity type and action
   const getActivityIcon = (type, action) => {
     if (type === 'course' && action === 'completed') return '🏆';
     if (type === 'course' && action === 'started') return '📖';
     if (type === 'game' && action === 'played') {
-      // Check specific games for custom icons
       if (action.includes('Battle of Budgets')) return '⚔️';
       if (action.includes('Money Match')) return '💰';
       return '🎮';
@@ -118,41 +117,29 @@ function Dashboard() {
     return '📝';
   };
 
-  // Get game title from activity
+  // Extract the game title from an activity using metadata if available
   const getGameTitle = (activity) => {
-    // Check if activity has metadata
     if (activity.metadata) {
       try {
         const metadata = typeof activity.metadata === 'string'
           ? JSON.parse(activity.metadata)
           : activity.metadata;
-
-        // Return the title from metadata if it exists
         if (metadata.title) return metadata.title;
       } catch (e) {
-        // If parsing fails, fall back to activity.title
+        // Fallback to activity title if metadata parsing fails
       }
     }
-
     return activity.title;
   };
 
-  // Format game metadata for Battle Budgets
+  // Process game metadata for Battle Budgets into meaningful details
   const formatGameDetails = (metadata) => {
-    console.log('Formatting metadata:', metadata); // Debug log
-
     if (!metadata) return null;
-
     try {
-      // Handle metadata whether it's string or object
       let parsed = metadata;
       if (typeof metadata === 'string') {
         parsed = JSON.parse(metadata);
       }
-
-      console.log('Parsed metadata:', parsed); // Debug log
-
-      // Ensure all required fields exist
       return {
         winner: parsed.winner || null,
         aiPersonality: parsed.aiPersonality || null,
@@ -161,12 +148,12 @@ function Dashboard() {
         specialEvents: parsed.specialEvents || 0,
       };
     } catch (e) {
-      console.error('Error parsing metadata:', e); // Debug log
+      console.error('Error parsing metadata:', e);
       return null;
     }
   };
 
-  // Get Battle Budgets specific details for activity
+  // Provide Battle Budgets specific details for an activity's outcome
   const getBattleBudgetsDetails = (activity) => {
     if (activity.gameId === 'battle-budgets' && activity.metadata) {
       const details = formatGameDetails(activity.metadata);
@@ -180,6 +167,7 @@ function Dashboard() {
     return null;
   };
 
+  // Render loading state
   if (loading) {
     return (
       <div className={`dashboard-container ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -191,6 +179,7 @@ function Dashboard() {
     );
   }
 
+  // Render error state with a retry option
   if (error) {
     return (
       <div className={`dashboard-container ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -204,12 +193,11 @@ function Dashboard() {
     );
   }
 
+  // Main render of the dashboard view
   return (
     <div className={`dashboard-container ${theme === 'dark' ? 'dark-theme' : ''}`}>
       <h2>Welcome, {user?.username || 'User'}!</h2>
-
       <div className="dashboard-content">
-        {/* Progress Section */}
         <div className="progress-section">
           <h3>Your Learning Progress</h3>
           <div className="progress-bar">
@@ -219,48 +207,44 @@ function Dashboard() {
             ></div>
           </div>
           <p><strong>{dashboardData?.overallProgress || 0}% Completed</strong></p>
-
           {dashboardData?.courseProgress && dashboardData.courseProgress.length > 0 ? (
             <>
-              {/* Original courses list - can be used for light theme */}
+              {/* Light theme courses list */}
               <div className={`courses-list ${theme === 'dark' ? 'd-none' : ''}`}>
                 <h4>Your Courses</h4>
                 {dashboardData.courseProgress
-                // Filter out courses that don't exist in the database anymore
                   .filter(course => validCourseIds.includes(course.courseId))
                   .map((course, index) => (
-                  <div key={index} className="course-item">
-                    <div className="course-info">
-                      <span className="course-title">{course.title}</span>
-                      <span className="course-progress">{course.progress}%</span>
+                    <div key={index} className="course-item">
+                      <div className="course-info">
+                        <span className="course-title">{course.title}</span>
+                        <span className="course-progress">{course.progress}%</span>
+                      </div>
+                      <div className="course-progress-bar">
+                        <div
+                          className="course-progress-fill"
+                          style={{ width: `${course.progress}%` }}
+                        ></div>
+                      </div>
+                      <Link to={`/courses/${course.courseId}`} className="continue-btn">
+                        {course.progress > 0 ? 'Continue' : 'Start'}
+                      </Link>
                     </div>
-                    <div className="course-progress-bar">
-                      <div
-                        className="course-progress-fill"
-                        style={{ width: `${course.progress}%` }}
-                      ></div>
-                    </div>
-                    <Link to={`/courses/${course.courseId}`} className="continue-btn">
-                      {course.progress > 0 ? 'Continue' : 'Start'}
-                    </Link>
-                  </div>
                   ))}
               </div>
-
-              {/* Dark theme courses list that matches screenshot */}
+              {/* Dark theme courses list */}
               <div className={`dashboard-courses ${theme !== 'dark' ? 'd-none' : ''}`}>
                 {dashboardData.courseProgress
-                // Filter out courses that don't exist in the database anymore
                   .filter(course => validCourseIds.includes(course.courseId))
                   .map((course, index) => (
-                  <DashboardCourseItem
-                    key={index}
-                    course={{
-                      courseId: course.courseId,
-                      title: course.title,
-                      progress: course.progress,
-                    }}
-                  />
+                    <DashboardCourseItem
+                      key={index}
+                      course={{
+                        courseId: course.courseId,
+                        title: course.title,
+                        progress: course.progress,
+                      }}
+                    />
                   ))}
               </div>
             </>
@@ -268,11 +252,8 @@ function Dashboard() {
             <p className="no-data">No courses in progress yet</p>
           )}
         </div>
-
-        {/* Recent Activity */}
         <div className="recent-activity">
           <h3>Recent Activity</h3>
-
           {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
             <ul className="activity-list">
               {dashboardData.recentActivity.map((activity, index) => (
@@ -288,15 +269,11 @@ function Dashboard() {
                           ? 'Completed'
                           : activity.action === 'started'
                             ? 'Started'
-                            : activity.action}
-                      {' '}
+                            : activity.action}{' '}
                       <strong>{getGameTitle(activity)}</strong>
-
-                      {/* Show Battle Budgets outcome */}
                       {activity.gameId === 'battle-budgets' && activity.metadata && (() => {
                         const result = activity.metadata.winner;
                         const personality = activity.metadata.aiPersonality;
-
                         if (result === 'player') {
                           return <span className="game-outcome win"> - Victory vs {personality}! 🏆</span>;
                         } else if (result === 'ai') {
@@ -306,8 +283,6 @@ function Dashboard() {
                         }
                         return null;
                       })()}
-
-                      {/* Show session type for MoneyMatch */}
                       {activity.type === 'game' && activity.title?.includes('Money Budgeting Challenge') && (
                         <span className="game-details">
                           {activity.title.includes('Session Start')
@@ -316,12 +291,9 @@ function Dashboard() {
                         </span>
                       )}
                     </span>
-
-                    {/* Show score for games */}
                     {activity.type === 'game' && activity.score !== undefined && (
                       <span className="activity-score">Score: ${activity.score}</span>
                     )}
-
                     <span className="activity-time">{formatDate(activity.timestamp)}</span>
                   </div>
                 </li>
@@ -332,78 +304,64 @@ function Dashboard() {
           )}
         </div>
       </div>
-
-{/* Game Stats Dashboard */}
-{dashboardData?.gameProgress && dashboardData.gameProgress.length > 0 && (
-  <div className="games-section">
-    <h3>Game Stats Dashboard</h3>
-    <div className="games-grid">
-      {dashboardData.gameProgress.map((game, index) => {
-        let metadata = {};
-        try {
-          // Always try to parse metadata
-          if (game.metadata) {
-            metadata = typeof game.metadata === 'string'
-              ? JSON.parse(game.metadata)
-              : game.metadata;
-          }
-        } catch (e) {
-          console.error('Error parsing game metadata:', e);
-          metadata = {};
-        }
-
-        // Don't show Money Budgeting Challenge - Session Start
-        if (game.gameId === 'money-match' && game.title?.includes('Session Start')) {
-          return null;
-        }
-
-        return (
-          <div key={index} className="game-stat-card enhanced">
-            <h4>{game.title || 'Untitled Game'}</h4>
-
-            {/* Battle Budgets specific details */}
-            {game.gameId === 'battle-budgets' && (
-              <div className="game-details">
-                <p>💰 High Score: <strong>${game.highScore || 0}</strong></p>
-                <p>🎮 Played: <strong>{game.timesPlayed || 0} times</strong></p>
-                <p>📅 Last played: <strong>{game.lastPlayed ? formatDate(game.lastPlayed) : 'Never'}</strong></p>
-
-                {/* Only show additional details if metadata exists */}
-                {metadata && Object.keys(metadata).length > 0 && (() => {
-                  const details = formatGameDetails(metadata);
-                  return details && (
-                    <>
-                      <p>🎯 Last Match: <strong>{details.winner === 'player' ? '🏆 Victory' : details.winner === 'ai' ? '😔 Loss' : '🤝 Draw'}</strong></p>
-                      <p>🤖 Last Opponent: <strong>{details.aiPersonality || 'Unknown'}</strong></p>
-                      <p>⭐ Special Events: <strong>{details.specialEvents || 0}</strong></p>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-
- {/* MoneyMatch specific details */}
- {game.gameId === 'money-match' && !game.title?.includes('Session Start') && (
-              <div className="game-details">
-                <p>High Score: <strong>{game.highScore}</strong></p>
-                <p>Played: <strong>{game.timesPlayed} times</strong></p>
-                <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
-                {metadata.difficulty && (
-                  <p>Last difficulty: <strong>{metadata.difficulty}</strong></p>
-                )}
-                {metadata.essentialsPercentage && (
-                  <p>Essentials: <strong>{metadata.essentialsPercentage}%</strong></p>
-                )}
-                {metadata.luxuriesPercentage && (
-                  <p>Luxuries: <strong>{metadata.luxuriesPercentage}%</strong></p>
-                )}
-                {metadata.savingsPercentage && (
-                  <p>Savings: <strong>{metadata.savingsPercentage}%</strong></p>
-                )}
-              </div>
- )}
-
-                  {/* Generic game details for other games */}
+      {dashboardData?.gameProgress && dashboardData.gameProgress.length > 0 && (
+        <div className="games-section">
+          <h3>Game Stats Dashboard</h3>
+          <div className="games-grid">
+            {dashboardData.gameProgress.map((game, index) => {
+              let metadata = {};
+              try {
+                if (game.metadata) {
+                  metadata = typeof game.metadata === 'string'
+                    ? JSON.parse(game.metadata)
+                    : game.metadata;
+                }
+              } catch (e) {
+                console.error('Error parsing game metadata:', e);
+                metadata = {};
+              }
+              if (game.gameId === 'money-match' && game.title?.includes('Session Start')) {
+                return null;
+              }
+              return (
+                <div key={index} className="game-stat-card enhanced">
+                  <h4>{game.title || 'Untitled Game'}</h4>
+                  {game.gameId === 'battle-budgets' && (
+                    <div className="game-details">
+                      <p>💰 High Score: <strong>${game.highScore || 0}</strong></p>
+                      <p>🎮 Played: <strong>{game.timesPlayed || 0} times</strong></p>
+                      <p>📅 Last played: <strong>{game.lastPlayed ? formatDate(game.lastPlayed) : 'Never'}</strong></p>
+                      {metadata && Object.keys(metadata).length > 0 && (() => {
+                        const details = formatGameDetails(metadata);
+                        return details && (
+                          <>
+                            <p>🎯 Last Match: <strong>{details.winner === 'player' ? '🏆 Victory' : details.winner === 'ai' ? '😔 Loss' : '🤝 Draw'}</strong></p>
+                            <p>🤖 Last Opponent: <strong>{details.aiPersonality || 'Unknown'}</strong></p>
+                            <p>⭐ Special Events: <strong>{details.specialEvents || 0}</strong></p>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  {game.gameId === 'money-match' && !game.title?.includes('Session Start') && (
+                    <div className="game-details">
+                      <p>High Score: <strong>{game.highScore}</strong></p>
+                      <p>Played: <strong>{game.timesPlayed} times</strong></p>
+                      <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
+                      {metadata.difficulty && (
+                        <p>Last difficulty: <strong>{metadata.difficulty}</strong></p>
+                      )}
+                      {metadata.essentialsPercentage && (
+                        <p>Essentials: <strong>{metadata.essentialsPercentage}%</strong></p>
+                      )}
+                      {metadata.luxuriesPercentage && (
+                        <p>Luxuries: <strong>{metadata.luxuriesPercentage}%</strong></p>
+                      )}
+                      {metadata.savingsPercentage && (
+                        <p>Savings: <strong>{metadata.savingsPercentage}%</strong></p>
+                      )}
+                    </div>
+                  )}
                   {game.gameId !== 'battle-budgets' && (game.gameId !== 'money-match' || game.title?.includes('Session Start')) && (
                     <div className="game-details">
                       <p>High Score: <strong>{game.highScore}</strong></p>
@@ -412,13 +370,11 @@ function Dashboard() {
                     </div>
                   )}
                 </div>
-        );
-      })}
+              );
+            })}
           </div>
         </div>
-)}
-
-      {/* MoneyMatch Highlight Section */}
+      )}
       {dashboardData?.gameProgress?.some(game => game.gameId === 'money-match') && (
         <div className="moneymatch-highlight">
           <h3>MoneyMatch Budgeting Challenge</h3>
@@ -433,7 +389,6 @@ function Dashboard() {
               } catch (e) {
                 metadata = {};
               }
-
               return (
                 <div key={index} className="moneymatch-summary">
                   <div className="moneymatch-stats">
@@ -450,8 +405,6 @@ function Dashboard() {
                       <span className="stat-value">{metadata.difficulty || 'N/A'}</span>
                     </div>
                   </div>
-
-                  {/* Budget breakdown from last game */}
                   {metadata.essentialsPercentage && (
                     <div className="budget-breakdown">
                       <h4>Last Budget Breakdown</h4>
@@ -486,7 +439,6 @@ function Dashboard() {
           }
         </div>
       )}
-
       <button className="logout-btn" onClick={handleLogout}>Logout</button>
     </div>
   );

@@ -1,4 +1,3 @@
-// config/sampleCoursesData.js
 import { connect } from './sqlite-adapter.js';
 import Course from '../models/Course.js';
 import Chapter from '../models/Chapter.js';

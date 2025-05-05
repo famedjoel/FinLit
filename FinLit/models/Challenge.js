@@ -1,17 +1,15 @@
-// models/Challenge.js
 import { connect } from '../config/sqlite-adapter.js';
 
+// Challenge module responsible for managing challenge operations.
 const Challenge = {
-  // Create a new challenge
+  // Creates a new challenge in the database.
   create: async (challengeData) => {
     try {
       const connection = await connect();
-
-      // Begin a transaction
+      // Begin a transaction.
       await connection.run('BEGIN TRANSACTION');
-
       try {
-        // Convert quiz settings to JSON string
+        // Convert quiz settings to a JSON string if provided.
         const quizSettingsJSON = challengeData.quizSettings ? JSON.stringify(challengeData.quizSettings) : null;
 
         const result = await connection.run(
@@ -27,25 +25,25 @@ const Challenge = {
             challengeData.gameMode || null,
             'pending',
             challengeData.prizePoints || 50,
-            null, // challenger_score
-            null, // challenged_score
+            null,
+            null,
             quizSettingsJSON,
             new Date().toISOString(),
           ],
         );
 
-        // Get the created challenge
+        // Retrieve the newly created challenge using its unique identifier.
         const challenge = await connection.get(
           'SELECT * FROM challenges WHERE id = ?',
           result.lastID,
         );
 
-        // Commit the transaction
+        // Commit the transaction.
         await connection.run('COMMIT');
 
         return processChallengeData(challenge);
       } catch (error) {
-        // Rollback the transaction on error
+        // Roll back the transaction in case of any errors.
         await connection.run('ROLLBACK');
         throw error;
       }
@@ -55,11 +53,10 @@ const Challenge = {
     }
   },
 
-  // Find challenges for a user
+  // Retrieves challenges associated with a specific user.
   findByUserId: async (userId, options = {}) => {
     try {
       const connection = await connect();
-
       let query = `
         SELECT c.*, 
                u1.username as challenger_username, 
@@ -71,9 +68,9 @@ const Challenge = {
         LEFT JOIN users u3 ON c.winner_id = u3.id
         WHERE (c.challenger_id = ? OR c.challenged_id = ?)
       `;
-
       const params = [userId, userId];
 
+      // Optionally filter by challenge status.
       if (options.status) {
         query += ' AND c.status = ?';
         params.push(options.status);
@@ -81,13 +78,13 @@ const Challenge = {
 
       query += ' ORDER BY c.created_at DESC';
 
+      // Apply a limit if specified.
       if (options.limit) {
         query += ' LIMIT ?';
         params.push(options.limit);
       }
 
       const challenges = await connection.all(query, params);
-
       return challenges.map(challenge => processChallengeData(challenge));
     } catch (error) {
       console.error('Error finding challenges:', error);
@@ -95,11 +92,10 @@ const Challenge = {
     }
   },
 
-  // Find a challenge by ID
+  // Finds a challenge by its unique identifier.
   findById: async (id) => {
     try {
       const connection = await connect();
-
       const challenge = await connection.get(
         `SELECT c.*, 
                u1.username as challenger_username, 
@@ -120,25 +116,24 @@ const Challenge = {
     }
   },
 
-  // Accept a challenge
+  // Accepts a pending challenge.
   accept: async (challengeId) => {
     try {
       const connection = await connect();
-
-      // Update the challenge status to 'accepted'
+      // Update the challenge status to 'accepted' and record the acceptance time.
       const result = await connection.run(
-      `UPDATE challenges 
-       SET status = 'accepted', challenged_at = ? 
-       WHERE id = ? AND status = 'pending'`,
-      [new Date().toISOString(), challengeId],
+        `UPDATE challenges 
+         SET status = 'accepted', challenged_at = ? 
+         WHERE id = ? AND status = 'pending'`,
+        [new Date().toISOString(), challengeId],
       );
 
       if (result.changes === 0) {
-      // No rows were updated, likely because the challenge wasn't in 'pending' status
+        // Return null if the challenge was no longer pending.
         return null;
       }
 
-      // Return the updated challenge
+      // Retrieve and return the updated challenge.
       return await Challenge.findById(challengeId);
     } catch (error) {
       console.error('Error accepting challenge:', error);
@@ -146,15 +141,14 @@ const Challenge = {
     }
   },
 
-  // Update challenge with score
+  // Updates the score for a challenge and processes its completion.
   updateScore: async (challengeId, userId, score) => {
     try {
       const connection = await connect();
-
       const challenge = await Challenge.findById(challengeId);
       if (!challenge) throw new Error('Challenge not found');
 
-      // Determine which score to update
+      // Identify which score field to update based on the user.
       const isChallenger = userId === challenge.challengerId;
       const scoreField = isChallenger ? 'challenger_score' : 'challenged_score';
 
@@ -163,19 +157,18 @@ const Challenge = {
         [score, challengeId],
       );
 
-      // Check if both players have completed
+      // Retrieve the updated challenge details.
       const updatedChallenge = await Challenge.findById(challengeId);
 
       if (updatedChallenge.challengerScore !== null && updatedChallenge.challengedScore !== null) {
-        // Both players have completed - determine winner
         let winnerId = null;
+        // Determine the winner based on the scores.
         if (updatedChallenge.challengerScore > updatedChallenge.challengedScore) {
           winnerId = updatedChallenge.challengerId;
         } else if (updatedChallenge.challengedScore > updatedChallenge.challengerScore) {
           winnerId = updatedChallenge.challengedId;
         }
-        // If scores are equal, it's a tie (winnerId remains null)
-
+        // Update the challenge status to 'completed' and record the completion time and winner.
         await connection.run(
           `UPDATE challenges 
            SET status = 'completed', winner_id = ?, completed_at = ? 
@@ -183,7 +176,7 @@ const Challenge = {
           [winnerId, new Date().toISOString(), challengeId],
         );
 
-        // Award points if there's a winner
+        // Award points if there is a winner.
         if (winnerId) {
           await Challenge.awardPoints(winnerId, updatedChallenge.prizePoints, 'challenge_win', challengeId);
         }
@@ -196,16 +189,14 @@ const Challenge = {
     }
   },
 
-  // Award points to a user
+  // Awards points to a user and logs this change.
   awardPoints: async (userId, points, reason, referenceId = null) => {
     try {
       const connection = await connect();
-
-      // Start a transaction
+      // Begin a transaction.
       await connection.run('BEGIN TRANSACTION');
-
       try {
-        // Update or create user points record
+        // Insert new or update the existing user points record.
         await connection.run(
           `INSERT INTO user_points (user_id, total_points, last_updated)
            VALUES (?, ?, ?)
@@ -215,14 +206,14 @@ const Challenge = {
           [userId, points, new Date().toISOString(), points, new Date().toISOString()],
         );
 
-        // Create points history record
+        // Log the points change in the history.
         await connection.run(
           `INSERT INTO points_history (user_id, points_change, reason, reference_id)
            VALUES (?, ?, ?, ?)`,
           [userId, points, reason, referenceId],
         );
 
-        // Update challenge statistics if it was for a win
+        // Update additional statistics depending on the reason.
         if (reason === 'challenge_win') {
           await connection.run(
             `UPDATE user_points SET 
@@ -239,10 +230,12 @@ const Challenge = {
           );
         }
 
+        // Commit the transaction.
         await connection.run('COMMIT');
 
         return true;
       } catch (error) {
+        // Roll back the transaction in case of an error.
         await connection.run('ROLLBACK');
         throw error;
       }
@@ -253,12 +246,12 @@ const Challenge = {
   },
 };
 
-// Process challenge data from DB format
+// Processes raw challenge data from the database into a standardised format.
 function processChallengeData(challenge) {
   if (!challenge) return null;
 
-  // Parse quiz settings if they exist
   let quizSettings = null;
+  // Parse quiz settings from JSON if they exist.
   if (challenge.quiz_settings) {
     try {
       quizSettings = JSON.parse(challenge.quiz_settings);
@@ -282,7 +275,7 @@ function processChallengeData(challenge) {
     winnerId: challenge.winner_id,
     winnerUsername: challenge.winner_username,
     prizePoints: challenge.prize_points,
-    quizSettings, // Add quiz settings to processed data
+    quizSettings, // Quiz settings associated with the challenge.
     createdAt: challenge.created_at,
     challengedAt: challenge.challenged_at,
     completedAt: challenge.completed_at,

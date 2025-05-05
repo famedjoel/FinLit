@@ -1,18 +1,16 @@
-// config/dbInitMultiplayer.js
 import { connect } from './sqlite-adapter.js';
 
-// Initialize database tables for multiplayer features
 export async function initMultiplayerTables() {
   try {
     const connection = await connect();
 
-    // Check if challenges table exists
+    // Verify if the challenges table exists
     const tablesCheck = await connection.all(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='challenges'",
     );
 
     if (tablesCheck.length === 0) {
-      // Create challenges table for user-to-user challenges
+      // Create the challenges table for multiplayer user challenges
       await connection.exec(`
         CREATE TABLE IF NOT EXISTS challenges (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +23,7 @@ export async function initMultiplayerTables() {
           challenged_score INTEGER,
           winner_id INTEGER,
           prize_points INTEGER DEFAULT 50,
-          quiz_settings TEXT,  -- Store quiz settings as JSON
+          quiz_settings TEXT,
           created_at TEXT DEFAULT CURRENT_TIMESTAMP,
           challenged_at TEXT,
           completed_at TEXT,
@@ -35,20 +33,19 @@ export async function initMultiplayerTables() {
         )
       `);
     } else {
-      // Check if the quiz_settings column exists
+      // Ensure the quiz_settings column exists in the challenges table
       const tableInfo = await connection.all('PRAGMA table_info(challenges)');
       const hasQuizSettings = tableInfo.some(column => column.name === 'quiz_settings');
 
       if (!hasQuizSettings) {
-        // Add the quiz_settings column if it doesn't exist
         await connection.exec(`
           ALTER TABLE challenges ADD COLUMN quiz_settings TEXT
         `);
-        console.log('Added quiz_settings column to existing challenges table');
+        console.log('Added quiz_settings column to the existing challenges table');
       }
     }
 
-    // Create global leaderboard table
+    // Create the leaderboard table for tracking user rankings
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS leaderboard (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +58,7 @@ export async function initMultiplayerTables() {
       )
     `);
 
-    // Create user points table for reward system
+    // Create the user points table for managing reward points
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS user_points (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +72,7 @@ export async function initMultiplayerTables() {
       )
     `);
 
-    // Create points history table for tracking point transactions
+    // Create the points history table for recording point transactions
     await connection.exec(`
       CREATE TABLE IF NOT EXISTS points_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

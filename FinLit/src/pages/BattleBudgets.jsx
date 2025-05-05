@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import '../styles/BattleBudgets.css';
 
+// Constants for starting budget and number of weeks.
 const STARTING_BUDGET = 1000;
 const WEEKS = 4;
 
+// Predefined list of possible weekly expenses.
 const expensesList = [
   { name: 'Rent', cost: 400, icon: '🏠' },
   { name: 'Groceries', cost: 100, icon: '🛒' },
@@ -16,6 +18,7 @@ const expensesList = [
   { name: 'Internet', cost: 50, icon: '📡' },
 ];
 
+// List of AI personalities with their preferences and probabilities.
 const AI_PERSONALITIES = [
   {
     name: 'Saver Sam',
@@ -48,6 +51,7 @@ const AI_PERSONALITIES = [
 ];
 
 const BattleBudgets = () => {
+  // State hooks for game logic
   const [week, setWeek] = useState(1);
   const [playerMoney, setPlayerMoney] = useState(STARTING_BUDGET);
   const [aiMoney, setAiMoney] = useState(STARTING_BUDGET);
@@ -60,14 +64,17 @@ const BattleBudgets = () => {
   const [gameOver, setGameOver] = useState(false);
   const [specialEvent, setSpecialEvent] = useState(null);
 
+  // Base URL for API requests
   const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
+  // On initial load, select a random AI personality and generate expenses.
   useEffect(() => {
     const randomPersonality = AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)];
     setAiPersonality(randomPersonality);
     generateWeeklyExpenses();
   }, []);
 
+  // Regenerate expenses and check special events when week changes (except for the first week).
   useEffect(() => {
     if (week > 1) {
       generateWeeklyExpenses();
@@ -75,13 +82,15 @@ const BattleBudgets = () => {
     }
   }, [week]);
 
+  // Generate a random selection of weekly expenses.
   const generateWeeklyExpenses = () => {
     const randomExpenses = expensesList
       .sort(() => 0.5 - Math.random())
-      .slice(0, Math.floor(Math.random() * 2) + 3); // 3-4 random expenses
+      .slice(0, Math.floor(Math.random() * 2) + 3); // selects 3 or 4 random expenses
     setExpenses(randomExpenses);
   };
 
+  // 20% chance to trigger a special event.
   const checkSpecialEvents = () => {
     if (Math.random() < 0.2) {
       const events = [
@@ -113,19 +122,21 @@ const BattleBudgets = () => {
     }
   };
 
+  // Apply special event effect if applicable.
   const applySpecialEvent = (choice, amount) => {
     if (!specialEvent) return amount;
 
     switch (specialEvent.effect) {
       case 'discount':
-        return amount * 0.8;
+        return amount * 0.8; // reduce cost by 20%
       case 'double_investment':
-        return choice === 'invest' ? amount * 2 : amount;
+        return choice === 'invest' ? amount * 2 : amount; // double investment return if chosen
       default:
         return amount;
     }
   };
 
+  // Determine AI's choice based on its personality probabilities.
   const getAiChoice = () => {
     const random = Math.random();
     const probabilities = aiPersonality.probability;
@@ -135,6 +146,7 @@ const BattleBudgets = () => {
     return 'invest';
   };
 
+  // Handle player's choice and determine effects for both player and AI.
   const handleChoice = async (choice) => {
     if (isAnimating) return;
 
@@ -145,6 +157,7 @@ const BattleBudgets = () => {
     let playerEffect = 0;
     let aiEffect = 0;
 
+    // Apply bonus/penalty events if present.
     if (specialEvent && specialEvent.type === 'bonus') {
       newPlayerMoney += specialEvent.effect;
       newAiMoney += specialEvent.effect;
@@ -154,29 +167,31 @@ const BattleBudgets = () => {
       newAiMoney += specialEvent.effect;
     }
 
+    // Calculate player's cash effect based on their choice.
     if (choice === 'save') {
-      playerEffect = -totalExpense * 0.5;
+      playerEffect = -totalExpense * 0.5; // save reduces cost by 50%
       newPlayerMoney += playerEffect;
     } else if (choice === 'spend') {
-      playerEffect = -totalExpense;
+      playerEffect = -totalExpense; // full expense cost
       newPlayerMoney += playerEffect;
     } else if (choice === 'invest') {
-      const investmentReturn = Math.floor(Math.random() * 41) + 40;
-      const costReduction = totalExpense * 0.75;
+      const investmentReturn = Math.floor(Math.random() * 41) + 40; // random return between 40 and 80
+      const costReduction = totalExpense * 0.75; // reduced expense when investing
       playerEffect = -costReduction + investmentReturn;
       newPlayerMoney += playerEffect;
     }
 
+    // Apply any special event modifications.
     if (specialEvent && specialEvent.effect === 'discount') {
       playerEffect = applySpecialEvent(choice, playerEffect);
     }
-
     if (specialEvent && specialEvent.effect === 'double_investment' && choice === 'invest') {
       const investmentBonus = Math.floor(Math.abs(playerEffect) * 0.5);
       playerEffect += investmentBonus;
       newPlayerMoney += investmentBonus;
     }
 
+    // Get AI decision and calculate its effect.
     const aiChoice = getAiChoice();
     if (aiChoice === 'save') {
       aiEffect = -totalExpense * 0.5;
@@ -187,8 +202,6 @@ const BattleBudgets = () => {
       const costReduction = totalExpense * 0.75;
       aiEffect = -costReduction + investmentReturn;
     }
-
-    // Apply special events to AI
     aiEffect = applySpecialEvent(aiChoice, aiEffect);
     if (specialEvent && specialEvent.effect === 'double_investment' && aiChoice === 'invest') {
       const investmentBonus = Math.floor(Math.abs(aiEffect) * 0.5);
@@ -197,7 +210,7 @@ const BattleBudgets = () => {
 
     newAiMoney += aiEffect;
 
-    // Save history
+    // Save round history for review.
     const roundHistory = {
       week,
       playerChoice: choice,
@@ -210,10 +223,10 @@ const BattleBudgets = () => {
     };
     setGameHistory([...gameHistory, roundHistory]);
 
-    // Update state
     setPlayerMoney(newPlayerMoney);
     setAiMoney(newAiMoney);
 
+    // Construct response message showing both choices and any special event.
     let responseMessage = `You chose ${choice}! ${choice === 'invest' ? `Investment return: $${Math.abs(playerEffect) + totalExpense * 0.75}` : ''} 
 ${aiPersonality.name} chose ${aiChoice}!`;
 
@@ -223,7 +236,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
 
     setMessage(responseMessage);
 
-    // Move to next week or end game
+    // After a short delay, move to the next week or end the game.
     setTimeout(() => {
       if (week < WEEKS) {
         setWeek(week + 1);
@@ -237,6 +250,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
     }, 2000);
   };
 
+  // Determine the winner based on final monies.
   const determineWinner = (player, ai) => {
     if (player > ai) {
       setMessage(`🎉 Congratulations! You won with $${player.toFixed(2)}!`);
@@ -247,6 +261,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
     }
   };
 
+  // Track game stats by sending data to an API endpoint.
   const trackGameStats = async (finalPlayerMoney, finalAiMoney) => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) return;
@@ -279,6 +294,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
     }
   };
 
+  // Reset the game to initial state.
   const resetGame = () => {
     setWeek(1);
     setPlayerMoney(STARTING_BUDGET);
@@ -287,7 +303,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
     setGameOver(false);
     setSpecialEvent(null);
 
-    // Select new AI personality
+    // Select a new AI personality for the new game.
     const randomPersonality = AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)];
     setAiPersonality(randomPersonality);
     generateWeeklyExpenses();
@@ -297,6 +313,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
     <div className="battle-budgets-container">
       <h2 className="title animated-title">⚔️ Battle of the Budgets</h2>
 
+      {/* Display AI personality information */}
       {aiPersonality && (
         <div className="ai-personality-card">
           <div className="ai-avatar">{aiPersonality.emoji}</div>
@@ -313,9 +330,11 @@ ${aiPersonality.name} chose ${aiChoice}!`;
         </div>
 
         <div className="progress-bars">
+          {/* Progress bar for player */}
           <div className="progress-bar player" style={{ width: `${(playerMoney / STARTING_BUDGET) * 100}%` }}>
             <div className="progress-text">Player: ${playerMoney.toFixed(2)}</div>
           </div>
+          {/* Progress bar for AI */}
           <div className="progress-bar ai" style={{ width: `${(aiMoney / STARTING_BUDGET) * 100}%` }}>
             <div className="progress-text">{aiPersonality?.name}: ${aiMoney.toFixed(2)}</div>
           </div>
@@ -331,6 +350,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
         </div>
       </div>
 
+      {/* Display current week's expenses */}
       <div className="expenses">
         <h4>This Week&apos;s Expenses:</h4>
         <ul>
@@ -343,6 +363,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
         </ul>
       </div>
 
+      {/* Display special event if any */}
       {specialEvent && (
         <div className="special-event-card">
           <h3>🌟 Special Event!</h3>
@@ -351,6 +372,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
       )}
 
       <div className="choices">
+        {/* Buttons to choose game action */}
         <button className={'choice-btn save pulse tooltip'}
                 onClick={() => handleChoice('save')}
                 disabled={isAnimating || gameOver}>
@@ -373,6 +395,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
 
       {message && <p className={`message-box pop-up ${gameOver ? 'game-over' : ''}`}>{message}</p>}
 
+      {/* Controls to reset game or toggle tooltips when game is over */}
       {gameOver && (
         <div className="game-controls">
           <button onClick={resetGame} className="choice-btn invest">
@@ -394,7 +417,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
         </div>
       )}
 
-      {/* Enhanced helper text when tips are enabled */}
+      {/* Helper text for tooltips when enabled */}
       {showTooltips && gameOver && (
         <div style={{
           textAlign: 'center',
@@ -410,6 +433,7 @@ ${aiPersonality.name} chose ${aiChoice}!`;
         </div>
       )}
 
+      {/* Display game history if any rounds have been played */}
       {gameHistory.length > 0 && (
         <div className="game-history">
           <h3>Game History</h3>

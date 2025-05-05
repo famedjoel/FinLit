@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect, useRef } from 'react';
-import '../styles/LoanShark.css'; // Import the enhanced styles
+import '../styles/LoanShark.css';
 
 const LOAN_OPTIONS = [100, 200, 500];
 const DAILY_INTEREST = 0.05; // 5% daily interest
@@ -43,7 +43,7 @@ const DISTRICTS = [
   },
   {
     id: 'residential',
-    name: 'Suburban Neighborhood',
+    name: 'Suburban Neighbourhood',
     type: 'residential',
     description: 'Quiet streets with houses and lawns that need maintenance.',
     loans: [],
@@ -303,7 +303,7 @@ const LoanShark = () => {
       progressTime();
     }
 
-    showNotification(`Traveled to ${DISTRICTS.find(d => d.id === districtId).name}`, 'success');
+    showNotification(`Travelled to ${DISTRICTS.find(d => d.id === districtId).name}`, 'success');
   };
 
   // Progress time period (morning -> afternoon -> evening)

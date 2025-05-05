@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import PropTypes from 'prop-types';
-import '../styles/MoneyMatch.css'; // Using our new CSS file
+import '../styles/MoneyMatch.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 
 // API Base URL (works on all devices)
@@ -13,7 +13,7 @@ const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7
 const EASY_BUDGET = 1500;
 const HARD_BUDGET = 800;
 
-
+// Array of expense items available for the budgeting challenge
 const items = [
   { id: 1, name: 'Rent', category: 'Essentials', cost: 500 },
   { id: 2, name: 'Netflix Subscription', category: 'Luxuries', cost: 15 },
@@ -29,6 +29,7 @@ const items = [
   { id: 12, name: 'Phone Bill', category: 'Essentials', cost: 60 },
 ];
 
+// Component that renders an individual draggable expense item
 function DraggableItem({ item, isUsed }) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ITEM',
@@ -51,6 +52,7 @@ function DraggableItem({ item, isUsed }) {
   );
 }
 
+// Component representing a drop zone for a specific budget category
 function DropZone({ category, onDrop, allocatedItems, totalCost }) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'ITEM',
@@ -74,7 +76,9 @@ function DropZone({ category, onDrop, allocatedItems, totalCost }) {
   );
 }
 
+// Main component encompassing the Money Budgeting Challenge logic and interface
 function MoneyMatch() {
+  // States for budget, allocations and game status
   const [budgetLimit, setBudgetLimit] = useState(EASY_BUDGET);
   const [essentials, setEssentials] = useState([]);
   const [luxuries, setLuxuries] = useState([]);
@@ -89,7 +93,7 @@ function MoneyMatch() {
   const [confetti, setConfetti] = useState([]);
   const { theme } = useContext(ThemeContext);
 
-  // Progress tracking states
+  // States for user and progress tracking
   const [user, setUser] = useState(null);
   const [progressStats, setProgressStats] = useState({
     gamesPlayed: 0,
@@ -102,30 +106,25 @@ function MoneyMatch() {
   const [sessionTracked, setSessionTracked] = useState(false);
   const [dashboardSynced, setDashboardSynced] = useState(false);
 
-
-  // Check if user is logged in
+  // Retrieve user and progress details from localStorage on initial render
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-
-    // Load progress stats from localStorage
     const storedProgress = localStorage.getItem('moneyMatchProgress');
     if (storedProgress) {
       setProgressStats(JSON.parse(storedProgress));
     }
-
-    // Track game session at the beginning
+    // Begin the game session tracking if not already initialised
     if (!sessionTracked) {
       trackGameSession();
     }
   }, []);
 
-  // Track game session start
+  // Function to record the commencement of a game session
   const trackGameSession = async () => {
     if (!user) return;
-
     try {
       const response = await fetch(`${API_BASE_URL}/progress/game`, {
         method: 'POST',
@@ -152,7 +151,7 @@ function MoneyMatch() {
     }
   };
 
-  // Generate random confetti particles
+  // Generate confetti particles once the game is completed
   useEffect(() => {
     if (gameCompleted) {
       const confettiArray = [];
@@ -167,19 +166,19 @@ function MoneyMatch() {
         });
       }
       setConfetti(confettiArray);
-
-      // Update progress on game completion
+      // Update progress details on game completion
       updateProgress();
     }
   }, [gameCompleted]);
 
+  // Function to display temporary alert notifications
   const showAlert = (message, type) => {
     setAlert({ show: true, message, type });
     setTimeout(() => setAlert({ show: false, message: '', type: '' }), 3000);
   };
 
+  // Process the dropping of an expense item into a budget category
   const handleDrop = (item, category) => {
-    // Check if item is already used
     if (usedItems.has(item.id)) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
@@ -187,7 +186,6 @@ function MoneyMatch() {
       return;
     }
 
-    // Check if adding this item would exceed budget
     if (totalSpent + item.cost > budgetLimit) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
@@ -195,7 +193,6 @@ function MoneyMatch() {
       return;
     }
 
-    // Add item to used items
     setUsedItems(new Set([...usedItems, item.id]));
 
     if (category === 'Essentials') setEssentials((prev) => [...prev, item]);
@@ -205,63 +202,52 @@ function MoneyMatch() {
     setTotalSpent((prev) => prev + item.cost);
     showAlert(`Added ${item.name} to ${category}.`, 'success');
 
-    // Check if all required categories have items
+    // Verify if the game completion criteria have been met
     if (essentials.length > 0 && savings.length > 0) {
-      // Check if total spent is at least 80% of budget
       if ((totalSpent + item.cost) >= budgetLimit * 0.8) {
         setGameCompleted(true);
       }
     }
   };
 
-  // Update progress stats and check for achievements
+  // Update user progress, calculate score and assign achievements post game completion
   const updateProgress = () => {
-    // Calculate score based on budget balancing
     const essentialsPercentage = Math.round((essentials.reduce((sum, item) => sum + item.cost, 0) / budgetLimit) * 100);
     const luxuriesPercentage = Math.round((luxuries.reduce((sum, item) => sum + item.cost, 0) / budgetLimit) * 100);
     const savingsPercentage = Math.round((savings.reduce((sum, item) => sum + item.cost, 0) / budgetLimit) * 100);
 
-    // Base score on how close to the 50/30/20 ideal breakdown
     const idealEssentials = 50;
     const idealLuxuries = 30;
     const idealSavings = 20;
 
-    // Calculate the deviation from ideal (lower is better)
     const essentialsDev = Math.abs(essentialsPercentage - idealEssentials);
     const luxuriesDev = Math.abs(luxuriesPercentage - idealLuxuries);
     const savingsDev = Math.abs(savingsPercentage - idealSavings);
 
-    // Score based on deviation (100 is perfect, lower for more deviation)
+    // Score is determined by deviation from the ideal percentages
     const score = Math.max(0, 100 - (essentialsDev + luxuriesDev + savingsDev));
-
-    // Create a copy of achievements to potentially add new ones
     const newAchievements = [...progressStats.achievements];
 
-    // Check for achievements
     if (!newAchievements.includes('firstGame')) {
       newAchievements.push('firstGame');
       showAlert('Achievement Unlocked: Beginner Budgeter! 🔰', 'success');
     }
 
-    // Perfect balance achievement (close to 50/30/20)
     if (!newAchievements.includes('perfectBalance') && essentialsDev <= 5 && luxuriesDev <= 5 && savingsDev <= 5) {
       newAchievements.push('perfectBalance');
       showAlert('Achievement Unlocked: Balance Master! ⚖️', 'success');
     }
 
-    // Hard mode achievement
     if (!newAchievements.includes('moneyWise') && budgetLimit === HARD_BUDGET) {
       newAchievements.push('moneyWise');
       showAlert('Achievement Unlocked: Money Wise! 🧠', 'success');
     }
 
-    // Savings champion
     if (!newAchievements.includes('savingsChamp') && savingsPercentage >= 30) {
       newAchievements.push('savingsChamp');
       showAlert('Achievement Unlocked: Savings Champion! 🏆', 'success');
     }
 
-    // Games count achievements
     const newGamesCompleted = progressStats.gamesCompleted + 1;
     if (!newAchievements.includes('fiveGames') && newGamesCompleted >= 5) {
       newAchievements.push('fiveGames');
@@ -273,10 +259,7 @@ function MoneyMatch() {
       showAlert('Achievement Unlocked: Budget Veteran! 🌟', 'success');
     }
 
-    // Calculate level based on games completed and achievements
     const newLevel = Math.floor(1 + (newGamesCompleted / 2) + (newAchievements.length / 2));
-
-    // Update progress stats
     const updatedStats = {
       gamesPlayed: progressStats.gamesPlayed + 1,
       gamesCompleted: newGamesCompleted,
@@ -289,7 +272,6 @@ function MoneyMatch() {
     setProgressStats(updatedStats);
     localStorage.setItem('moneyMatchProgress', JSON.stringify(updatedStats));
 
-    // Track progress with the server if logged in
     if (user) {
       trackGameProgress(score, updatedStats, {
         essentialsPercentage,
@@ -299,10 +281,9 @@ function MoneyMatch() {
     }
   };
 
-  // Track game progress with server
+  // Send the game progress and statistics to the server for synchronisation
   const trackGameProgress = async (score, updatedStats, budgetBreakdown) => {
     if (!user) return;
-
     try {
       const response = await fetch(`${API_BASE_URL}/progress/game`, {
         method: 'POST',
@@ -323,7 +304,6 @@ function MoneyMatch() {
             level: updatedStats.level,
             gameCompleted: true,
             timestamp: new Date().toISOString(),
-            // Add specific game stats
             gameStats: {
               usedItems: usedItems.size,
               remainingBudget: budgetLimit - totalSpent,
@@ -342,6 +322,7 @@ function MoneyMatch() {
     }
   };
 
+  // Reset all game states to start a new session
   const resetGame = () => {
     setEssentials([]);
     setLuxuries([]);
@@ -353,17 +334,15 @@ function MoneyMatch() {
     setConfetti([]);
     setDashboardSynced(false);
     setSessionTracked(false);
-
-    // Track new game session
     trackGameSession();
   };
 
-  // Calculate percentages for budget breakdown
+  // Compute allocation percentages for each category
   const essentialsPercentage = Math.round((essentials.reduce((sum, item) => sum + item.cost, 0) / budgetLimit) * 100) || 0;
   const luxuriesPercentage = Math.round((luxuries.reduce((sum, item) => sum + item.cost, 0) / budgetLimit) * 100) || 0;
   const savingsPercentage = Math.round((savings.reduce((sum, item) => sum + item.cost, 0) / budgetLimit) * 100) || 0;
 
-  // Determine budget status
+  // Provide a status based on the remaining budget for visual feedback
   const getBudgetStatus = () => {
     const remainingPercentage = 100 - (totalSpent / budgetLimit * 100);
     if (remainingPercentage > 20) return 'good';
@@ -375,7 +354,6 @@ function MoneyMatch() {
     <DndProvider backend={HTML5Backend}>
       <div className={`game-container ${shake ? 'shake-animation' : ''} ${theme === 'dark' ? 'dark-theme' : ''}`}></div>
       <div className={`game-container ${shake ? 'shake-animation' : ''}`}>
-        {/* Display dashboard tracking indicator for logged-in users */}
         {user && (
           <div className="dashboard-indicator">
             <span className="dashboard-icon">📊</span>
@@ -390,23 +368,15 @@ function MoneyMatch() {
         <h2>💰 Money Budgeting Challenge</h2>
         <p>Drag and drop expenses into the correct categories while staying within your budget. Make sure to include both essentials and savings!</p>
 
-        {/* Helper buttons for hints and objectives */}
         <div className="helper-buttons">
-          <button
-            className="helper-btn hint-btn"
-            onClick={() => setShowHints(true)}
-          >
+          <button className="helper-btn hint-btn" onClick={() => setShowHints(true)}>
             Budgeting Tips
           </button>
-          <button
-            className="helper-btn objectives-btn"
-            onClick={() => setShowObjectives(true)}
-          >
+          <button className="helper-btn objectives-btn" onClick={() => setShowObjectives(true)}>
             Game Objectives
           </button>
         </div>
 
-        {/* Budget selector */}
         <div className="budget-selector">
           <label>
             Select Difficulty:
@@ -422,24 +392,18 @@ function MoneyMatch() {
           </label>
         </div>
 
-        {/* Budget display */}
         <h3 className="budget">Budget: ${budgetLimit} | Spent: ${totalSpent} | Remaining: ${budgetLimit - totalSpent}</h3>
 
-        {/* Budget progress bar */}
         <div className="budget-progress">
           <div className="budget-progress-label">
             <span>Budget Usage</span>
             <span>{Math.round((totalSpent / budgetLimit) * 100)}%</span>
           </div>
           <div className="budget-progress-bar">
-            <div
-              className="budget-progress-fill"
-              style={{ width: `${(totalSpent / budgetLimit) * 100}%` }}
-            ></div>
+            <div className="budget-progress-fill" style={{ width: `${(totalSpent / budgetLimit) * 100}%` }}></div>
           </div>
         </div>
 
-        {/* Budget status indicator */}
         <div className={`budget-status ${getBudgetStatus()}`}>
           {getBudgetStatus() === 'good'
             ? '👍 Budget looking good! Keep allocating wisely.'
@@ -451,11 +415,7 @@ function MoneyMatch() {
         <div className="game-board">
           <div className="items-container">
             {items.map((item) => (
-              <DraggableItem
-                key={item.id}
-                item={item}
-                isUsed={usedItems.has(item.id)}
-              />
+              <DraggableItem key={item.id} item={item} isUsed={usedItems.has(item.id)} />
             ))}
           </div>
           <div className="drop-zones">
@@ -480,7 +440,6 @@ function MoneyMatch() {
           </div>
         </div>
 
-        {/* Budget breakdown section */}
         <div className="budget-breakdown">
           <h3 className="breakdown-title">Your Budget Breakdown</h3>
           <div className="breakdown-items">
@@ -509,17 +468,15 @@ function MoneyMatch() {
         </div>
 
         <div className="action-buttons center-only-reset">
-  <button className="reset-btn" onClick={resetGame}>🔄 Reset Game</button>
-</div>
+          <button className="reset-btn" onClick={resetGame}>🔄 Reset Game</button>
+        </div>
 
-        {/* Alert notification */}
         {alert.show && (
           <div className={`alert ${alert.type}`}>
             {alert.message}
           </div>
         )}
 
-        {/* Hints Modal */}
         {showHints && (
           <div className="helper-modal">
             <div className="helper-content">
@@ -530,38 +487,35 @@ function MoneyMatch() {
                 <li>Aim to spend 50-60% of your budget on <strong>Essentials</strong> (needs)</li>
                 <li>Limit <strong>Luxuries</strong> (wants) to 20-30% of your budget</li>
                 <li>Try to allocate at least 20% of your budget to <strong>Savings</strong></li>
-                <li>Always prioritize essential expenses before luxuries</li>
+                <li>Always prioritise essential expenses before luxuries</li>
                 <li>Consider the 50/30/20 rule: 50% needs, 30% wants, 20% savings</li>
               </ul>
-              <p className="helper-text">Remember, good budgeting is about making conscious choices that align with your financial goals!</p>
+              <p className="helper-text">Remember, sound budgeting is about making informed choices aligned with your financial goals!</p>
             </div>
           </div>
         )}
 
-        {/* Objectives Modal */}
         {showObjectives && (
           <div className="helper-modal">
             <div className="helper-content">
               <button className="helper-close" onClick={() => setShowObjectives(false)}>×</button>
               <h3 className="helper-title">Game Objectives 🎯</h3>
-              <p className="helper-text">To win the Money Budgeting Challenge:</p>
+              <p className="helper-text">To triumph in the Money Budgeting Challenge:</p>
               <ul className="helper-list">
-                <li>Drag and drop items into the appropriate categories</li>
-                <li>Stay within your budget limit (${budgetLimit})</li>
-                <li>Make sure to include some essential expenses</li>
-                <li>Allocate at least some money to savings</li>
-                <li>Use at least 80% of your available budget</li>
-                <li>Create a balanced budget that would be sustainable in real life</li>
+                <li>Drag and drop items into their correct categories</li>
+                <li>Remain within your budget limit (${budgetLimit})</li>
+                <li>Ensure that essential expenses are included</li>
+                <li>Allocate a portion of funds to savings</li>
+                <li>Utilise at least 80% of your available budget</li>
+                <li>Create a balanced budget that is realistic</li>
               </ul>
-              <p className="helper-text">Challenge yourself with the hard mode once you&apos;ve mastered the basics!</p>
+              <p className="helper-text">Test yourself with hard mode once you have mastered the basics!</p>
             </div>
           </div>
         )}
 
-        {/* Game Completion Screen */}
         {gameCompleted && (
           <div className="game-completion">
-            {/* Confetti effect */}
             {confetti.map(particle => (
               <div
                 key={particle.id}
@@ -579,7 +533,7 @@ function MoneyMatch() {
             <div className="completion-content">
               <h2 className="completion-title">Excellent Budgeting! 🎉</h2>
               <p className="completion-message">
-                You&apos;ve successfully created a balanced budget! You&apos;ve demonstrated good financial decision-making skills by allocating your funds wisely.
+                You have successfully devised a balanced budget. Your careful allocation of funds demonstrates sound financial decision-making.
               </p>
               <div className="completion-stats">
                 <div className="completion-stat">
@@ -603,27 +557,20 @@ function MoneyMatch() {
                   <div className="completion-stat-value">Level {progressStats.level}</div>
                 </div>
               </div>
-
-              {/* Dashboard sync indication */}
               {user && (
                 <div className={`dashboard-sync-status ${dashboardSynced ? 'synced' : 'syncing'}`}>
                   <span className="sync-icon">{dashboardSynced ? '✓' : '⟳'}</span>
                   <span className="sync-text">
-                    {dashboardSynced
-                      ? 'Progress saved to your dashboard!'
-                      : 'Syncing with your dashboard...'}
+                    {dashboardSynced ? 'Progress saved to your dashboard!' : 'Syncing with your dashboard...'}
                   </span>
                 </div>
               )}
-
               <div className="completion-buttons">
                 <button className="completion-btn play-again-btn" onClick={resetGame}>
                   Play Again
                 </button>
                 {user && (
-                  <button className="completion-btn dashboard-btn" onClick={() => {
-                    window.location.href = '/dashboard';
-                  }}>
+                  <button className="completion-btn dashboard-btn" onClick={() => { window.location.href = '/dashboard'; }}>
                     Go to Dashboard
                   </button>
                 )}
@@ -636,7 +583,7 @@ function MoneyMatch() {
   );
 }
 
-// PropTypes definitions
+// PropTypes for DraggableItem
 DraggableItem.propTypes = {
   item: PropTypes.shape({
     id: PropTypes.number.isRequired,
@@ -647,6 +594,7 @@ DraggableItem.propTypes = {
   isUsed: PropTypes.bool.isRequired,
 };
 
+// PropTypes for DropZone
 DropZone.propTypes = {
   category: PropTypes.string.isRequired,
   onDrop: PropTypes.func.isRequired,

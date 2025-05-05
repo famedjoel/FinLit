@@ -2,7 +2,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// Component to display the user's course progress
 const CourseProgressSection = ({ courseProgress }) => {
+  // If no course progress data is available, show a message with a link to browse courses
   if (!courseProgress || courseProgress.length === 0) {
     return (
       <div className="progress-section">
@@ -13,12 +15,13 @@ const CourseProgressSection = ({ courseProgress }) => {
     );
   }
 
+  // If course progress data exists, render each course's progress
   return (
     <div className="progress-section">
       <h3>Your Learning Progress</h3>
-
       <div className="courses-list">
         {courseProgress.map((course, index) => (
+          // Render individual course progress item
           <div key={index} className="course-item">
             <div className="course-info">
               <span className="course-title">{course.title}</span>
@@ -40,4 +43,5 @@ const CourseProgressSection = ({ courseProgress }) => {
   );
 };
 
+// Export the component for use in other modules
 export default CourseProgressSection;

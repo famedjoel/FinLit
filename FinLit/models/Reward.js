@@ -1,8 +1,7 @@
-// models/Reward.js
 import { connect } from '../config/sqlite-adapter.js';
 
 const Reward = {
-  // Create a new reward
+  // Create a new reward in the database
   create: async (rewardData) => {
     try {
       const connection = await connect();
@@ -31,7 +30,7 @@ const Reward = {
     }
   },
 
-  // Get all rewards
+  // Retrieve all rewards, ordered by type and points cost
   getAll: async () => {
     try {
       const connection = await connect();
@@ -43,7 +42,7 @@ const Reward = {
     }
   },
 
-  // Get rewards by type
+  // Retrieve rewards filtered by type
   getByType: async (type) => {
     try {
       const connection = await connect();
@@ -58,7 +57,7 @@ const Reward = {
     }
   },
 
-  // Find a specific reward by ID
+  // Find a specific reward by its ID
   findById: async (id) => {
     try {
       const connection = await connect();
@@ -70,20 +69,17 @@ const Reward = {
     }
   },
 
-  // Initialize default rewards if none exist
+  // Initialise default rewards if none exist in the database
   initDefaultRewards: async () => {
     try {
       const connection = await connect();
-
-      // Check if any rewards already exist
       const existing = await connection.get('SELECT COUNT(*) as count FROM rewards');
       if (existing.count > 0) {
-        console.log(`Rewards already initialized (${existing.count} rewards found).`);
+        console.log(`Rewards already initialised (${existing.count} rewards found).`);
         return;
       }
 
       const defaultRewards = [
-      // Example rewards
         {
           name: 'Gold Frame',
           description: 'A premium gold frame for your profile picture',
@@ -126,13 +122,14 @@ const Reward = {
         await Reward.create(rewardData);
       }
 
-      console.log(`Initialized ${defaultRewards.length} default rewards.`);
+      console.log(`Initialised ${defaultRewards.length} default rewards.`);
     } catch (error) {
-      console.error('Error initializing default rewards:', error);
+      console.error('Error initialising default rewards:', error);
       throw error;
     }
   },
-  // Update a reward
+
+  // Update an existing reward by its ID
   update: async (id, updates) => {
     try {
       const connection = await connect();
@@ -162,7 +159,7 @@ const Reward = {
     }
   },
 
-  // Delete a reward
+  // Delete a reward by its ID
   delete: async (id) => {
     try {
       const connection = await connect();
@@ -174,7 +171,7 @@ const Reward = {
     }
   },
 
-  // Get rewards for a specific user
+  // Retrieve rewards for a specific user, including acquisition and equip status
   getUserRewards: async (userId) => {
     try {
       const connection = await connect();
@@ -197,7 +194,7 @@ const Reward = {
     }
   },
 
-  // Give a reward to a user manually
+  // Manually assign a reward to a user
   giveRewardToUser: async (userId, rewardId) => {
     try {
       const connection = await connect();
@@ -234,7 +231,7 @@ const Reward = {
     }
   },
 
-  // Equip or unequip a reward
+  // Equip or unequip a reward for a user
   toggleEquipStatus: async (userId, rewardId, equip = true) => {
     try {
       const connection = await connect();
@@ -271,7 +268,7 @@ const Reward = {
     }
   },
 
-  // Get user's equipped rewards
+  // Retrieve all rewards equipped by a user
   getEquippedRewards: async (userId) => {
     try {
       const connection = await connect();
@@ -289,7 +286,7 @@ const Reward = {
     }
   },
 
-  // Purchase a reward with points
+  // Allow a user to purchase a reward using points
   purchaseReward: async (userId, rewardId) => {
     try {
       const connection = await connect();
@@ -358,7 +355,7 @@ const Reward = {
   },
 };
 
-// Utility: process DB row into a JS object
+// Utility function to process database rows into JavaScript objects
 function processRewardData(reward) {
   if (!reward) return null;
 

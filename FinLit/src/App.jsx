@@ -26,21 +26,21 @@ import Rewards from './pages/Rewards.jsx';
 import './styles/styles.css';
 import './styles/theme.css';
 
-// Create a custom event for login status changes
+// Define a custom event to signal changes in login status
 const loginStatusChange = new Event('loginStatusChange');
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Check if user is logged in
+  // On mount, check for a logged-in user and set up listeners for login updates
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
-    // Listen for login/logout changes
+    // Update the user state when login status changes
     const handleLoginChange = () => {
       const updatedUser = localStorage.getItem('user');
       if (updatedUser) {
@@ -63,7 +63,7 @@ function App() {
     };
   }, []);
 
-  // Handle logout
+  // Log out the current user, update the state and redirect to the home page
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
@@ -75,7 +75,7 @@ function App() {
     <ThemeProvider>
       <Router>
         <div className="app-container">
-          {/* Navbar */}
+          {/* Navigation bar */}
           <nav className="navbar">
             <div className="logo">💰 FinLearn</div>
             <div className="menu-icon" onClick={() => setMenuOpen(!menuOpen)}>
@@ -83,7 +83,7 @@ function App() {
             </div>
 
             <div className={`nav-links ${menuOpen ? 'show' : ''}`}>
-              {/* Always visible important links */}
+              {/* Persistent links for all users */}
               <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>Home</Link>
               <Link to="/courses" className="nav-link" onClick={() => setMenuOpen(false)}>Courses</Link>
               <Link to="/games" className="nav-link" onClick={() => setMenuOpen(false)}>Games</Link>
@@ -94,7 +94,7 @@ function App() {
                   <Link to="/stats" className="nav-link" onClick={() => setMenuOpen(false)}>Statistics</Link>
                   <Link to="/profile" className="nav-link" onClick={() => setMenuOpen(false)}>Profile</Link>
 
-                  {/* More Dropdown */}
+                  {/* Additional options for logged-in users */}
                   <div className="nav-link dropdown">
                     More ▾
                     <div className="dropdown-content">
@@ -114,11 +114,11 @@ function App() {
                 </>
               )}
 
-              <ThemeToggle /> {/* Theme switch always visible */}
+              <ThemeToggle /> {/* Always visible theme toggle */}
             </div>
           </nav>
 
-          {/* Main Content */}
+          {/* Main content area */}
           <div className="content-container">
             <Routes>
               <Route path="/" element={<LandingPage />} />
