@@ -1,3 +1,66 @@
+# FinLit: Financial Literacy & Learning Platform
+
+## Description
+FinLit is an interactive educational platform designed to improve users' financial literacy through engaging courses, trivia games, and a gamified learning experience. With features like progress tracking, achievements, and multiplayer challenges, FinLit makes learning about personal finance, investing, and money management both educational and enjoyable.
+
+## Installation
+
+Before you start, ensure you have a good code editor like Visual Studio Code and the following software installed:
+- Node.js (v14 or higher)
+- npm or yarn package manager
+- SQLite3
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/finlit.git
+   cd finlit
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+  Edit `.env` file with your configuration (database path, port, etc.)
+
+4. Start the application:
+   ```bash
+   # Development mode (requires two terminals)
+   Terminal 1:
+   npm run server
+   
+   Terminal 2:
+   npm run dev
+   
+   # Production mode
+   npm run build
+   npm start
+   ```
+
+5. Open any selected web browser of your choice and visit [http://localhost:7900/](http://localhost:7900/) to view the app.
+
+Alternatively, use Visual Studio Code's Live Server extension by clicking **Go Live** in the bottom right corner of the status bar.
+
+> To install and use this web app, follow these simple steps:
+
+- Open your web browser and navigate to the URL where the web app is hosted.
+- In the browser's address bar, you will see a desktop-like icon. Click on that icon to access the installation options.
+- From the menu that appears, select the option to install the web app or add it to your home screen. The exact wording may vary depending on your browser.
+- If prompted, confirm the installation by clicking "Install" or "Add."
+- The web app will now be installed and accessible from your device's home screen or app launcher.
+
+> Accessing the Web App Locally
+> To access the web app on your local network, follow these steps:
+
+- Open the Command Prompt or Terminal on your computer.
+- Type `ipconfig` and press Enter to retrieve your network configuration information.
+- Look for the "IPv4 Address" under the network adapter you are using (e.g., Ethernet or Wi-Fi).
+- Take note of the IPv4 address, which will be in the format xxx.xxx.xxx.xxx.
+- Open your web browser and enter the following address in the URL bar:
 - Replace `your-ipv4-address` with the actual IPv4 address you obtained in step 4.
 - The web app should now load in your browser. If you see a settings or configuration page, look for an option to add the web app to your home screen for easier access.
 
