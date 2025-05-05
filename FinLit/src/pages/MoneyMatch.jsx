@@ -1,16 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import PropTypes from "prop-types";
 import "../styles/MoneyMatch.css"; // Using our new CSS file
+import { ThemeContext } from "../context/ThemeContext";
 
 // API Base URL (works on all devices)
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
 const EASY_BUDGET = 1500;
 const HARD_BUDGET = 800;
-// const GAME_ID = "money-match";
+
 
 
 const items = [
@@ -86,7 +87,8 @@ function MoneyMatch() {
   const [gameCompleted, setGameCompleted] = useState(false);
   const [shake, setShake] = useState(false);
   const [confetti, setConfetti] = useState([]);
-  
+  const { theme } = useContext(ThemeContext);
+
   // Progress tracking states
   const [user, setUser] = useState(null);
   const [progressStats, setProgressStats] = useState({
@@ -97,19 +99,9 @@ function MoneyMatch() {
     level: 1,
     lastGameTimestamp: null
   });
-  const [showProgress, setShowProgress] = useState(false);
   const [sessionTracked, setSessionTracked] = useState(false);
   const [dashboardSynced, setDashboardSynced] = useState(false);
   
-  // Achievements list
-  const ACHIEVEMENTS = [
-    { id: 'firstGame', name: 'Beginner Budgeter', description: 'Complete your first budget', icon: '🔰' },
-    { id: 'perfectBalance', name: 'Balance Master', description: 'Create a perfect 50/30/20 budget', icon: '⚖️' },
-    { id: 'moneyWise', name: 'Money Wise', description: 'Complete a hard mode budget', icon: '🧠' },
-    { id: 'savingsChamp', name: 'Savings Champion', description: 'Allocate 30% or more to savings', icon: '🏆' },
-    { id: 'fiveGames', name: 'Consistency', description: 'Complete 5 budget games', icon: '🔄' },
-    { id: 'tenGames', name: 'Budget Veteran', description: 'Complete 10 budget games', icon: '🌟' }
-  ];
 
   // Check if user is logged in
   useEffect(() => {
@@ -381,6 +373,7 @@ function MoneyMatch() {
 
   return (
     <DndProvider backend={HTML5Backend}>
+      <div className={`game-container ${shake ? "shake-animation" : ""} ${theme === "dark" ? "dark-theme" : ""}`}></div>
       <div className={`game-container ${shake ? "shake-animation" : ""}`}>
         {/* Display dashboard tracking indicator for logged-in users */}
         {user && (
@@ -513,10 +506,9 @@ function MoneyMatch() {
           </div>
         </div>
 
-        <div className="action-buttons">
-          <button className="reset-btn" onClick={resetGame}>🔄 Reset Game</button>
-          <button className="progress-btn" onClick={() => setShowProgress(true)}>📊 View Progress</button>
-        </div>
+        <div className="action-buttons center-only-reset">
+  <button className="reset-btn" onClick={resetGame}>🔄 Reset Game</button>
+</div>
 
         {/* Alert notification */}
         {alert.show && (
@@ -626,12 +618,6 @@ function MoneyMatch() {
                 <button className="completion-btn play-again-btn" onClick={resetGame}>
                   Play Again
                 </button>
-                <button className="completion-btn view-progress-btn" onClick={() => {
-                  setShowProgress(true);
-                  setGameCompleted(false);
-                }}>
-                  View Progress
-                </button>
                 {user && (
                   <button className="completion-btn dashboard-btn" onClick={() => {
                     window.location.href = '/dashboard';
@@ -639,106 +625,6 @@ function MoneyMatch() {
                     Go to Dashboard
                   </button>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Progress Modal */}
-        {showProgress && (
-          <div className="progress-modal">
-            <div className="progress-content">
-              <button className="progress-close" onClick={() => setShowProgress(false)}>×</button>
-              <h3 className="progress-title">Your Budgeting Journey 📈</h3>
-              
-              <div className="progress-level">
-                <div className="level-indicator">
-                  <div className="level-number">Level {progressStats.level}</div>
-                  <div className="level-progress-bar">
-                    <div className="level-progress-fill" style={{ 
-                      width: `${((progressStats.gamesCompleted % 2) + (progressStats.achievements.length % 2)) / 4 * 100}%` 
-                    }}></div>
-                  </div>
-                </div>
-                <div className="level-description">
-                  Complete more budgets and earn achievements to level up!
-                </div>
-              </div>
-              
-              <div className="progress-stats-grid">
-                <div className="progress-stat-card">
-                  <div className="stat-icon">🎮</div>
-                  <div className="stat-value">{progressStats.gamesPlayed}</div>
-                  <div className="stat-label">Games Played</div>
-                </div>
-                <div className="progress-stat-card">
-                  <div className="stat-icon">✅</div>
-                  <div className="stat-value">{progressStats.gamesCompleted}</div>
-                  <div className="stat-label">Budgets Completed</div>
-                </div>
-                <div className="progress-stat-card">
-                  <div className="stat-icon">🏆</div>
-                  <div className="stat-value">{progressStats.highScore}</div>
-                  <div className="stat-label">High Score</div>
-                </div>
-                <div className="progress-stat-card">
-                  <div className="stat-icon">🌟</div>
-                  <div className="stat-value">{progressStats.achievements.length}</div>
-                  <div className="stat-label">Achievements</div>
-                </div>
-              </div>
-              
-              <h4 className="achievements-title">Achievements Earned</h4>
-              <div className="achievements-grid">
-                {ACHIEVEMENTS.map(achievement => (
-                  <div 
-                    key={achievement.id}
-                    className={`achievement-card ${progressStats.achievements.includes(achievement.id) ? 'unlocked' : 'locked'}`}
-                  >
-                    <div className="achievement-icon">{achievement.icon}</div>
-                    <div className="achievement-name">{achievement.name}</div>
-                    <div className="achievement-description">{achievement.description}</div>
-                    {!progressStats.achievements.includes(achievement.id) && (
-                      <div className="achievement-locked-overlay">
-                        <div className="locked-icon">🔒</div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Dashboard information */}
-              {user && (
-                <div className="dashboard-info">
-                  <h4>Dashboard Integration</h4>
-                  <p>Your progress is being saved to your user dashboard. Visit your dashboard to see your overall financial literacy progress!</p>
-                  <button 
-                    className="dashboard-link-btn"
-                    onClick={() => window.location.href = '/dashboard'}
-                  >
-                    Go to Dashboard
-                  </button>
-                </div>
-              )}
-              
-              <div className="progress-actions">
-                <button className="reset-progress-btn" onClick={() => {
-                  if (confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
-                    setProgressStats({
-                      gamesPlayed: 0,
-                      gamesCompleted: 0,
-                      highScore: 0,
-                      achievements: [],
-                      level: 1,
-                      lastGameTimestamp: null
-                    });
-                    localStorage.removeItem("moneyMatchProgress");
-                    setShowProgress(false);
-                    showAlert("Progress has been reset", "info");
-                  }
-                }}>
-                  Reset Progress
-                </button>
               </div>
             </div>
           </div>

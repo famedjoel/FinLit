@@ -1389,3 +1389,77 @@
         justify-content: center;
     }
 }
+
+/* Budget progress styles for dark mode */
+.dark-theme .budget-progress-label {
+    color: #f9fafb;
+    font-weight: 700;
+  }
+  
+  .dark-theme .budget-progress-label span {
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  
+  .dark-theme .budget-progress-bar {
+    background: #374151;
+    border: 1px solid #4b5563;
+  }
+  
+  .dark-theme .budget-progress-fill {
+    background: linear-gradient(90deg, #60a5fa 0%, #0ea5e9 100%);
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+  }
+
+
+  /* Dark mode styling for budget status */
+.dark-theme .budget-status {
+    color: #e5e7eb;
+    font-weight: 700;
+    border: 1px solid #4b5563;
+  }
+  
+  .dark-theme .budget-status.good {
+    background: rgba(4, 120, 87, 0.2);
+    color: #6ee7b7;
+    border-color: #047857;
+  }
+  
+  .dark-theme .budget-status.warning {
+    background: rgba(161, 98, 7, 0.2);
+    color: #fde68a;
+    border-color: #a16207;
+  }
+  
+  .dark-theme .budget-status.danger {
+    background: rgba(153, 27, 27, 0.2);
+    color: #fca5a5;
+    border-color: #991b1b;
+  }
+  
+  /* Dark mode for game container */
+  .dark-theme .game-container {
+    background: #111827;
+  }
+
+  
+  /* Center reset button when alone */
+.action-buttons.center-only-reset {
+    justify-content: center;
+  }
+  
+  /* Dark mode styling for action buttons */
+  .dark-theme .action-buttons {
+    justify-content: center;
+  }
+  
+  .dark-theme .reset-btn {
+    background: linear-gradient(90deg, #b91c1c 0%, #dc2626 100%);
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 5px 15px rgba(185, 28, 28, 0.3);
+  }
+  
+  .dark-theme .reset-btn:hover {
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+  }
