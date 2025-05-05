@@ -224,7 +224,7 @@ function Achievements() {
 
       <div className="achievements-list">
         {Object.entries(groupedAchievements).map(([category, categoryAchievements]) => {
-          const categoryInfo = categories.find(c => c.id === category) || { name: 'Uncategorized', icon: '🏆' };
+          const categoryInfo = categories.find(c => c.id === category) || { name: 'Uncategorised', icon: '🏆' };
 
           return (
             <div key={category} className="achievement-category-section">

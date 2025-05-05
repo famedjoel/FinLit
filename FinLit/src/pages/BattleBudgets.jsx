@@ -16,7 +16,6 @@ const expensesList = [
   { name: 'Internet', cost: 50, icon: '📡' },
 ];
 
-// AI Personalities with different strategies
 const AI_PERSONALITIES = [
   {
     name: 'Saver Sam',
@@ -64,7 +63,6 @@ const BattleBudgets = () => {
   const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:7900`;
 
   useEffect(() => {
-    // Select random AI personality at game start
     const randomPersonality = AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)];
     setAiPersonality(randomPersonality);
     generateWeeklyExpenses();
@@ -85,7 +83,6 @@ const BattleBudgets = () => {
   };
 
   const checkSpecialEvents = () => {
-    // 20% chance of special event
     if (Math.random() < 0.2) {
       const events = [
         {
@@ -148,7 +145,6 @@ const BattleBudgets = () => {
     let playerEffect = 0;
     let aiEffect = 0;
 
-    // Apply special events
     if (specialEvent && specialEvent.type === 'bonus') {
       newPlayerMoney += specialEvent.effect;
       newAiMoney += specialEvent.effect;
@@ -158,7 +154,6 @@ const BattleBudgets = () => {
       newAiMoney += specialEvent.effect;
     }
 
-    // Apply player choice
     if (choice === 'save') {
       playerEffect = -totalExpense * 0.5;
       newPlayerMoney += playerEffect;
@@ -166,25 +161,22 @@ const BattleBudgets = () => {
       playerEffect = -totalExpense;
       newPlayerMoney += playerEffect;
     } else if (choice === 'invest') {
-      const investmentReturn = Math.floor(Math.random() * 41) + 40; // 40-80 return
+      const investmentReturn = Math.floor(Math.random() * 41) + 40;
       const costReduction = totalExpense * 0.75;
       playerEffect = -costReduction + investmentReturn;
       newPlayerMoney += playerEffect;
     }
 
-    // Apply discount if it exists
     if (specialEvent && specialEvent.effect === 'discount') {
       playerEffect = applySpecialEvent(choice, playerEffect);
     }
 
-    // Apply investment doubling
     if (specialEvent && specialEvent.effect === 'double_investment' && choice === 'invest') {
       const investmentBonus = Math.floor(Math.abs(playerEffect) * 0.5);
       playerEffect += investmentBonus;
       newPlayerMoney += investmentBonus;
     }
 
-    // AI Strategy
     const aiChoice = getAiChoice();
     if (aiChoice === 'save') {
       aiEffect = -totalExpense * 0.5;
