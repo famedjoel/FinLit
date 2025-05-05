@@ -281,9 +281,10 @@ app.post("/progress/course", async (req, res) => {
 });
 
 // Track Game Activity
+// Updated game progress tracking endpoint in server.js
 app.post("/progress/game", async (req, res) => {
   try {
-    const { userId, gameId, title, score } = req.body;
+    const { userId, gameId, title, score, metadata } = req.body;
     
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -294,6 +295,18 @@ app.post("/progress/game", async (req, res) => {
     // Find if game already exists in user progress
     const gameIndex = gameProgress.findIndex(g => g.gameId === gameId);
     
+    // Parse metadata if it's a string
+    let parsedMetadata = {};
+    if (typeof metadata === 'string') {
+      try {
+        parsedMetadata = JSON.parse(metadata);
+      } catch (e) {
+        console.error('Error parsing metadata:', e);
+      }
+    } else {
+      parsedMetadata = metadata || {};
+    }
+    
     // Update or add game progress
     if (gameIndex >= 0) {
       // Update high score if new score is higher
@@ -302,27 +315,49 @@ app.post("/progress/game", async (req, res) => {
       }
       gameProgress[gameIndex].timesPlayed += 1;
       gameProgress[gameIndex].lastPlayed = new Date();
+      
+      // Update metadata to include the latest game stats
+      gameProgress[gameIndex].metadata = parsedMetadata;
+      
+      // Update game title if specified
+      if (title) {
+        gameProgress[gameIndex].title = title;
+      }
     } else {
       // Add new game to progress
       gameProgress.push({
         gameId,
-        title,
+        title: title || gameId,
         highScore: score,
         timesPlayed: 1,
-        lastPlayed: new Date()
+        lastPlayed: new Date(),
+        metadata: parsedMetadata
       });
     }
     
     // Update user's game progress
     user.gameProgress = gameProgress;
     
-    // Add game activity
+    // Add game activity with more details
     const activities = user.recentActivity || [];
+    
+    let activityTitle = title || "Battle of Budgets";
+    if (parsedMetadata.winner) {
+      activityTitle += ` - ${parsedMetadata.winner === "player" ? "Won" : parsedMetadata.winner === "ai" ? "Lost" : "Draw"}`;
+    }
+    
     activities.unshift({
       type: 'game',
-      title: title,
+      title: activityTitle,
       action: 'played',
-      timestamp: new Date()
+      timestamp: new Date(),
+      score: score,
+      gameId: gameId,
+      metadata: {
+        gameId,
+        winner: parsedMetadata.winner,
+        aiPersonality: parsedMetadata.aiPersonality
+      }
     });
     
     // Keep only the 10 most recent activities

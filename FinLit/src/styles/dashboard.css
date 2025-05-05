@@ -50,17 +50,26 @@
 
 .progress-bar {
   width: 100%;
-  height: 10px;
-  background: var(--bg-tertiary);
-  border-radius: 5px;
+  height: 25px;
+  border-radius: 12px;
+  background-color: #e9ecef;
+  margin-bottom: 20px;
   overflow: hidden;
-  margin-bottom: 1rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .progress {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  border-radius: 12px;
   transition: width 0.5s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* Course List Styles */
@@ -199,24 +208,44 @@
   background: white;
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  min-height: 200px;
+  transition: transform 0.3s ease;
+}
+
+.game-stat-card:hover {
+  transform: translateY(-5px);
 }
 
 .game-stat-card h4 {
-  color: #2d3748;
   margin-bottom: 15px;
-  font-size: 1.2rem;
+  color: #2c3e50;
+  font-size: 20px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 10px;
 }
 
-.game-stat-card p {
-  margin-bottom: 8px;
-  color: #4a5568;
+.game-details p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 14px;
 }
 
-.game-stat-card strong {
-  color: #2d3748;
+.game-details strong {
+  color: #333;
 }
+
+
+
+.dark-theme .game-details p {
+  color: #ddd;
+}
+
+.dark-theme .game-stat-card h4 {
+  color: #fff;
+  border-bottom-color: #555;
+}
+
 
 /* Logout Button */
 .logout-btn {
@@ -429,26 +458,37 @@
   border-color: var(--border-color);
 }
 
-.dark-theme .game-stat-card {
-  background: #4a5568;
-  border-color: #718096;
-}
 .dark-theme .game-stat-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
   border-color: var(--accent-primary);
 }
 
-.dark-theme .game-stat-card h4 {
-  color: #e2e8f0;
+.dark-theme .game-stat-card {
+  background: #2d2d2d;
 }
 
-.dark-theme .game-stat-card p {
-  color: #cbd5e0;
+.dark-theme .game-stat-card h4 {
+  color: #fff;
+  border-bottom-color: #444;
+}
+
+.dark-theme .game-details p {
+  color: #ddd;
 }
 
 .dark-theme .game-stat-card strong {
   color: #f7fafc;
+}
+
+.game-stat-card.enhanced {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid #e9ecef;
+}
+
+.dark-theme .game-stat-card.enhanced {
+  background: linear-gradient(135deg, #2d2d2d, #333);
+  border-color: #444;
 }
 
 /* Course progress cards */
@@ -763,4 +803,63 @@
   .bar-label, .bar-value {
     text-align: left;
   }
+}
+
+.progress-section .progress-bar {
+  width: 100%;
+  height: 25px;
+  border-radius: 12px;
+  background-color: #e9ecef;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-section .progress {
+  height: 100%;
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  border-radius: 12px;
+  transition: width 0.5s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+
+
+.game-details {
+  margin-top: 15px;
+}
+
+
+
+/* Game outcome styles for recent activity */
+.game-outcome {
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.game-outcome.win {
+  color: #4CAF50;
+}
+
+.game-outcome.loss {
+  color: #f44336;
+}
+
+.game-outcome.tie {
+  color: #2196F3;
+}
+
+.activity-score {
+  display: inline-block;
+  background: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 8px;
 }

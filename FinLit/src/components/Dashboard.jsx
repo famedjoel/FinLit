@@ -107,8 +107,9 @@ function Dashboard() {
     if (type === 'course' && action === 'completed') return '🏆';
     if (type === 'course' && action === 'started') return '📖';
     if (type === 'game' && action === 'played') {
-      // Check if it's MoneyMatch specifically
-      if (action.includes('Money Budgeting Challenge')) return '💰';
+      // Check specific games for custom icons
+      if (action.includes('Battle of Budgets')) return '⚔️';
+      if (action.includes('Money Match')) return '💰';
       return '🎮';
     }
     if (type === 'account' && action === 'created') return '👤';
@@ -133,6 +134,48 @@ function Dashboard() {
     }
     
     return activity.title;
+  };
+
+  // Format game metadata for Battle Budgets
+  const formatGameDetails = (metadata) => {
+    console.log('Formatting metadata:', metadata); // Debug log
+    
+    if (!metadata) return null;
+    
+    try {
+      // Handle metadata whether it's string or object
+      let parsed = metadata;
+      if (typeof metadata === 'string') {
+        parsed = JSON.parse(metadata);
+      }
+      
+      console.log('Parsed metadata:', parsed); // Debug log
+      
+      // Ensure all required fields exist
+      return {
+        winner: parsed.winner || null,
+        aiPersonality: parsed.aiPersonality || null,
+        finalPlayerMoney: parsed.finalPlayerMoney || 0,
+        finalAiMoney: parsed.finalAiMoney || 0,
+        specialEvents: parsed.specialEvents || 0
+      };
+    } catch (e) {
+      console.error('Error parsing metadata:', e); // Debug log
+      return null;
+    }
+  };
+
+  // Get Battle Budgets specific details for activity
+  const getBattleBudgetsDetails = (activity) => {
+    if (activity.gameId === 'battle-budgets' && activity.metadata) {
+      const details = formatGameDetails(activity.metadata);
+      if (details) {
+        const outcome = details.winner === 'player' ? 'Won' : 
+                        details.winner === 'ai' ? 'Lost' : 'Draw';
+        return `${outcome} vs ${details.aiPersonality}`;
+      }
+    }
+    return null;
   };
 
   if (loading) {
@@ -244,6 +287,21 @@ function Dashboard() {
                       {" "}
                       <strong>{getGameTitle(activity)}</strong>
                       
+                      {/* Show Battle Budgets outcome */}
+                      {activity.gameId === 'battle-budgets' && activity.metadata && (() => {
+                        const result = activity.metadata.winner;
+                        const personality = activity.metadata.aiPersonality;
+                        
+                        if (result === 'player') {
+                          return <span className="game-outcome win"> - Victory vs {personality}! 🏆</span>;
+                        } else if (result === 'ai') {
+                          return <span className="game-outcome loss"> - Lost to {personality} 😔</span>;
+                        } else if (result === 'tie') {
+                          return <span className="game-outcome tie"> - Draw vs {personality} 🤝</span>;
+                        }
+                        return null;
+                      })()}
+                      
                       {/* Show session type for MoneyMatch */}
                       {activity.type === 'game' && activity.title?.includes('Money Budgeting Challenge') && (
                         <span className="game-details">
@@ -252,6 +310,12 @@ function Dashboard() {
                         </span>
                       )}
                     </span>
+                    
+                    {/* Show score for games */}
+                    {activity.type === 'game' && activity.score !== undefined && (
+                      <span className="activity-score">Score: ${activity.score}</span>
+                    )}
+                    
                     <span className="activity-time">{formatDate(activity.timestamp)}</span>
                   </div>
                 </li>
@@ -262,6 +326,91 @@ function Dashboard() {
           )}
         </div>
       </div>
+
+{/* Game Stats Dashboard */}
+{dashboardData?.gameProgress && dashboardData.gameProgress.length > 0 && (
+  <div className="games-section">
+    <h3>Game Stats Dashboard</h3>
+    <div className="games-grid">
+      {dashboardData.gameProgress.map((game, index) => {
+        let metadata = {};
+        try {
+          // Always try to parse metadata
+          if (game.metadata) {
+            metadata = typeof game.metadata === 'string' 
+              ? JSON.parse(game.metadata) 
+              : game.metadata;
+          }
+        } catch (e) {
+          console.error('Error parsing game metadata:', e);
+          metadata = {};
+        }
+        
+        // Don't show Money Budgeting Challenge - Session Start
+        if (game.gameId === 'money-match' && game.title?.includes('Session Start')) {
+          return null;
+        }
+              
+        return (
+          <div key={index} className="game-stat-card enhanced">
+            <h4>{game.title || 'Untitled Game'}</h4>
+            
+            {/* Battle Budgets specific details */}
+            {game.gameId === 'battle-budgets' && (
+              <div className="game-details">
+                <p>💰 High Score: <strong>${game.highScore || 0}</strong></p>
+                <p>🎮 Played: <strong>{game.timesPlayed || 0} times</strong></p>
+                <p>📅 Last played: <strong>{game.lastPlayed ? formatDate(game.lastPlayed) : 'Never'}</strong></p>
+                
+                {/* Only show additional details if metadata exists */}
+                {metadata && Object.keys(metadata).length > 0 && (() => {
+                  const details = formatGameDetails(metadata);
+                  return details && (
+                    <>
+                      <p>🎯 Last Match: <strong>{details.winner === 'player' ? '🏆 Victory' : details.winner === 'ai' ? '😔 Loss' : '🤝 Draw'}</strong></p>
+                      <p>🤖 Last Opponent: <strong>{details.aiPersonality || 'Unknown'}</strong></p>
+                      <p>⭐ Special Events: <strong>{details.specialEvents || 0}</strong></p>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+                  
+ {/* MoneyMatch specific details */}
+ {game.gameId === 'money-match' && !game.title?.includes('Session Start') && (
+              <div className="game-details">
+                <p>High Score: <strong>{game.highScore}</strong></p>
+                <p>Played: <strong>{game.timesPlayed} times</strong></p>
+                <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
+                {metadata.difficulty && (
+                  <p>Last difficulty: <strong>{metadata.difficulty}</strong></p>
+                )}
+                {metadata.essentialsPercentage && (
+                  <p>Essentials: <strong>{metadata.essentialsPercentage}%</strong></p>
+                )}
+                {metadata.luxuriesPercentage && (
+                  <p>Luxuries: <strong>{metadata.luxuriesPercentage}%</strong></p>
+                )}
+                {metadata.savingsPercentage && (
+                  <p>Savings: <strong>{metadata.savingsPercentage}%</strong></p>
+                )}
+              </div>
+            )}
+                  
+                  {/* Generic game details for other games */}
+                  {game.gameId !== 'battle-budgets' && (game.gameId !== 'money-match' || game.title?.includes('Session Start')) && (
+                    <div className="game-details">
+                      <p>High Score: <strong>{game.highScore}</strong></p>
+                      <p>Played: <strong>{game.timesPlayed} times</strong></p>
+                      <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* MoneyMatch Highlight Section */}
       {dashboardData?.gameProgress?.some(game => game.gameId === 'money-match') && (
@@ -331,51 +480,6 @@ function Dashboard() {
           }
         </div>
       )}
-
-      {/* Enhanced Game Progress Section - Detailed Stats */}
-      {dashboardData?.gameProgress && dashboardData.gameProgress.length > 0 && (
-        <div className="games-section">
-          <h3>Game Details</h3>
-          <div className="games-grid">
-            {dashboardData.gameProgress.map((game, index) => {
-              let metadata = {};
-              try {
-                metadata = typeof game.metadata === 'string' 
-                  ? JSON.parse(game.metadata) 
-                  : game.metadata || {};
-              } catch (e) {
-                metadata = {};
-              }
-              
-              return (
-                <div key={index} className="game-stat-card">
-                  <h4>{game.title}</h4>
-                  <p>High Score: <strong>{game.highScore}</strong></p>
-                  <p>Played: <strong>{game.timesPlayed} times</strong></p>
-                  <p>Last played: <strong>{formatDate(game.lastPlayed)}</strong></p>
-                  
-                  {/* Add MoneyMatch specific details */}
-                  {game.gameId === 'money-match' && metadata.difficulty && (
-                    <>
-                      <p>Last difficulty: <strong>{metadata.difficulty}</strong></p>
-                      {metadata.essentialsPercentage && (
-                        <p>Essentials: <strong>{metadata.essentialsPercentage}%</strong></p>
-                      )}
-                      {metadata.luxuriesPercentage && (
-                        <p>Luxuries: <strong>{metadata.luxuriesPercentage}%</strong></p>
-                      )}
-                      {metadata.savingsPercentage && (
-                        <p>Savings: <strong>{metadata.savingsPercentage}%</strong></p>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      
 
       <button className="logout-btn" onClick={handleLogout}>Logout</button>
     </div>
