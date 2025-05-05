@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-undef */
 // tests/progress.test.js
 import { jest } from '@jest/globals';
@@ -112,6 +113,22 @@ describe('Course Progress System', () => {
       mockConnection.get.mockResolvedValue(null);
       mockConnection.run.mockResolvedValue();
 
+      // Mock the SQL queries for updateCourseProgress
+      mockConnection.all.mockImplementation((query) => {
+        if (query.includes('SELECT l.id')) {
+          return Promise.resolve([
+            { id: 1 },
+            { id: 2 },
+            { id: 3 },
+            { id: 4 },
+          ]);
+        }
+        if (query.includes('COUNT(*) as count')) {
+          return Promise.resolve([{ count: 2 }]);
+        }
+        return Promise.resolve([]);
+      });
+
       // Setup route
       courseRoutes.setupCourseRoutes(mockApp);
 
@@ -171,8 +188,8 @@ describe('Course Progress System', () => {
         title: 'Test Course',
       });
 
-      // Mock enrollment check
-      mockConnection.get.mockResolvedValue(null); // No existing enrollment
+      // Mock enrolment check
+      mockConnection.get.mockResolvedValue(null); // No existing enrolment
       mockConnection.run.mockResolvedValue();
 
       // Setup route
@@ -228,6 +245,22 @@ describe('Course Progress System', () => {
       });
 
       mockConnection.run.mockResolvedValue({ lastID: 1 });
+
+      // Mock the SQL queries for updateCourseProgress
+      mockConnection.all.mockImplementation((query) => {
+        if (query.includes('SELECT l.id')) {
+          return Promise.resolve([
+            { id: 1 },
+            { id: 2 },
+            { id: 3 },
+            { id: 4 },
+          ]);
+        }
+        if (query.includes('COUNT(*) as count')) {
+          return Promise.resolve([{ count: 2 }]);
+        }
+        return Promise.resolve([]);
+      });
 
       // Setup route
       courseRoutes.setupCourseRoutes(mockApp);

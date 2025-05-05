@@ -35,7 +35,7 @@ describe('UserStats System', () => {
     jest.clearAllMocks();
   });
 
-  test('should initialize user stats for new user', async () => {
+  test('should initialise user stats for new user', async () => {
     // Arrange
     const userId = 1;
 
@@ -64,7 +64,7 @@ describe('UserStats System', () => {
       .mockResolvedValueOnce(newStats); // New stats
 
     // Act
-    const result = await UserStats.initializeForUser(userId);
+    const result = await UserStats.initialiseForUser(userId);
 
     // Assert
     expect(result).toBeDefined();

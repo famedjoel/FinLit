@@ -6,12 +6,12 @@ import dotenv from "dotenv";
 import User from "./models/User.js";
 import TriviaQuestion from "./models/TriviaQuestion.js";
 import bcrypt from "bcryptjs";
-import connectDB from "./config/db.js"; // Import DB connection
+import connectDB from "./config/db.js";
 import populateCourseData from './scripts/populate-course-data.js';
 import { updateTriviaQuestions } from './config/dbInit.js';
-import { initCourseTables } from './config/dbInitCourses.js'; // Import course tables initialization
-import { initSampleCourseData } from './config/sampleCoursesData.js'; // Import sample course data
-import { setupCourseRoutes } from './routes/courseRoutes.js'; // Import course routes
+import { initCourseTables } from './config/dbInitCourses.js';
+import { initSampleCourseData } from './config/sampleCoursesData.js';
+import { setupCourseRoutes } from './routes/courseRoutes.js';
 import { initMultiplayerTables } from './config/dbInitMultiplayer.js';
 import challengeRoutes from './routes/challengeRoutes.js';
 import { addQuizSettingsColumn } from './migrations.js';
@@ -24,7 +24,6 @@ import Challenge from './models/Challenge.js';
 
 
 dotenv.config();
-// connectDB(); // Call function to connect to SQLite
 
 const app = express();
 const PORT = process.env.PORT || 7900;

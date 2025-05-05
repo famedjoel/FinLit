@@ -189,7 +189,7 @@ describe('Reward System', () => {
     expect(result.message).toBe('You do not own this reward');
   });
 
-  test('should initialize default rewards', async () => {
+  test('should initialise default rewards', async () => {
     let lastId = 0;
 
     mockConnection.get.mockImplementation((query, params) => {
@@ -225,7 +225,7 @@ describe('Reward System', () => {
     );
   });
 
-  test('should not initialize if rewards already exist', async () => {
+  test('should not initialise if rewards already exist', async () => {
     mockConnection.get.mockResolvedValue({ count: 5 });
 
     const callsBefore = mockConnection.run.mock.calls.length;

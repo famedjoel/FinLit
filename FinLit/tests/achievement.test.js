@@ -175,7 +175,7 @@ describe('Achievement and Rewards System', () => {
       );
     });
 
-    test('should initialize default achievements', async () => {
+    test('should initialise default achievements', async () => {
       // Arrange
       mockConnection.all.mockResolvedValue([]); // No existing achievements
 
