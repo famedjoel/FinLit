@@ -1,6 +1,6 @@
 /* Quiz Type Selection Styles */
 .quiz-type-selector {
-  background: #f0fdfa; /* Light teal background */
+  background: #f0fdfa; 
   margin-bottom: 2rem;
   border-radius: 8px;
   padding: 1.5rem;
@@ -135,7 +135,7 @@
 
 /* Timer Settings Styles */
 .timer-selector {
-  background: #eff6ff; /* Light blue background */
+  background: #eff6ff;
   margin-bottom: 1.5rem;
 }
 
@@ -178,7 +178,7 @@
 
 /* Question Count Selection Styles */
 .question-count-selector {
-  background: #f0fdf4; /* Light green background */
+  background: #f0fdf4; 
   margin-bottom: 1.5rem;
 }
 

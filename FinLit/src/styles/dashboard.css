@@ -363,15 +363,12 @@
   }
 }
 
-/* Course Items Dark Theme Styling - Matches Screenshot */
-
-/* Container for course items as shown in the screenshot */
 .dark-theme .dashboard-courses {
   width: 100%;
   margin-top: 2rem;
 }
 
-/* Course Item - dark navy bg with light blue progress */
+
 .dark-theme .dashboard-course-item {
   background-color: #1a2234;
   border-radius: 0.5rem;
@@ -392,7 +389,6 @@
   transition: all 0.3s ease;
 }
 
-/* Course title - white, left-aligned */
 .dark-theme .dashboard-course-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -401,7 +397,6 @@
   text-align: left;
 }
 
-/* Progress text - light blue, right-aligned */
 .dark-theme .dashboard-course-progress {
   position: absolute;
   top: 1.5rem;
@@ -421,7 +416,6 @@
   margin-bottom: 1rem;
 }
 
-/* Progress bar fill - bright blue gradient */
 .dark-theme .dashboard-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
@@ -430,7 +424,6 @@
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
-/* Continue button - blue, center-aligned */
 .dark-theme .dashboard-continue-btn {
   background-color: #3b82f6;
   color: white;
@@ -452,7 +445,6 @@
 
 /* Game Cards for Dashboard Dark Theme */
 
-/* For the game progress section */
 .dark-theme .games-section {
   background: var(--bg-secondary);
   border-color: var(--border-color);
@@ -564,7 +556,6 @@
   color: var(--text-tertiary);
 }
 
-/* Course progress in the dashboard - match the screenshot */
 .dark-theme .progress-bar {
   background: rgba(255, 255, 255, 0.1);
   height: 10px;
@@ -576,7 +567,6 @@
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
-/* Main game progress section from screenshot */
 .game-progress-container {
   margin-top: 2rem;
 }

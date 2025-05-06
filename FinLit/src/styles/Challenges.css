@@ -18,7 +18,6 @@
     font-size: 1.1rem;
   }
   
-  /* Create Challenge Button */
   .btn-create-challenge {
     display: block;
     margin: 0 auto 2rem;
@@ -38,7 +37,6 @@
     box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
   }
   
-  /* Tabs */
   .challenges-tabs {
     display: flex;
     justify-content: center;
@@ -69,7 +67,6 @@
     border-color: #2563eb;
   }
   
-  /* Challenge Cards */
   .challenges-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -134,7 +131,6 @@
     color: #991b1b;
   }
   
-  /* Players Section */
   .challenge-players {
     display: flex;
     justify-content: space-between;
@@ -166,7 +162,6 @@
     margin: 0 1rem;
   }
   
-  /* Challenge Actions */
   .challenge-actions {
     padding: 1rem;
     text-align: center;
@@ -209,7 +204,6 @@
     font-weight: 700;
   }
   
-  /* Challenge Footer */
   .challenge-footer {
     display: flex;
     justify-content: space-between;
@@ -228,7 +222,6 @@
     font-size: 0.875rem;
   }
   
-  /* No Challenges */
   .no-challenges {
     text-align: center;
     padding: 3rem;
@@ -256,7 +249,6 @@
     background: #2563eb;
   }
   
-  /* Modal */
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -357,9 +349,7 @@
     }
   }
 
-  /* Add these styles to your Challenges.css file */
 
-/* Wide modal for challenge creation with settings */
 .wide-modal {
   max-width: 600px;
   width: 90%;
@@ -383,7 +373,6 @@
   margin-bottom: 1rem;
 }
 
-/* Improved checkbox styling */
 .question-type-checkbox {
   display: flex;
   align-items: center;
@@ -401,13 +390,11 @@
   border-color: #cbd5e0;
 }
 
-/* Style for checked state */
 .question-type-checkbox input[type="checkbox"]:checked + span {
   font-weight: 600;
   color: #3182ce;
 }
 
-/* Make sure the checkboxes themselves are visible and properly sized */
 .question-type-checkbox input[type="checkbox"] {
   width: 16px;
   height: 16px;
@@ -419,7 +406,6 @@
   display: inline-block;
 }
 
-/* Fix for the grid layout */
 .question-types-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -427,12 +413,10 @@
   margin-top: 0.5rem;
 }
 
-/* Ensure the container shows the checked state visually */
 .question-type-checkbox input[type="checkbox"]:checked ~ span {
   color: #3182ce;
 }
 
-/* Quiz settings display in challenge card */
 .challenge-settings {
   margin: 0.75rem 0;
   text-align: center;
@@ -448,7 +432,6 @@
   font-weight: 500;
 }
 
-/* Enhanced modal styling */
 .modal-content {
   max-height: 90vh;
   overflow-y: auto;
@@ -473,9 +456,6 @@
   }
 }
 
-/* Add these styles to your Challenges.css file */
-
-/* Delete Button */
 .btn-delete {
   background-color: #fee2e2;
   color: #dc2626;
@@ -498,7 +478,6 @@
   transform: translateY(-2px);
 }
 
-/* Delete Confirmation Modal */
 .delete-modal {
   max-width: 400px;
   text-align: center;
@@ -527,7 +506,6 @@
   background-color: #b91c1c;
 }
 
-/* When challenge has both play and delete buttons */
 .challenge-actions {
   display: flex;
   flex-direction: column;
@@ -543,9 +521,7 @@
   }
 }
 
-/* Add these styles to your Challenges.css file */
 
-/* Date and time styling */
 .challenge-footer .date {
   color: #64748b;
   font-size: 0.875rem;
@@ -559,7 +535,6 @@
   font-size: 0.9rem;
 }
 
-/* Make challenge footer more responsive */
 .challenge-footer {
   display: flex;
   justify-content: space-between;

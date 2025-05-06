@@ -30,8 +30,8 @@ const PORT = process.env.PORT || 7900;
 
 // Define custom CORS options that allow all origins
 const corsOptions = {
-  origin: '*', // Allow all origins
-  credentials: true, // Allow cookies if needed
+  origin: '*', 
+  credentials: true, 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
@@ -39,7 +39,7 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json({limit: '50mb'})); // Parses JSON requests
+app.use(express.json({limit: '50mb'}));
 
 // Log all requests for debugging
 app.use((req, res, next) => {
@@ -129,7 +129,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Update only the profile route in server.js
 app.put("/profile", async (req, res) => {
   try {
     const { userId, username, avatar, financialGoals } = req.body;
@@ -150,7 +149,6 @@ app.put("/profile", async (req, res) => {
   }
 });
 
-// Get User Profile (for loading in navbar/dashboard)
 app.get("/profile/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
@@ -379,8 +377,7 @@ app.post("/progress/game", async (req, res) => {
   }
 });
 
-// API routes for the trivia game
-// Add these endpoints to your server.js file
+
 
 // Get trivia questions with optional difficulty, category, and types filters
 app.get("/trivia/questions", async (req, res) => {
@@ -649,7 +646,6 @@ app.get("/stats/progress/:userId", async (req, res) => {
   try {
     const stats = await UserStats.getForUser(req.params.userId);
     
-    // Also fetch user achievements
     const achievements = await Achievement.getUserAchievements(req.params.userId);
     
     // Calculate completion percentages for each category
@@ -687,7 +683,6 @@ app.get("/stats/progress/:userId", async (req, res) => {
   }
 });
 
-// Enhanced route for tracking quiz completion with achievements
 app.post("/progress/quiz-with-achievements", async (req, res) => {
   try {
     const { userId, score, questionsAnswered, gameId, title } = req.body;
@@ -772,7 +767,6 @@ app.post("/progress/quiz-with-achievements", async (req, res) => {
   }
 });
 
-// Enhanced route for tracking course completion with achievements
 app.post("/progress/course-with-achievements", async (req, res) => {
   try {
     const { userId, courseId, title, progress } = req.body;
@@ -879,8 +873,7 @@ app.post("/progress/course-with-achievements", async (req, res) => {
   }
 });
 
-// Update challenge route to track achievements when a challenge is completed
-// Update challenge route to track achievements when a challenge is completed
+
 app.post("/challenges/:challengeId/score", async (req, res) => {
   try {
     const { challengeId } = req.params;
@@ -913,8 +906,7 @@ app.post("/challenges/:challengeId/score", async (req, res) => {
   }
 });
 
-// Update the create challenge route to track challenge sent achievement
-// Update the create challenge route to track challenge sent achievement
+
 app.post("/challenges", async (req, res) => {
   try {
     const { challengerId, challengedId, gameType, gameMode, quizSettings } = req.body;
@@ -943,7 +935,6 @@ app.post("/challenges", async (req, res) => {
       achievementUpdate = await UserStats.trackChallengeSent(challengerId);
     } catch (achievementError) {
       console.error("Error tracking challenge achievement (non-fatal):", achievementError);
-      // Continue execution even if achievement tracking fails
     }
     
     res.status(201).json({
@@ -957,14 +948,12 @@ app.post("/challenges", async (req, res) => {
 });
 
 
-// Add this inside the connectDB().then() block before app.listen()
-// Initialize achievements and rewards system
+// Initialise achievements and rewards system
 await initAchievementsSystem();
 await Achievement.initDefaultAchievements();
 await Reward.initDefaultRewards();
 console.log("Achievements and rewards system initialized");
 
-// Add these routes to server.js
 
 // Get user statistics
 app.get("/stats/:userId", async (req, res) => {
@@ -1006,7 +995,6 @@ app.get("/stats/:userId", async (req, res) => {
     
     // Calculate aggregate statistics
     
-    // 1. Calculate mastery levels by category
     const categoryMastery = {};
     const categoryAttempts = {};
     
@@ -1032,7 +1020,6 @@ app.get("/stats/:userId", async (req, res) => {
         : 0;
     });
     
-    // 2. Performance over time data
     const performanceOverTime = gameData
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
       .map(game => ({
@@ -1043,7 +1030,6 @@ app.get("/stats/:userId", async (req, res) => {
           : null
       }));
     
-    // 3. Strengths and weaknesses
     const strengths = [];
     const weaknesses = [];
     
@@ -1071,7 +1057,6 @@ app.get("/stats/:userId", async (req, res) => {
       });
     }
     
-    // 4. Generate recommended topics
     const recommendedTopics = generateRecommendedTopics(weaknesses, masteryLevels);
     
     // Return compiled statistics
@@ -1147,21 +1132,21 @@ app.get("/health", (req, res) => {
   res.json({ status: "Server is running" });
 });
 
-// Connect to database and initialize it
+// Connect to database and initialise it
 connectDB().then(async () => {
   try {
         // Run migration to add quiz_settings column if needed
         await addQuizSettingsColumn();
         
-    // Initialize course tables
+    // Initialise course tables
     await initCourseTables();
     
     await initMultiplayerTables();
     
-    // Initialize sample course data
+    // Initialise sample course data
     await initSampleCourseData();
     
-    // Initialize trivia questions if needed
+    // Initialise trivia questions if needed
     await updateTriviaQuestions();
 
     // Set up course routes 
@@ -1185,7 +1170,6 @@ connectDB().then(async () => {
   }
 });
 
-// Add this endpoint to get all users (for challenge creation)
 app.get("/users", async (req, res) => {
   try {
     const connection = await import('./config/sqlite-adapter.js').then(m => m.connect());

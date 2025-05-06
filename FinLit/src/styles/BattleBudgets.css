@@ -450,13 +450,11 @@
 }
 
 
-/* Interactive Tooltips - Enhanced and Fixed */
 .tooltip {
   position: relative;
   display: inline-block;
 }
 
-/* Important: Ensure tooltip is visible and on top */
 .tooltip .tooltiptext {
   visibility: hidden;
   width: 240px !important;
@@ -480,7 +478,6 @@
   font-weight: bold;
 }
 
-/* Hover state - make sure this works */
 .tooltip:hover .tooltiptext,
 .tooltip.tooltip:hover .tooltiptext {
   visibility: visible !important;
@@ -488,13 +485,11 @@
   bottom: 135% !important;
 }
 
-/* Enhancement: Add visual feedback when hovering over buttons with tooltips */
 .tooltip:hover.choice-btn {
   transform: translateY(-5px) scale(1.05) !important;
   box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
 }
 
-/* Tooltip arrow - ensure it's visible */
 .tooltip .tooltiptext::after {
   content: "";
   position: absolute;
@@ -506,12 +501,10 @@
   border-color: rgba(0,0,0,0.98) transparent transparent transparent;
 }
 
-/* Make sure button hover states don't interfere with tooltips */
 .choice-btn:hover {
   z-index: 998;
 }
 
-/* Dark mode support for tooltips */
 @media (prefers-color-scheme: dark) {
   .tooltip .tooltiptext {
     background-color: rgba(50,50,50,0.98) !important;
@@ -523,7 +516,6 @@
   }
 }
 
-/* Mobile responsiveness for tooltips */
 @media (max-width: 768px) {
   .tooltip .tooltiptext {
     width: 200px !important;
@@ -533,12 +525,10 @@
   }
 }
 
-/* Add visual feedback when hovering over buttons with tooltips */
 .tooltip:hover.choice-btn {
   box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
-/* AI Personality Card */
 .ai-personality-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border-radius: 15px;
@@ -580,7 +570,6 @@
   font-size: 14px;
 }
 
-/* Special Event Card */
 .special-event-card {
   background: linear-gradient(45deg, #ffd54f, #ff8a65);
   border-radius: 15px;
@@ -604,7 +593,6 @@
   text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Game History Section */
 .game-history {
   background: white;
   border-radius: 15px;
@@ -679,7 +667,6 @@
 }
 
 
-/* Responsive Enhancements */
 @media (max-width: 768px) {
   .ai-personality-card {
       flex-direction: column;
@@ -703,7 +690,6 @@
   }
 }
 
-/* Victory and Defeat Animations */
 .victory {
   animation: victoryDance 1s ease-in-out;
 }
@@ -725,7 +711,6 @@
   40%, 80% { transform: translateX(10px); }
 }
 
-/* Particle Effects for Special Events */
 .particle {
   position: absolute;
   background: #ffd700;

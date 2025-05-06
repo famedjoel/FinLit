@@ -6,7 +6,6 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Define theme variables */
 :root {
   /* Light theme variables (default) */
   --bg-primary: #f8f9fa;
@@ -25,7 +24,7 @@
   --error-color: #ef4444;
   --info-color: #0ea5e9;
   
-  /* Game-specific colors */
+  /* Game-specific colours */
   --essentials-color: #38b2ac;
   --luxuries-color: #ed8936;
   --savings-color: #4299e1;
@@ -227,8 +226,6 @@ body {
 .toggle-icon {
   color: white;
 }
-
-/* Enhanced styling for the course dashboard */
 
 /* CourseDashboard.css */
 
@@ -626,7 +623,6 @@ body {
   filter: brightness(1.1);
 }
 
-/* Enhanced Game Categories Styling */
 /* Games Container */
 .games-container {
   max-width: 1200px;
@@ -755,14 +751,13 @@ body {
   border-left: 4px solid var(--accent-primary);
 }
 
-/* Featured Game Card - Enhanced Trivia */
 .game-card.featured-game {
   background: var(--bg-tertiary);
   border: 2px solid var(--accent-primary);
   transform: scale(1.02);
   position: relative;
   box-shadow: 0 8px 20px -5px var(--shadow-color);
-  grid-column: 1 / -1; /* Make it span full width in first row */
+  grid-column: 1 / -1; 
 }
 
 .game-card.featured-game:hover {
@@ -786,7 +781,6 @@ body {
   z-index: 2;
 }
 
-/* Make featured game title stand out */
 .featured-game h3 {
   color: var(--accent-primary);
   font-size: 1.5rem;
@@ -1065,7 +1059,6 @@ body {
   margin-bottom: 20px;
 }
 
-/* Dark theme-specific overrides */
 .dark-theme .hero-section {
   background: var(--bg-secondary);
 }

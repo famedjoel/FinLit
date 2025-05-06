@@ -46,7 +46,7 @@ const FinancialTrivia = () => {
   const [searchParams] = useSearchParams();
   const challengeId = searchParams.get('challengeId');
   const navigate = useNavigate();
-  const [message, setMessage] = useState(''); // <-- New: To show submission message
+  const [message, setMessage] = useState('');
   const [challengeSettings, setChallengeSettings] = useState(null);
   const [loadingChallenge, setLoadingChallenge] = useState(false);
   const [currentChallenge, setCurrentChallenge] = useState(null);

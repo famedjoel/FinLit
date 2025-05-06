@@ -423,7 +423,6 @@
     color: #1e40af;
   }
 
-  /* Add these to your QuestionTypes.css file */
 
 /* Matching status display */
 .matching-status {
@@ -470,7 +469,6 @@
   margin-top: 4px;
 }
 
-/* Improve term/definition pairing visual */
 .matching-item.matched {
   position: relative;
   border-left-width: 4px;
@@ -484,7 +482,6 @@
   border-left-color: #0ea5e9;
 }
 
-/* Improve animation */
 .matching-item {
   transform-origin: center left;
   animation-duration: 0.3s;

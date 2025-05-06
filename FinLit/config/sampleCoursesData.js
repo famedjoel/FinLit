@@ -4,7 +4,7 @@ import Chapter from '../models/Chapter.js';
 import Lesson from '../models/Lesson.js';
 import Quiz from '../models/Quiz.js';
 
-// Initialize sample course data
+// Initialise sample course data
 export async function initSampleCourseData() {
   try {
     const connection = await connect();

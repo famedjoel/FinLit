@@ -12,7 +12,6 @@
   overflow: hidden;
 }
 
-/* Add a subtle underwater pattern to the background */
 .loan-shark-game::before {
   content: "";
   position: absolute;
@@ -32,7 +31,6 @@
   pointer-events: none;
 }
 
-/* Content wrapper to place above the pattern */
 .game-content {
   position: relative;
   z-index: 1;
@@ -92,14 +90,12 @@
   margin-top: 2rem;
 }
 
-/* Left column - action areas */
 .action-area {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-/* Right column - stats and info */
 .stats-area {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 15px;
@@ -112,7 +108,6 @@
   overflow: hidden;
 }
 
-/* Stats dashboard with enhanced styling */
 .stats {
   display: grid;
   grid-template-columns: 1fr;
@@ -121,7 +116,6 @@
   z-index: 1;
 }
 
-/* Each stat item */
 .stat-item {
   display: flex;
   align-items: center;
@@ -170,7 +164,6 @@
   color: #fff;
 }
 
-/* Money stat - green accent */
 .money-stat .stat-icon {
   background: rgba(78, 204, 163, 0.2);
   color: #4ecca3;
@@ -180,7 +173,6 @@
   color: #4ecca3;
 }
 
-/* Days stat - yellow accent */
 .days-stat .stat-icon {
   background: rgba(255, 215, 0, 0.2);
   color: #ffd700;
@@ -190,7 +182,6 @@
   color: #ffd700;
 }
 
-/* Loan stat - red accent */
 .loan-stat .stat-icon {
   background: rgba(231, 69, 93, 0.2);
   color: #e7455d;
@@ -200,7 +191,6 @@
   color: #e7455d;
 }
 
-/* Interest stat - blue accent */
 .interest-stat .stat-icon {
   background: rgba(69, 179, 231, 0.2);
   color: #45b3e7;
@@ -210,7 +200,6 @@
   color: #45b3e7;
 }
 
-/* Warning indicator for low days */
 .days-warning {
   animation: pulse 2s infinite;
 }
@@ -365,7 +354,6 @@
   font-size: 1.2rem;
 }
 
-/* Next day button with enhanced styling */
 .next-day-btn {
   background: linear-gradient(45deg, #ffd700, #f0c800);
   color: #1a1a2e;
@@ -394,16 +382,15 @@
   background: #b71c1c;
 }
 
-/* Enhanced notifications */
 .notifications {
   position: fixed;
-  top: 150px; /* Much higher to ensure it's below navbar */
+  top: 150px; 
   left: 0;
   right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 9999; /* Extremely high z-index */
+  z-index: 9999; 
   pointer-events: none;
 }
 

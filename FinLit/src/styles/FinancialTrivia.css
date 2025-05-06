@@ -677,7 +677,7 @@
 
 /* Timer Settings Section Styles */
 .timer-selector {
-  background: #eff6ff; /* Light blue background */
+  background: #eff6ff; 
   margin-bottom: 1.5rem;
 }
 
@@ -733,7 +733,7 @@
 
 /* Question Count Selection Styles */
 .question-count-selector {
-  background: #f0fdf4; /* Light green background */
+  background: #f0fdf4; 
   margin-bottom: 1.5rem;
 }
 
@@ -924,7 +924,6 @@
   }
 }
 
-/* Add these styles to FinancialTrivia.css */
 
 .challenge-mode-banner {
   background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
@@ -960,7 +959,6 @@
   }
 }
 
-/* Add these styles to your FinancialTrivia.css file */
 
 .challenge-settings-info {
   background: #f8fafc;
