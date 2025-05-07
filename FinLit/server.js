@@ -952,7 +952,7 @@ app.post("/challenges", async (req, res) => {
 await initAchievementsSystem();
 await Achievement.initDefaultAchievements();
 await Reward.initDefaultRewards();
-console.log("Achievements and rewards system initialized");
+console.log("Achievements and rewards system initialised");
 
 
 // Get user statistics
@@ -1165,7 +1165,7 @@ connectDB().then(async () => {
       console.log(`For other devices on your network, try: http://<your-ip-address>:${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to initialize database:", error);
+    console.error("Failed to initialise database:", error);
     process.exit(1);
   }
 });

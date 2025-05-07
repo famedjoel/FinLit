@@ -18,6 +18,7 @@ Before you start, ensure you have a good code editor like Visual Studio Code and
 
 2. Install dependencies:
    ```bash
+   npm install eslint@^8.40.0
    npm install
    ```
 

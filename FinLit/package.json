@@ -40,7 +40,7 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "babel-jest": "^29.7.0",
-    "eslint": "^8.27.0",
+    "eslint": "^8.57.1",
     "eslint-config-portsoc": "^1.0.1",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.0.0",
